@@ -94,7 +94,30 @@ canvas{display:block}
 .chip .dot{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:14px;height:3px;border-radius:3px;background:#ffb524;opacity:0}
 .chip.act .dot{opacity:1}
 #boardWrap{flex:1;position:relative;min-height:0;overflow:hidden}
-#cvBoard{position:absolute;inset:0;width:100%;height:100%}
+#cvBoard{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+/* 이동 HUD */
+#moveBar{position:absolute;left:50%;top:7px;transform:translate(-50%,-6px);z-index:6;
+  display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:13px;
+  background:rgba(24,36,60,.86);color:#fff;font-size:12px;font-weight:900;
+  box-shadow:0 6px 16px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:.18s;white-space:nowrap}
+#moveBar.on{opacity:1;transform:translate(-50%,0)}
+#moveBar .mb-star{color:#ffd54a;font-variant-numeric:tabular-nums}
+#moveBar .mb-rem{font-variant-numeric:tabular-nums}
+#moveBar.bot{background:rgba(90,36,60,.86)}
+/* 여기로 이동? 확인 */
+#moveCfm{position:absolute;left:50%;bottom:10px;transform:translate(-50%,14px);z-index:7;
+  display:flex;align-items:center;gap:8px;padding:8px 9px 8px 13px;border-radius:16px;
+  background:rgba(255,255,255,.97);box-shadow:0 10px 26px rgba(20,40,80,.3);
+  width:max-content;max-width:calc(100% - 16px);white-space:nowrap;
+  opacity:0;pointer-events:none;transition:.16s}
+#moveCfm.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#moveCfm .mc-t{font-size:13px;font-weight:900;color:#22405c;letter-spacing:-.3px;white-space:nowrap}
+#moveCfm .mc-s{font-size:10px;font-weight:800;color:#6b8299;margin-top:1px;white-space:nowrap}
+#moveCfm .mc-s b{color:#c98a00}
+#moveCfm button{flex:none;height:36px;border-radius:11px;padding:0 11px;font-size:12.5px;font-weight:900;transition:.1s}
+#btnGo{background:linear-gradient(180deg,#ffe066,#ffb524);color:#5a3300;box-shadow:0 3px 0 #cf8108}
+#btnStay{background:#eaf2fa;color:#5d7691}
+#moveCfm button:active{transform:translateY(2px);box-shadow:none}
 .float-btn{position:absolute;width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.94);
   box-shadow:0 3px 10px rgba(30,60,110,.22);display:flex;align-items:center;justify-content:center;right:8px;z-index:5;transition:.15s}
 .float-btn:active{transform:scale(.92)}
@@ -272,7 +295,7 @@ canvas{display:block}
         <div class="row" style="margin-top:9px"><span class="row-l">라운드</span><div class="seg" id="segRounds"></div></div>
       </div>
       <button id="btnStart" class="big-btn">파티 시작!</button>
-      <div class="hint">100칸 대형 보드 · 미니게임 12종 · 동료 시스템<br>P1~P4 키보드: Q / P / Z / M</div>
+      <div class="hint">넓은 광장 + 좁은 다리 보드(100칸+) · 상하좌우 자유 이동 · 미니게임 12종<br>주사위를 굴린 뒤 옆 칸을 탭하거나, 멀리 있는 칸을 탭해 경로를 미리 봐요</div>
     </div>
   </section>
 
@@ -284,6 +307,11 @@ canvas{display:block}
       <button id="btnMute" class="float-btn" aria-label="소리"></button>
       <div id="turnTag">피클 차례</div>
       <div id="toast"><div class="tt"></div><div class="ts"></div></div>
+      <div id="moveBar"><span class="mb-rem">남은 0칸</span><span class="mb-star"></span></div>
+      <div id="moveCfm">
+        <div><div class="mc-t">여기로 이동?</div><div class="mc-s">0칸 이동</div></div>
+        <button id="btnGo">이동</button><button id="btnStay">취소</button>
+      </div>
       <div id="roulette">
         <div class="rl-card">
           <div class="rl-title">미니게임 룰렛</div>
@@ -613,70 +641,46 @@ function haptic(ms) {
   try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) { }
 }
 /* =========================================================
-   피클 파티 — maps (3 themes, 100+ tiles), camera, rendering
+   피클 파티 — 그리드 보드 (넓은 광장 + 좁은 다리), 카메라, 렌더
    ========================================================= */
 
-let MAP_W = 1800, MAP_H = 2900;
-const TILE_SIZE = 152;
+let MAP_W = 2900, MAP_H = 1700;
+const GRID = 104;                 // 타일 간격(월드 px)
+const MAP_MARGIN = 150;           // 맵 가장자리 여백
+const TILE_SIZE = GRID;
 
-/* ---------- track shapes ---------- */
-function geoRiver(w, h) {
-  const out = [], N = 2600, A = 540, K = 9;
-  for (let i = 0; i <= N; i++) {
-    const t = i / N;
-    const y = h * .07 + h * .86 * t;
-    const x = w / 2 + A * Math.sin(t * Math.PI * 2 * K) + 130 * Math.sin(t * Math.PI * 2 * 2.3 + 1);
-    out.push({ x, y });
-  }
-  return out;
-}
-
-function geoSpiral(w, h) {
-  const out = [];
-  let l = 220, t0 = 200, r = w - 220, b = h - 200;
-  const step = 285;
-  out.push({ x: l, y: t0 });
-  for (let k = 0; k < 8; k++) {
-    if (r - l < 340 || b - t0 < 340) break;
-    out.push({ x: r, y: t0 });
-    out.push({ x: r, y: b });
-    out.push({ x: l, y: b });
-    out.push({ x: l, y: t0 + step });
-    l += step; t0 += step; r -= step; b -= step;
-    out.push({ x: l, y: t0 });
-  }
-  return out;
-}
-
-function geoEight(w, h) {
-  const out = [];
-  const N = 4200, A = w * .40, B = h * .36, cx = w / 2, cy = h / 2;
-  const laps = 2.3;
-  const total = Math.PI * 2 * laps;
-  for (let i = 0; i <= N; i++) {
-    const t = i / N * total;
-    const shrink = 1 - .20 * (i / N);
-    const x = cx + A * shrink * Math.cos(t);
-    const y = cy + B * shrink * Math.sin(t) * Math.cos(t) * 2;
-    out.push({ x, y });
-  }
-  return out;
-}
-
+/* ---------- 맵 3종: 넓은 광장(자유 경로) + 좁은 다리/외길 ----------
+   '#' = 길, '.' = 없음. 구역이 넓게 트인 곳은 자유롭게 돌아다닐 수 있고,
+   한 칸 폭 다리/외길에는 맵 전용 기믹이 놓인다. */
 const MAPS = [
   {
-    id: 'meadow', name: '초원 대모험', n: 104, badge: '기본',
-    desc: '강물 따라 굽이치는 길 · 워프 포탈 · 점프 부스터',
-    gimmicks: ['워프 포탈', '부스터 +5', '갈림길'],
-    w: 1800, h: 2900, geo: geoRiver, kind: 'meadow',
-    bg: ['#c8efab', '#7fd3a8'],
-    tint: ['#8fd96b', '#ffd166'],
-    path: { edge: '#d9b98a', base: '#fff3d6', dash: '#ffcf8a' },
+    id: 'meadow', name: '초원 유적', badge: '기본',
+    desc: '넓은 광장 4곳 · 1칸 다리 · 워프 포탈 지름길',
+    gimmicks: ['워프 포탈', '부스터 다리', '갈림길'],
+    kind: 'meadow', tint: ['#9be07a'],
+    bg: ['#d6f0b6', '#86cfa4'],
+    plate: '#a98a5c', plate2: '#8d6f45', rail: '#d8c49a',
+    path: { edge: '#8d6f45', base: '#f5ecd2', dash: '#ffcf8a' },
     zones: [
       { name: '초원 지대', sky: '#a8e08a' },
       { name: '꽃밭 언덕', sky: '#c3ea9c' },
       { name: '호수 숲', sky: '#9fdcc4' },
       { name: '무지개 고원', sky: '#c9b8ff' }
+    ],
+    grid: [
+      '.......###########.......',
+      '..######....#....######..',
+      '..######....#....######..',
+      '..######....#....######..',
+      '..######....#....######..',
+      '....#.....#####....#.....',
+      '....################.....',
+      '....#.....#####....#.....',
+      '..######....#....######..',
+      '..######....#....######..',
+      '..######....#....######..',
+      '..######....#....######..',
+      '.......###########.......'
     ],
     patterns: [
       ['coin', 'coin', 'event', 'rest', 'coin', 'trap', 'coin', 'ally', 'coin', 'trap', 'coin', 'rest', 'event', 'coin', 'trap', 'coin'],
@@ -684,27 +688,49 @@ const MAPS = [
       ['coin', 'event', 'coin', 'trap', 'coin', 'rest', 'coin', 'ally', 'event', 'coin', 'trap', 'coin', 'gem', 'coin', 'event', 'coin'],
       ['gem', 'event', 'coin', 'trap', 'gem', 'ally', 'coin', 'rest', 'gem', 'trap', 'event', 'coin', 'gem', 'event', 'coin', 'trap']
     ],
-    special: { 0: 'start', 7: 'booster', 12: 'portal', 18: 'shop', 22: 'ally', 30: 'portal', 34: 'booster',
-      40: 'fork', 44: 'ally', 50: 'shop', 58: 'portal', 62: 'booster', 66: 'ally', 70: 'shop',
-      74: 'fork', 84: 'booster', 88: 'portal', 92: 'ally', 96: 'shop' },
-    altLanes: [{ start: 40, types: ['gem', 'trap', 'gem', 'trap'], label: '보물 지름길' },
-               { start: 74, types: ['gem', 'gem', 'trap', 'gem'], label: '무지개 지름길' }],
-    portals: { 12: 58, 58: 12, 30: 88, 88: 30 },
-    starStart: 25
+    start: [2, 11],
+    starStart: [22, 1],
+    specials: {
+      shop: [[7, 1], [17, 8]],
+      ally: [[2, 2], [12, 2], [12, 10], [22, 8]],
+      booster: [[7, 6], [17, 6], [4, 6], [19, 6]],
+      gem: [[14, 5], [10, 7]],
+      event: [[12, 0], [12, 12]],
+      rest: [[3, 8], [21, 4]]
+    },
+    portals: [[[4, 7], [19, 5]], [[9, 0], [9, 12]]],
+    bridgeTypes: ['booster', 'coin', 'event', 'coin']
   },
   {
-    id: 'volcano', name: '용암 화산 성', n: 108, badge: '고위험',
-    desc: '성곽 나선길 · 용암 분출 · 황금 다리 · 코인 듀얼',
+    id: 'volcano', name: '용암 성곽', badge: '고위험',
+    desc: '성벽 외길 고리 · 용암 다리 · 황금 다리',
     gimmicks: ['용암 분출', '황금 다리', '코인 듀얼'],
-    w: 2400, h: 2500, geo: geoSpiral, kind: 'volcano',
-    bg: ['#3d1f22', '#b8442a'],
-    tint: ['#ff7a45', '#ffd166'],
-    path: { edge: '#5c2a24', base: '#3f2521', dash: '#ff9f43' },
+    kind: 'volcano', tint: ['#c96a3e'],
+    bg: ['#3a1c1e', '#9c3a22'],
+    plate: '#3a2320', plate2: '#241310', rail: '#7b4a34',
+    path: { edge: '#2a1512', base: '#5c3a30', dash: '#ff9f43' },
     zones: [
       { name: '성문 앞', sky: '#5a241f' },
       { name: '화산 성벽', sky: '#8a3a24' },
       { name: '용암 회랑', sky: '#a8321c' },
       { name: '분화구 심장', sky: '#d1441f' }
+    ],
+    grid: [
+      '...........................',
+      '.#########################.',
+      '.#...........#...........#.',
+      '.#.######....#....######.#.',
+      '.#.######....#....######.#.',
+      '.#.######..#####..######.#.',
+      '.#.#####################.#.',
+      '.#......#..#####..#......#.',
+      '.#......#....#....#......#.',
+      '.#.######....#....######.#.',
+      '.#.######....#....######.#.',
+      '.#.######....#....######.#.',
+      '.#...........#...........#.',
+      '.#########################.',
+      '...........................'
     ],
     patterns: [
       ['coin', 'event', 'coin', 'lava', 'coin', 'rest', 'coin', 'ally', 'event', 'coin', 'lava', 'coin', 'gem', 'coin', 'event', 'coin'],
@@ -712,26 +738,50 @@ const MAPS = [
       ['coin', 'lava', 'event', 'coin', 'gem', 'coin', 'lava', 'ally', 'event', 'coin', 'trap', 'lava', 'coin', 'event', 'coin', 'gold'],
       ['gem', 'event', 'coin', 'lava', 'gold', 'rest', 'coin', 'ally', 'gold', 'trap', 'event', 'coin', 'gem', 'event', 'coin', 'lava']
     ],
-    special: { 0: 'start', 18: 'shop', 22: 'ally', 26: 'duel', 40: 'fork', 44: 'ally', 47: 'gold', 50: 'shop',
-      52: 'gold', 54: 'gold', 56: 'gold', 58: 'gold', 66: 'ally', 70: 'shop', 74: 'fork', 82: 'duel', 90: 'booster', 96: 'shop' },
-    altLanes: [{ start: 40, types: ['gold', 'lava', 'gold', 'gold'], label: '황금 다리' },
-               { start: 74, types: ['gold', 'lava', 'gold', 'lava'], label: '용암 지름길' }],
-    portals: {},
-    starStart: 33
+    start: [1, 7],
+    starStart: [23, 11],
+    specials: {
+      shop: [[3, 3], [23, 10]],
+      ally: [[6, 9], [13, 2], [13, 6], [20, 4]],
+      duel: [[2, 1], [24, 13], [13, 12]],
+      gold: [[8, 7], [8, 8], [18, 7], [18, 8]],
+      lava: [[5, 1], [19, 1], [12, 13], [5, 13]],
+      gem: [[13, 4], [13, 9]],
+      rest: [[8, 3], [18, 11]]
+    },
+    portals: [[[1, 1], [25, 13]]],
+    bridgeTypes: ['coin', 'lava', 'coin', 'gold', 'coin', 'lava']
   },
   {
-    id: 'ice', name: '얼음 눈꽃 섬', n: 106, badge: '변덕',
-    desc: '쌍둥이 섬 8자 길 · 빙판 슬라이드 · 눈폭풍 · 얼음 상자',
+    id: 'ice', name: '얼음 빙하', badge: '변덕',
+    desc: '두 섬 · 1칸 얼음 다리 · 빙판 슬라이드 · 눈폭풍',
     gimmicks: ['빙판 슬라이드', '눈폭풍', '얼음 상자'],
-    w: 1740, h: 3300, geo: geoEight, kind: 'ice',
-    bg: ['#eaf9ff', '#a8d8f0'],
-    tint: ['#8fd8ff', '#c6b6ff'],
-    path: { edge: '#8fb8d8', base: '#eaf9ff', dash: '#9fd8ff' },
+    kind: 'ice', tint: ['#a8e4ff'],
+    bg: ['#eaf9ff', '#a4d2ee'],
+    plate: '#7fb0cc', plate2: '#4f86a8', rail: '#dff4ff',
+    path: { edge: '#4f86a8', base: '#eaf9ff', dash: '#9fd8ff' },
     zones: [
       { name: '눈꽃 숲', sky: '#cfeeff' },
       { name: '빙하 계곡', sky: '#b8e6ff' },
       { name: '얼음 동굴', sky: '#c9d8ff' },
       { name: '오로라 언덕', sky: '#b6f0e0' }
+    ],
+    grid: [
+      '.......................',
+      '...........#...........',
+      '.########..#..########.',
+      '.########..#..########.',
+      '.#####################.',
+      '.########.....########.',
+      '..######.......######..',
+      '..######.......######..',
+      '..######.......######..',
+      '..######.......######..',
+      '.#####################.',
+      '.########.....########.',
+      '.########.....########.',
+      '....#.............#....',
+      '....#.............#....'
     ],
     patterns: [
       ['coin', 'event', 'coin', 'slide', 'coin', 'rest', 'coin', 'ally', 'event', 'coin', 'slide', 'coin', 'gem', 'coin', 'event', 'coin'],
@@ -739,21 +789,35 @@ const MAPS = [
       ['coin', 'slide', 'event', 'coin', 'gem', 'coin', 'storm', 'ally', 'event', 'coin', 'trap', 'slide', 'coin', 'event', 'coin', 'chest'],
       ['gem', 'event', 'coin', 'slide', 'chest', 'rest', 'coin', 'ally', 'storm', 'trap', 'event', 'coin', 'gem', 'event', 'coin', 'slide']
     ],
-    special: { 0: 'start', 18: 'shop', 22: 'ally', 40: 'fork', 44: 'ally', 50: 'shop', 58: 'chest',
-      66: 'ally', 70: 'shop', 74: 'fork', 85: 'storm', 92: 'ally', 96: 'shop', 100: 'chest' },
-    altLanes: [{ start: 40, types: ['chest', 'storm', 'gem', 'trap'], label: '얼음 지름길' },
-               { start: 74, types: ['chest', 'slide', 'storm', 'gem'], label: '눈보라 지름길' }],
-    portals: {},
-    starStart: 29
+    start: [5, 4],
+    starStart: [21, 2],
+    specials: {
+      shop: [[1, 11], [21, 11]],
+      ally: [[11, 1], [4, 7], [18, 7], [7, 2]],
+      slide: [[10, 4], [12, 4], [10, 10], [12, 10]],
+      storm: [[11, 3], [4, 13], [18, 13]],
+      chest: [[8, 2], [14, 12], [20, 2]],
+      gem: [[13, 10], [11, 4]]
+    },
+    portals: [[[4, 14], [18, 14]]],
+    bridgeTypes: ['slide', 'storm', 'chest']
   }
 ];
 
+MAPS.forEach(m => {
+  m.n = m.grid.reduce((s, row) => s + (row.split('#').length - 1), 0);
+  let C = 0; m.grid.forEach(r => { C = Math.max(C, r.length); });
+  m.cols = C; m.rows = m.grid.length;
+  m.w = MAP_MARGIN * 2 + C * GRID;
+  m.h = MAP_MARGIN * 2 + m.grid.length * GRID;
+});
+
 const TILE_INFO = {
-  coin: { col: ['#ffe08a', '#f0a71b'], rim: '#c98a12', icon: 'coin' },
+  coin: { col: ['#ffd97a', '#e39411'], rim: '#b87908', icon: 'coin' },
   gem: { col: ['#8ef4d8', '#25b6a0'], rim: '#118a7c', icon: 'gem' },
   trap: { col: ['#ff9a9a', '#e34b4b'], rim: '#a82b2b', icon: 'trap' },
   lava: { col: ['#ffb066', '#e04a1c'], rim: '#8f2b0c', icon: 'lava' },
-  gold: { col: ['#ffe98a', '#ffbf1f'], rim: '#b87f00', icon: 'gold' },
+  gold: { col: ['#fff6b0', '#ffc400'], rim: '#a97000', icon: 'gold' },
   duel: { col: ['#e08a8a', '#a83232'], rim: '#6f1a1a', icon: 'duel' },
   slide: { col: ['#c9f0ff', '#68c0e8'], rim: '#2c7fae', icon: 'slide' },
   storm: { col: ['#ded0ff', '#a58cf0'], rim: '#6b4fc0', icon: 'storm' },
@@ -770,214 +834,246 @@ const TILE_INFO = {
 };
 
 const BOARD = {
-  map: null, n: 0, pos: [], pts: [], types: [], alt: {}, branchOf: {}, zoneOf: [], decor: null, sprites: null
+  map: null, n: 0, rows: 0, cols: 0, tiles: [], types: [], pos: [], nb: [],
+  idx: {}, start: 0, portals: {}, zoneOf: [], narrow: [], w: 0, h: 0,
+  decor: null, sprites: null, starBfs: null, ts: GRID
 };
 
-/* ---------- geometry ---------- */
-const ROW_GAP = 330, ROW_X0 = 260, ROW_X1 = 1540, STUB = 100;
-function buildWaypoints() {
-  const pts = [];
-  let ltr = true;
-  for (let z = 0; z < 4; z++) {
-    const y0 = 100 + z * 990;
-    const rows = [y0 + 150, y0 + 480, y0 + 810];
-    for (let r = 0; r < 3; r++) {
-      const y = rows[r];
-      if (ltr) pts.push([ROW_X0, y], [ROW_X1, y], [ROW_X1 + STUB, y], [ROW_X1 + STUB, y + ROW_GAP]);
-      else pts.push([ROW_X1, y], [ROW_X0, y], [ROW_X0 - STUB, y], [ROW_X0 - STUB, y + ROW_GAP]);
-      ltr = !ltr;
+/* ---------- BFS helpers ---------- */
+function bfsFrom(startIdx, limit) {
+  const n = BOARD.n;
+  const dist = new Int32Array(n).fill(-1);
+  const prev = new Int32Array(n).fill(-1);
+  const order = [];
+  if (startIdx == null || startIdx < 0 || startIdx >= n) return { dist, prev, order };
+  dist[startIdx] = 0;
+  const q = [startIdx];
+  for (let h = 0; h < q.length; h++) {
+    const cur = q[h];
+    order.push(cur);
+    if (limit !== undefined && dist[cur] >= limit) continue;
+    const nbs = BOARD.nb[cur];
+    for (let k = 0; k < nbs.length; k++) {
+      const nx = nbs[k];
+      if (dist[nx] === -1) { dist[nx] = dist[cur] + 1; prev[nx] = cur; q.push(nx); }
     }
   }
-  return pts;
+  return { dist, prev, order };
 }
 
-function densePath(pts) {
-  const out = [{ x: pts[0][0], y: pts[0][1] }];
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1], b = pts[i];
-    const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    const n = Math.max(1, Math.round(d / 10));
-    for (let k = 1; k <= n; k++) out.push({ x: lerp(a[0], b[0], k / n), y: lerp(a[1], b[1], k / n) });
-  }
-  return out;
+/* 최단 경로 (from 제외) */
+function bfsPath(from, to) {
+  if (from === to) return [];
+  const { dist, prev } = bfsFrom(from);
+  if (dist[to] < 0) return null;
+  const out = [];
+  let cur = to;
+  while (cur !== from && cur >= 0) { out.push(cur); cur = prev[cur]; }
+  if (cur !== from) return null;
+  return out.reverse();
 }
 
-function sampleByLength(poly, n) {
-  const segs = [];
-  let total = 0;
-  for (let i = 1; i < poly.length; i++) {
-    const d = Math.hypot(poly[i].x - poly[i - 1].x, poly[i].y - poly[i - 1].y);
-    if (d < .0001) continue;
-    segs.push({ a: poly[i - 1], b: poly[i], d, s: total });
-    total += d;
-  }
-  const res = [], gap = total / n;
-  let si = 0;
-  for (let k = 0; k < n; k++) {
-    const target = (k + .5) * gap;
-    while (si < segs.length - 1 && segs[si].s + segs[si].d < target) si++;
-    const sg = segs[si];
-    const t = clamp((target - sg.s) / sg.d, 0, 1);
-    res.push({ x: lerp(sg.a.x, sg.b.x, t), y: lerp(sg.a.y, sg.b.y, t) });
-  }
-  return { pts: res, total };
+function reachableFrom(from, steps) {
+  const { dist } = bfsFrom(from, steps);
+  const list = [];
+  for (let i = 0; i < BOARD.n; i++) if (i !== from && dist[i] >= 0 && dist[i] <= steps) list.push(i);
+  return { dist, list };
 }
+
+/* ---------- board build ---------- */
+function idxOf(c, r) { return BOARD.idx[c + ',' + r]; }
 
 function buildBoard(mapId) {
   const map = MAPS.find(m => m.id === mapId) || MAPS[0];
   BOARD.map = map;
-  BOARD.n = map.n;
-  MAP_W = map.w; MAP_H = map.h;
-  const dense = map.geo(map.w, map.h);
-  const sampled = sampleByLength(dense, map.n);
-  BOARD.pts = dense;
-  BOARD.pos = sampled.pts;
-  const spacing = sampled.total / map.n;
-  BOARD.ts = clamp(spacing * .9, 106, TILE_SIZE);
-  const per = map.n / 4;
-  BOARD.types = []; BOARD.zoneOf = [];
-  for (let i = 0; i < map.n; i++) {
-    const zi = Math.min(3, Math.floor(i / per));
-    BOARD.zoneOf.push(zi);
-    const pat = map.patterns[zi];
-    BOARD.types.push(pat[i % pat.length]);
+  const rows = map.grid, R = rows.length;
+  let C = 0;
+  rows.forEach(r => { C = Math.max(C, r.length); });
+  const tiles = [], idx = {};
+  for (let r = 0; r < R; r++) {
+    const row = rows[r];
+    for (let c = 0; c < row.length; c++) {
+      if (row[c] !== '#') continue;
+      const i = tiles.length;
+      tiles.push({ i, c, r, x: MAP_MARGIN + c * GRID + GRID / 2, y: MAP_MARGIN + r * GRID + GRID / 2, deg: 0 });
+      idx[c + ',' + r] = i;
+    }
   }
-  Object.keys(map.special).forEach(k => { BOARD.types[+k] = map.special[k]; });
-  BOARD.types[map.n - 1] = 'finish';
-  BOARD.alt = {}; BOARD.branchOf = {};
-  const horizRun = (i, n) => {
-    for (let k = 0; k < n; k++) {
-      const a = BOARD.pos[i + k], b2 = BOARD.pos[i + k + 1];
-      if (!a || !b2 || Math.abs(a.y - b2.y) > 10) return false;
-    }
-    return true;
-  };
-  map.altLanes.forEach(br => {
-    let start = br.start;
-    if (!horizRun(start, 5)) {
-      let best = null, bd = 1e9;
-      for (let i = 10; i < map.n - 8; i++) {
-        if (!horizRun(i, 5)) continue;
-        const d = Math.abs(i - br.start);
-        if (d < bd) { bd = d; best = i; }
-      }
-      if (best !== null) start = best;
-    }
-    if (BOARD.types[br.start] === 'fork') BOARD.types[br.start] = 'coin';
-    BOARD.types[start] = 'fork';
-    br.start = start;
-    br.rejoin = start + 5;
-    br.types.forEach((ty, k) => {
-      const idx = start + 1 + k;
-      BOARD.alt[idx] = ty;
-      BOARD.branchOf[idx] = br;
+  BOARD.rows = R; BOARD.cols = C;
+  BOARD.n = tiles.length;
+  BOARD.tiles = tiles;
+  BOARD.idx = idx;
+  BOARD.w = MAP_MARGIN * 2 + C * GRID;
+  BOARD.h = MAP_MARGIN * 2 + R * GRID;
+  MAP_W = BOARD.w; MAP_H = BOARD.h;
+  BOARD.pos = tiles.map(t => ({ x: t.x, y: t.y }));
+  BOARD.nb = tiles.map(t => {
+    const out = [];
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dc, dr]) => {
+      const j = idx[(t.c + dc) + ',' + (t.r + dr)];
+      if (j !== undefined) out.push(j);
     });
-    const a = BOARD.pos[start], b2 = BOARD.pos[start + 1];
-    const dx = b2.x - a.x, dy = b2.y - a.y, len = Math.hypot(dx, dy) || 1;
-    br.nx = -dy / len; br.ny = dx / len;
-    if (br.ny > .2) { br.nx = -br.nx; br.ny = -br.ny; }   // keep lane below the road
+    return out;
   });
+  tiles.forEach(t => { t.deg = BOARD.nb[t.i].length; });
+
+  let start = idx[map.start[0] + ',' + map.start[1]];
+  if (start === undefined) { console.warn('[board] start 좌표가 타일이 아님:', map.start); start = 0; }
+  BOARD.start = start;
+
+  /* 좌표 → 인덱스 (없으면 경고 후 무시) */
+  const put = (type, cr) => {
+    const j = idx[cr[0] + ',' + cr[1]];
+    if (j === undefined) { console.warn('[board] ' + map.id + ' 좌표 없음:', type, cr); return -1; }
+    BOARD.types[j] = type;
+    return j;
+  };
+
+  /* BFS 순서로 구역·타일 종류 배정 */
+  const first = bfsFrom(start);
+  const order = first.order.slice();
+  const n = BOARD.n;
+  BOARD.types = new Array(n).fill('coin');
+  BOARD.zoneOf = new Array(n).fill(0);
+  const per = Math.max(1, n / 4);
+  order.forEach((i, k) => {
+    const zi = Math.min(3, Math.floor(k / per));
+    BOARD.zoneOf[i] = zi;
+    const pat = map.patterns[zi];
+    BOARD.types[i] = pat[k % pat.length];
+  });
+  BOARD.types[start] = 'start';
+
+  /* 한 칸 폭 다리·외길에 맵 고유 기믹 배치 */
+  const specials = map.specials || {};
+  const specialSet = {};
+  Object.keys(specials).forEach(k => (specials[k] || []).forEach(cr => {
+    const j = idx[cr[0] + ',' + cr[1]];
+    if (j !== undefined) specialSet[j] = k;
+  }));
+  BOARD.narrow = [];
+  let narrowK = 0;
+  order.forEach(i => {
+    if (i === start || specialSet[i]) return;
+    if (tiles[i].deg > 2) return;
+    BOARD.narrow.push(i);
+    BOARD.types[i] = map.bridgeTypes[narrowK++ % map.bridgeTypes.length];
+  });
+
+  /* 특수 타일 지정 */
+  Object.keys(specials).forEach(type => {
+    (specials[type] || []).forEach(cr => put(type, cr));
+  });
+
+  /* 포탈 연결 */
+  BOARD.portals = {};
+  (map.portals || []).forEach(([a, b]) => {
+    const ia = put('portal', a), ib = put('portal', b);
+    if (ia >= 0 && ib >= 0) { BOARD.portals[ia] = ib; BOARD.portals[ib] = ia; }
+  });
+
+  /* 별 위치 */
+  let star = idx[map.starStart[0] + ',' + map.starStart[1]];
+  if (star === undefined || star === start) { console.warn('[board] star 좌표 확인:', map.starStart); star = Math.max(0, n - 1); }
+  BOARD.starIndex = star;
+  BOARD.starBfs = bfsFrom(star);
+
   buildDecor(map);
-  BOARD.sprites = BOARD.sprites || buildSprites();
+  BOARD.sprites = buildSprites();
 }
 
-function tilePos(i, lane) {
-  const p = BOARD.pos[clamp(i, 0, BOARD.n - 1)];
-  if (!p) return { x: 0, y: 0 };
-  if (lane === 2 && BOARD.branchOf[i]) {
-    const br = BOARD.branchOf[i];
-    const OFF = 158;
-    return { x: p.x + (br.nx || 0) * OFF, y: p.y + (br.ny || 1) * OFF };
-  }
-  return { x: p.x, y: p.y };
+function tilePos(i) {
+  const t = BOARD.tiles[clamp(i, 0, BOARD.n - 1)];
+  return t ? { x: t.x, y: t.y } : { x: 0, y: 0 };
 }
-function tileType(i, lane) {
-  if (lane === 2 && BOARD.alt[i]) return BOARD.alt[i];
-  return BOARD.types[clamp(i, 0, BOARD.n - 1)];
-}
+function tileType(i) { return BOARD.types[clamp(i, 0, BOARD.n - 1)]; }
 function zoneOfTile(i) { return BOARD.map.zones[BOARD.zoneOf[clamp(i, 0, BOARD.n - 1)]] || BOARD.map.zones[0]; }
+function neighborOf(i) { return BOARD.nb[i] || []; }
 
 /* ---------- decor ---------- */
 function buildDecor(map) {
-  const S = .5;
+  const S = .55;
   const cv = document.createElement('canvas');
   cv.width = Math.round(MAP_W * S); cv.height = Math.round(MAP_H * S);
   const c = cv.getContext('2d');
   c.scale(S, S);
-  const rr = mulberry32(4242 + map.n);
+  const rr = mulberry32(4242 + map.grid.length);
 
-  // base sky gradient
-  const g = c.createLinearGradient(0, 0, 0, MAP_H);
+  const g = c.createLinearGradient(0, 0, MAP_W * .2, MAP_H);
   g.addColorStop(0, map.bg[0]); g.addColorStop(1, map.bg[1]);
   c.fillStyle = g; c.fillRect(0, 0, MAP_W, MAP_H);
 
-  // zone-tinted soft blobs along the track
-  const per = map.n / 4;
+  /* 구역별 옅은 색 번짐 (광장 분위기) */
   map.zones.forEach((z, zi) => {
-    const from = Math.floor(zi * per), to = Math.min(map.n - 1, Math.floor((zi + 1) * per));
-    let best = null;
-    for (let k = from; k <= to; k += 4) {
-      const p = BOARD.pos[k];
-      c.globalAlpha = .30;
-      c.fillStyle = z.sky;
-      c.beginPath(); c.ellipse(p.x, p.y, 330 + rr() * 90, 240 + rr() * 80, rr() * 3, 0, TAU); c.fill();
-    }
+    const own = BOARD.tiles.filter(t => BOARD.zoneOf[t.i] === zi);
+    if (!own.length) return;
+    c.globalAlpha = .17;
+    c.fillStyle = z.sky;
+    own.forEach(t => {
+      c.beginPath(); c.arc(t.x, t.y, GRID * 1.5, 0, TAU); c.fill();
+    });
     c.globalAlpha = 1;
-    void best;
   });
 
-  // theme landmarks
   if (map.kind === 'volcano') {
+    /* 분화구와 균열 */
     const cx = MAP_W / 2, cy = MAP_H / 2;
-    c.fillStyle = '#2a1518';
-    c.beginPath(); c.ellipse(cx, cy, 560, 480, 0, 0, TAU); c.fill();
-    const rg = c.createRadialGradient(cx, cy, 60, cx, cy, 560);
-    rg.addColorStop(0, 'rgba(255,170,60,.95)'); rg.addColorStop(.45, 'rgba(240,90,20,.75)');
+    const rg = c.createRadialGradient(cx, cy, 40, cx, cy, GRID * 6.5);
+    rg.addColorStop(0, 'rgba(255,170,60,.55)'); rg.addColorStop(.5, 'rgba(230,70,20,.30)');
     rg.addColorStop(1, 'rgba(120,30,10,0)');
     c.fillStyle = rg;
-    c.beginPath(); c.ellipse(cx, cy, 470, 400, 0, 0, TAU); c.fill();
-    c.strokeStyle = 'rgba(255,190,90,.55)'; c.lineWidth = 14;
-    c.beginPath(); c.ellipse(cx, cy, 330, 285, 0, 0, TAU); c.stroke();
-    for (let k = 0; k < 26; k++) {
-      const a = rr() * TAU, rad = 520 + rr() * 260;
-      c.fillStyle = 'rgba(255,140,40,' + (.25 + rr() * .35) + ')';
-      c.beginPath(); c.ellipse(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad * .86, 26 + rr() * 50, 14 + rr() * 26, rr() * 3, 0, TAU); c.fill();
+    c.beginPath(); c.arc(cx, cy, GRID * 6.5, 0, TAU); c.fill();
+    for (let k = 0; k < 90; k++) {
+      const x = rr() * MAP_W, y = rr() * MAP_H;
+      if (rr() < .35) {
+        c.strokeStyle = 'rgba(255,120,30,' + (.18 + rr() * .3) + ')';
+        c.lineWidth = 2 + rr() * 5;
+        c.beginPath(); c.moveTo(x, y);
+        let px = x, py = y;
+        for (let s = 0; s < 4; s++) { px += (rr() - .5) * 120; py += (rr() - .5) * 120; c.lineTo(px, py); }
+        c.stroke();
+      } else {
+        c.fillStyle = 'rgba(20,10,10,' + (.2 + rr() * .3) + ')';
+        c.beginPath(); c.ellipse(x, y, 30 + rr() * 70, 18 + rr() * 40, rr() * 3, 0, TAU); c.fill();
+      }
     }
   } else if (map.kind === 'ice') {
-    // twin islands
-    [[MAP_W * .5, MAP_H * .27], [MAP_W * .5, MAP_H * .73]].forEach(([cx, cy]) => {
-      c.fillStyle = 'rgba(255,255,255,.55)';
-      c.beginPath(); c.ellipse(cx, cy, MAP_W * .40, MAP_H * .19, 0, 0, TAU); c.fill();
-      c.fillStyle = 'rgba(180,230,255,.55)';
-      c.beginPath(); c.ellipse(cx + 40, cy + 30, MAP_W * .32, MAP_H * .14, 0, 0, TAU); c.fill();
-    });
-    for (let k = 0; k < 30; k++) {
-      const cx = rr() * MAP_W, cy = rr() * MAP_H;
-      c.fillStyle = 'rgba(255,255,255,.28)';
-      c.beginPath(); c.ellipse(cx, cy, 90 + rr() * 160, 40 + rr() * 70, 0, 0, TAU); c.fill();
+    for (let k = 0; k < 26; k++) {
+      const x = rr() * MAP_W, y = rr() * MAP_H;
+      c.fillStyle = 'rgba(255,255,255,' + (.18 + rr() * .3) + ')';
+      c.beginPath(); c.ellipse(x, y, 90 + rr() * 170, 40 + rr() * 70, rr() * 3, 0, TAU); c.fill();
+      c.strokeStyle = 'rgba(150,210,240,.4)'; c.lineWidth = 1.6;
+      c.beginPath(); c.ellipse(x, y, 90 + rr() * 170, 40 + rr() * 70, rr() * 3, 0, TAU); c.stroke();
     }
+    c.fillStyle = 'rgba(180,240,220,.12)';
+    c.fillRect(0, 0, MAP_W, MAP_H * .3);
   } else {
-    // meadow: pond + soft hills
-    for (let k = 0; k < 9; k++) {
-      const cx = rr() * MAP_W, cy = rr() * MAP_H;
-      c.fillStyle = 'rgba(120,200,255,.30)';
-      c.beginPath(); c.ellipse(cx, cy, 120 + rr() * 200, 60 + rr() * 110, rr() * 3, 0, TAU); c.fill();
+    for (let k = 0; k < 12; k++) {
+      const x = rr() * MAP_W, y = rr() * MAP_H;
+      c.fillStyle = 'rgba(120,200,255,.26)';
+      c.beginPath(); c.ellipse(x, y, 90 + rr() * 150, 44 + rr() * 90, rr() * 3, 0, TAU); c.fill();
     }
-    for (let k = 0; k < 14; k++) {
-      const cx = rr() * MAP_W, cy = rr() * MAP_H;
-      c.fillStyle = 'rgba(255,255,255,.20)';
-      c.beginPath(); c.ellipse(cx, cy, 200 + rr() * 180, 80 + rr() * 90, 0, 0, TAU); c.fill();
+    for (let k = 0; k < 22; k++) {
+      const x = rr() * MAP_W, y = rr() * MAP_H;
+      c.fillStyle = 'rgba(255,255,255,.18)';
+      c.beginPath(); c.ellipse(x, y, 170 + rr() * 190, 70 + rr() * 90, 0, 0, TAU); c.fill();
     }
   }
 
-  // scatter decorations away from the road
-  const avoid = (x, y, d) => BOARD.pos.some(p => Math.hypot(p.x - x, p.y - y) < d);
-  const count = Math.round(MAP_W * MAP_H / 95000);
+  /* 길에서 떨어진 곳에 장식 */
+  const far = (x, y) => {
+    const cc = Math.round((x - MAP_MARGIN - GRID / 2) / GRID), rr2 = Math.round((y - MAP_MARGIN - GRID / 2) / GRID);
+    for (let dc = -1; dc <= 1; dc++) for (let dr = -1; dr <= 1; dr++) {
+      if (BOARD.idx[(cc + dc) + ',' + (rr2 + dr)] !== undefined) return false;
+    }
+    return true;
+  };
+  const count = Math.round(MAP_W * MAP_H / 74000);
   for (let k = 0; k < count; k++) {
     let x, y, tries = 0;
-    do { x = 20 + rr() * (MAP_W - 40); y = 20 + rr() * (MAP_H - 40); tries++; } while (avoid(x, y, 145) && tries < 40);
+    do { x = 24 + rr() * (MAP_W - 48); y = 24 + rr() * (MAP_H - 48); tries++; } while (!far(x, y) && tries < 40);
     if (tries >= 40) continue;
-    drawDecorItem(c, map.kind, x, y, .7 + rr() * .6, rr);
+    drawDecorItem(c, map.kind, x, y, .7 + rr() * .7, rr);
   }
   BOARD.decor = { cv, S };
 }
@@ -1012,51 +1108,33 @@ function drawDecorItem(c, kind, x, y, s, rr) {
       c.fillStyle = 'rgba(255,255,255,.4)';
       c.beginPath(); c.ellipse(x - 14 * s, y - 8 * s, 22 * s, 8 * s, 0, 0, TAU); c.fill();
     }
-  } else if (kind === 'rainbow') {
-    const t = rr();
-    if (t < .5) {
-      c.fillStyle = 'rgba(255,255,255,.75)';
-      const R = 40 * s;
-      c.beginPath(); c.arc(x, y, R, 0, TAU); c.arc(x + R * .8, y + R * .2, R * .75, 0, TAU);
-      c.arc(x - R * .8, y + R * .2, R * .7, 0, TAU); c.fill();
-    } else if (t < .8) {
-      const cols = ['#ff9f9f', '#ffd166', '#9be86b', '#7ec8ff', '#c9a8ff'];
-      c.lineWidth = 8 * s;
-      for (let i = 0; i < 5; i++) {
-        c.strokeStyle = cols[i];
-        c.beginPath(); c.arc(x, y + 30 * s, (46 - i * 8) * s, Math.PI, 0); c.stroke();
-      }
-    } else {
-      c.fillStyle = 'rgba(255,255,255,.8)';
-      drawStarShape(c, x, y, 18 * s, .45); c.fill();
-    }
   } else if (kind === 'volcano') {
     const t = rr();
-    if (t < .38) { // lava pool
-      c.fillStyle = 'rgba(255,120,20,.75)';
+    if (t < .38) {
+      c.fillStyle = 'rgba(255,120,20,.8)';
       c.beginPath(); c.ellipse(x, y, 58 * s, 28 * s, 0, 0, TAU); c.fill();
       c.fillStyle = 'rgba(255,220,80,.7)';
       c.beginPath(); c.ellipse(x - 10 * s, y - 4 * s, 24 * s, 10 * s, 0, 0, TAU); c.fill();
       c.strokeStyle = 'rgba(90,20,10,.5)'; c.lineWidth = 5 * s;
       c.beginPath(); c.ellipse(x, y, 58 * s, 28 * s, 0, 0, TAU); c.stroke();
-    } else if (t < .7) { // rock
+    } else if (t < .7) {
       c.fillStyle = '#4a2b28';
       c.beginPath(); c.moveTo(x - 38 * s, y + 22 * s); c.lineTo(x - 16 * s, y - 30 * s);
       c.lineTo(x + 12 * s, y - 20 * s); c.lineTo(x + 34 * s, y + 22 * s); c.closePath(); c.fill();
       c.fillStyle = '#6a3c34';
       c.beginPath(); c.moveTo(x - 16 * s, y - 30 * s); c.lineTo(x + 12 * s, y - 20 * s); c.lineTo(x, y + 8 * s); c.closePath(); c.fill();
-    } else if (t < .88) { // fire torch
+    } else if (t < .88) {
       c.fillStyle = '#3a231f'; c.fillRect(x - 5 * s, y, 10 * s, 36 * s);
       c.fillStyle = 'rgba(255,150,40,.95)';
       c.beginPath(); c.ellipse(x, y - 8 * s, 13 * s, 20 * s, 0, 0, TAU); c.fill();
       c.fillStyle = 'rgba(255,240,150,.95)';
       c.beginPath(); c.ellipse(x, y - 4 * s, 6 * s, 11 * s, 0, 0, TAU); c.fill();
-    } else { // bones
-      c.strokeStyle = 'rgba(230,220,200,.6)'; c.lineWidth = 6 * s; c.lineCap = 'round';
+    } else {
+      c.strokeStyle = 'rgba(230,220,200,.55)'; c.lineWidth = 6 * s; c.lineCap = 'round';
       c.beginPath(); c.moveTo(x - 20 * s, y - 12 * s); c.lineTo(x + 20 * s, y + 12 * s); c.stroke();
       c.beginPath(); c.moveTo(x - 20 * s, y + 12 * s); c.lineTo(x + 20 * s, y - 12 * s); c.stroke();
     }
-  } else { // ice
+  } else {
     const t = rr();
     if (t < .46) {
       c.fillStyle = 'rgba(150,225,255,.85)';
@@ -1080,16 +1158,16 @@ function drawDecorItem(c, kind, x, y, s, rr) {
   }
 }
 
-/* ---------- tile sprites ---------- */
+/* ---------- tile sprites (그리드용) ---------- */
 function buildSprites() {
   const out = {};
   Object.keys(TILE_INFO).forEach(type => {
-    const S = 2.2, size = TILE_SIZE * S;
+    const S = 2.1, size = Math.round(TILE_SIZE * S);
     const cv = document.createElement('canvas');
     cv.width = size; cv.height = size;
     const c = cv.getContext('2d');
     c.scale(S, S);
-    drawTileArt(c, type, TILE_SIZE);
+    drawGridTileArt(c, type, TILE_SIZE);
     out[type] = cv;
   });
   return out;
@@ -1105,21 +1183,24 @@ function roundRect(c, x, y, w, h, r) {
   c.closePath();
 }
 
-function drawTileArt(c, type, s) {
+function drawGridTileArt(c, type, s) {
   const info = TILE_INFO[type] || TILE_INFO.coin;
-  const r = s * .24;
-  c.save();
-  c.translate(s / 2, s / 2);
-  c.fillStyle = 'rgba(40,30,60,.22)';
-  roundRect(c, -s / 2 + 2, -s / 2 + 8, s - 4, s - 6, r); c.fill();
-  const g = c.createLinearGradient(0, -s / 2, 0, s / 2);
+  const pad = s * .045, w = s - pad * 2, h = w * .94, r = s * .19;
+  /* 옆면(두께) */
+  c.fillStyle = info.rim;
+  roundRect(c, pad, pad + s * .05, w, h, r); c.fill();
+  /* 윗면 */
+  const g = c.createLinearGradient(0, pad, 0, pad + h);
   g.addColorStop(0, info.col[0]); g.addColorStop(1, info.col[1]);
   c.fillStyle = g;
-  roundRect(c, -s / 2 + 2, -s / 2 + 2, s - 4, s - 4, r); c.fill();
-  c.strokeStyle = info.rim; c.lineWidth = s * .045; c.stroke();
-  c.fillStyle = 'rgba(255,255,255,.32)';
-  roundRect(c, -s / 2 + s * .12, -s / 2 + s * .1, s * .76, s * .28, s * .15); c.fill();
-  drawTileIcon(c, type, s);
+  roundRect(c, pad, pad, w, h, r); c.fill();
+  c.strokeStyle = info.rim; c.lineWidth = s * .028; c.stroke();
+  /* 광택 */
+  c.fillStyle = 'rgba(255,255,255,.28)';
+  roundRect(c, pad + s * .1, pad + s * .07, w - s * .2, s * .19, s * .1); c.fill();
+  c.save();
+  c.translate(s / 2, s / 2 - s * .015);
+  drawTileIcon(c, type, s * .96);
   c.restore();
 }
 
@@ -1438,7 +1519,7 @@ function drawAlly(c, x, y, h, id, t) {
   c.restore();
 }
 /* =========================================================
-   피클 파티 — game flow (turns, dice, tiles, allies, star)
+   피클 파티 — 게임 진행 (턴, 주사위, 그리드 이동, 타일, 별)
    ========================================================= */
 
 const G = {
@@ -1446,15 +1527,15 @@ const G = {
   mapId: 'meadow', map: null,
   rounds: 4, round: 1,
   players: [], turn: 0, active: -1, lastRoll: null,
-  starIndex: 0,
-  busy: false, autoAnswer: false, forcedMg: null, lastMg: -1,
+  starIndex: 0, starDist: null,
+  busy: false, autoAnswer: false, autoMove: false, forcedMg: null, lastMg: -1,
   mgOrder: [], mgHistory: [], bag: null,
   fx: [], texts: [], icons: [], time: 0,
+  move: null, movePreview: null, moveWaiter: null,
   ended: false
 };
 
 /* ---------- utilities ---------- */
-const playerPos = p => ({ x: p.px, y: p.py });
 const activePlayer = () => G.players[G.active] || null;
 
 function gain(p, n, reason) {
@@ -1491,6 +1572,16 @@ function burst(x, y, color, n) {
   }
 }
 
+/* 별까지 최단 칸수 */
+function starDistOf(i) {
+  if (!G.starDist) return -1;
+  return G.starDist[i] === undefined ? -1 : G.starDist[i];
+}
+function refreshStarDist() {
+  const { dist } = bfsFrom(G.starIndex);
+  G.starDist = dist;
+}
+
 /* ---------- setup ---------- */
 function createGame(cfg) {
   G.mapId = cfg.mapId || 'meadow';
@@ -1498,29 +1589,34 @@ function createGame(cfg) {
   G.round = 1;
   G.minigameLog = []; G.mgOrder = []; G.lastMg = -1; G.bag = null; G.mgHistory = [];
   G.fx = []; G.texts = []; G.icons = []; G.ended = false;
+  G.move = null; G.movePreview = null; G.moveWaiter = null;
   buildBoard(G.mapId);
   G.map = BOARD.map;
-  G.starIndex = G.map.starStart;
+  G.starIndex = BOARD.starIndex;
+  refreshStarDist();
   const n = cfg.count || 4;
   G.players = [];
+  const sp = tilePos(BOARD.start);
   for (let i = 0; i < n; i++) {
     const ci = i;
     const p = {
       i, ci, name: CHARS[ci].n, bot: !!cfg.bots[i], coins: 10, stars: 0,
-      pos: 0, lane: 0, allies: [], items: [], mgWins: 0, mgRank: 0,
-      px: 0, py: 0, hop: 0, trail: [], rollMode: null, extraRoll: false, finished: false,
+      pos: BOARD.start, allies: [], items: [], mgWins: 0, mgRank: 0,
+      px: sp.x, py: sp.y, hop: 0, trail: [], rollMode: null, extraRoll: false, finished: false,
       tilt: 0, sx: 1, sy: 1, cheerAt: 0, cheerMs: 700, shakeAt: 0, shakeMs: 480
     };
-    const tp = tilePos(0, 0);
-    p.px = tp.x + (i - 1.5) * 26; p.py = tp.y;
     G.players.push(p);
   }
   G.turn = 0; G.active = -1;
   G.phase = 'board';
+  CAM.mode = 'follow';
+  CAM.manual = 0;
+  const c0 = tilePos(BOARD.start);
+  CAM.x = c0.x; CAM.y = c0.y;
 }
 
 /* ---------- camera ---------- */
-const CAM = { x: 0, y: 0, s: .42, tx: 0, ty: 0, ts: .42, mode: 'follow' };
+const CAM = { x: 0, y: 0, s: .42, tx: 0, ty: 0, ts: .42, mode: 'follow', zoom: 1, manual: 0 };
 
 function focusPlayer(p, instant) {
   if (!p) return;
@@ -1533,7 +1629,7 @@ async function startRound() {
   G.phase = 'board';
   G.turn = 0;
   updateFooter();
-  showToast('라운드 ' + G.round, '모두 한 번씩 굴리고 미니게임!', 1300);
+  showToast('라운드 ' + G.round, '주사위를 굴려 광장을 자유롭게!', 1300);
   await wait(900);
   await nextPlayerTurn();
 }
@@ -1546,6 +1642,7 @@ async function nextPlayerTurn() {
   G.phase = 'turn';
   updateHud(); updateFooter(); setTurnTag(p);
   focusPlayer(p);
+  CAM.manual = 0;
   if (p.bot) {
     enableDice(false);
     await wait(650);
@@ -1590,9 +1687,9 @@ async function doTurn(p) {
   G.lastRoll = { faces: [d1, d2], bonus: bonus, total: total, mode: mode, allies: p.allies.slice() };
 
   G.phase = 'move';
-  const passedStar = await walkPlayer(p, total);
+  await runMovement(p, total);
   await wait(120);
-  await afterMove(p, passedStar);
+  await afterMove(p);
   G.busy = false;
   if (G.ended) return;
   if (p.extraRoll) {
@@ -1606,43 +1703,149 @@ async function doTurn(p) {
   await nextPlayerTurn();
 }
 
-async function walkPlayer(p, steps) {
-  let remain = steps, passedStar = false, guard = 0;
-  const dur = clamp(760 / Math.max(1, steps), 95, 165);
-  while (remain > 0 && !G.ended && guard++ < 60) {
-    if (p.pos >= BOARD.n - 1) break;
-    const next = p.pos + 1;
-    if (next === G.starIndex) passedStar = true;
-    await hopTo(p, next, dur);
-    p.pos = next;
-    remain--;
-    sfx('step');
-    // branch choice
-    const br = (G.map.altLanes || []).find(b => b.start === next);
-    if (br) {
-      await chooseLane(p, br, remain > 0);
+/* =========================================================
+   자유 그리드 이동 — 남은 칸수만큼 상하좌우로 직접 경로 선택
+   ========================================================= */
+async function runMovement(p, steps) {
+  G.move = { p, remain: steps, total: steps, from: p.pos, visited: [p.pos] };
+  G.movePreview = null;
+  updateMoveBar();
+  updateFooter();
+  while (G.move && G.move.remain > 0 && !G.ended) {
+    let plan = null;
+    if (p.bot || G.autoMove) {
+      await wait(p.bot ? 220 : 60);
+      plan = autoPlan(p);
+    } else {
+      plan = await waitForMoveChoice();
     }
-    if (p.pos === br?.rejoin) p.lane = 0;
-    // walking over a rejoin clears lane
-    if (p.lane === 2 && !BOARD.branchOf[p.pos + 1] && !(br && p.pos === br.start)) p.lane = 0;
+    if (G.ended) break;
+    if (window.__DBG_MOVE) console.log('[mv] plan', JSON.stringify(plan), 'remain', G.move && G.move.remain);
+    if (!plan || !plan.length) continue;
+    for (let k = 0; k < plan.length; k++) {
+      if (!G.move || G.move.remain <= 0 || G.ended) break;
+      const ni = plan[k];
+      await hopTo(p, ni);
+      p.pos = ni;
+      G.move.remain--;
+      G.move.visited.push(ni);
+      sfx('step');
+      dust(p.px, p.py, 2);
+      updateMoveBar(); updateFooter();
+      if (window.__DBG_MOVE) console.log('[mv] step', ni, 'remain', G.move && G.move.remain);
+      await onContact(p, ni);
+      if (G.ended) break;
+    }
+    if (!G.movePreview) { hideMoveConfirm(); }
+    updateMoveBar();
   }
-  return passedStar;
+  G.move = null;
+  G.movePreview = null;
+  hideMoveConfirm();
+  updateMoveBar();
 }
 
+/* 사람 플레이어의 한 수 입력 대기 */
+function waitForMoveChoice() {
+  return new Promise(res => {
+    G.moveWaiter = res;
+    updateMoveBar();
+  });
+}
+function submitMove(plan) {
+  const r = G.moveWaiter;
+  G.moveWaiter = null;
+  G.movePreview = null;
+  hideMoveConfirm();
+  if (r) r(plan);
+}
+
+/* 탭 처리: 이웃칸 = 바로 한 칸, 먼 칸 = 최단 경로 미리보기 + 확인 */
+function tapTile(i) {
+  if (G.screen !== 'board' || G.ended) return 'none';
+  const mv = G.move;
+  if (!mv || !G.moveWaiter) return 'none';
+  const p = mv.p;
+  if (i === p.pos) return 'none';
+  const nbs = neighborOf(p.pos);
+  if (nbs.indexOf(i) >= 0) {
+    G.movePreview = { target: i, path: [i] };
+    submitMove([i]);
+    return 'step';
+  }
+  if (G.movePreview && G.movePreview.target === i) { submitMove(G.movePreview.path.slice()); return 'step'; }
+  const path = bfsPath(p.pos, i);
+  if (path && path.length <= mv.remain) {
+    G.movePreview = { target: i, path: path };
+    showMoveConfirm(i, path.length);
+    return 'preview';
+  }
+  if (path) showToast('여기까지는 못 가요', '남은 ' + mv.remain + '칸 · 이 칸까지 ' + path.length + '칸', 900);
+  else showToast('갈 수 없는 칸', '길이 끊겨 있어요', 800);
+  return 'blocked';
+}
+
+function confirmMove() {
+  const pr = G.movePreview;
+  if (!pr || !G.moveWaiter) return false;
+  submitMove(pr.path.slice());
+  return true;
+}
+function cancelMove() {
+  G.movePreview = null;
+  hideMoveConfirm();
+  updateMoveBar();
+  return true;
+}
+
+/* AI / 자동: 별·동료를 노려 BFS 최단 경로 */
+function autoPlan(p) {
+  const mv = G.move;
+  if (!mv) return null;
+  const remain = mv.remain;
+  const scoreTarget = (i) => {
+    const d = starDistOf(i);
+    let s = d >= 0 ? d * 10 : 999;
+    const ty = BOARD.types[i];
+    if (i === G.starIndex) s -= 400;
+    if (ty === 'ally') s -= 90;
+    if (ty === 'gem' || ty === 'gold' || ty === 'chest') s -= 45;
+    if (ty === 'shop' && p.coins >= 10) s -= 25;
+    if (ty === 'coin') s -= 12;
+    if (ty === 'trap' || ty === 'lava') s += 40;
+    if (ty === 'duel' && p.coins < 12) s += 30;
+    return -(s);
+  };
+  const { dist, list } = reachableFrom(p.pos, remain);
+  let best = null, bestScore = -1e9;
+  for (let k = 0; k < list.length; k++) {
+    const i = list[k];
+    const sc = scoreTarget(i) - (remain - dist[i]) * .8;
+    if (sc > bestScore) { bestScore = sc; best = i; }
+  }
+  if (best === null) {
+    const nbs = neighborOf(p.pos);
+    return nbs.length ? [nbs[Math.floor(Math.random() * nbs.length)]] : null;
+  }
+  const path = bfsPath(p.pos, best);
+  return path && path.length ? path.slice(0, remain) : null;
+}
+
+/* 한 칸 이동 애니메이션 */
 function hopTo(p, idx, dur) {
   return new Promise(res => {
     const from = { x: p.px, y: p.py };
-    const to = tilePos(idx, p.lane);
+    const to = tilePos(idx);
     const dir = Math.sign(to.x - from.x) || 1;
     const t0 = now();
     let dusted = false;
     function frame() {
-      const t = clamp((now() - t0) / (dur || 140), 0, 1);
+      const t = clamp((now() - t0) / (dur || 165), 0, 1);
       const e = easeInOut(t);
       p.px = lerp(from.x, to.x, e);
       p.py = lerp(from.y, to.y, e);
       const arc = Math.sin(t * Math.PI);
-      p.hop = arc * 34;
+      p.hop = arc * 30;
       p.tilt = dir * .10 * (1 - arc * .55);
       p.sy = 1 + arc * .12 - (t > .8 ? .14 * ((t - .8) / .2) : 0) + (t < .15 ? .16 * (1 - t / .15) : 0);
       p.sx = 1 / Math.sqrt(Math.max(.6, p.sy));
@@ -1661,42 +1864,29 @@ function hopTo(p, idx, dur) {
   });
 }
 
-async function chooseLane(p, br, willContinue) {
-  const safeLabel = '안전 루트';
-  const riskyLabel = br.label || '모험 루트';
-  let risky = false;
-  if (p.bot) {
-    risky = rnd() < (p.coins > 18 ? .55 : .35);
-    await wait(240);
-  } else {
-    const choose = await askModal({
-      title: '갈림길이다!',
-      sub: '어느 길로 갈까요?',
-      buttons: [
-        { value: 'safe', label: '안전 루트', sub: '코인과 이벤트 위주', primary: p.coins < 12, icon: 'A', color: '#4fc25a' },
-        { value: 'risky', label: riskyLabel, sub: '보물이지만 함정도!', primary: p.coins >= 12, icon: 'B', color: '#f5a623' }
-      ]
-    });
-    risky = choose === 'risky';
-    if (G.ended) return;
+/* 지나가는 칸 접촉: 동료 영입 / 별 구매 / 포탈 */
+async function onContact(p, i) {
+  const ty = BOARD.types[i];
+  if (i === G.starIndex) { await offerStar(p); return; }
+  if (ty === 'ally') {
+    BOARD.types[i] = 'coin';
+    await recruitAlly(p);
   }
-  p.lane = risky ? 2 : 0;
-  showToast(risky ? riskyLabel : '안전 루트', risky ? '보물을 노려봅니다' : '한 칸씩 안전하게', 800);
-  await wait(280);
 }
 
-async function afterMove(p, passedStar) {
+/* ---------- 이동 후 (도착 칸 이벤트 발동) ---------- */
+async function afterMove(p) {
   await applyTile(p);
   if (G.ended) return;
-  if (passedStar || p.pos === G.starIndex) await offerStar(p);
-  if (p.pos >= BOARD.n - 1) { p.finished = true; }
   updateHud();
+  updateFooter();
 }
 
 /* ---------- tile effects ---------- */
-async function applyTile(p) {
-  const type = tileType(p.pos, p.lane);
-  const z = zoneOfTile(p.pos);
+async function applyTile(p, depth) {
+  depth = depth || 0;
+  if (G.ended) return;
+  const type = tileType(p.pos);
   switch (type) {
     case 'coin': {
       let amt = ri(3, 5);
@@ -1723,24 +1913,16 @@ async function applyTile(p) {
         sfx('trap');
         showToast('뒤로 2칸!', '함정에 걸렸어요', 800);
         await wait(250);
-        for (let k = 0; k < 2; k++) {
-          if (p.pos <= 0) break;
-          await hopTo(p, p.pos - 1, 130);
-          p.pos--;
-        }
+        await pushBack(p, 2);
       }
       break;
     }
     case 'lava': {
       const dmg = hasAllyBonus(p, 'shield') ? 3 : 4;
       gain(p, -dmg); sfx('boom'); burst(p.px, p.py, '#ff6a1a', 20); shake(p, 700);
-      showToast('용암 분출! -' + dmg + '코인', '뒤로 2칸 밀립니다', 1000);
-      await wait(420);
-      for (let k = 0; k < 2; k++) {
-        if (p.pos <= 0) break;
-        await hopTo(p, p.pos - 1, 130);
-        p.pos--;
-      }
+      showToast('용암 분출! -' + dmg + '코인', '뒤로 2칸 밀려납니다', 1000);
+      await wait(380);
+      await pushBack(p, 2);
       break;
     }
     case 'gold': {
@@ -1758,7 +1940,8 @@ async function applyTile(p) {
       sfx('boost');
       showToast('빙판 슬라이드!', '+' + add + '칸 더 미끄러집니다', 900);
       await wait(300);
-      await walkExtra(p, add);
+      await advance(p, add);
+      if (depth < 2) await applyTile(p, depth + 1);
       break;
     }
     case 'storm': {
@@ -1774,52 +1957,71 @@ async function applyTile(p) {
       showToast('점프 부스터!', '+5칸 전진!', 900);
       burst(p.px, p.py, '#ff9f43', 14);
       await wait(300);
-      await walkExtra(p, 5);
+      await advance(p, 5);
+      if (depth < 2) await applyTile(p, depth + 1);
       break;
     }
     case 'portal': {
-      const other = G.map.portals[p.pos];
+      const other = BOARD.portals[p.pos];
       if (other !== undefined) {
         sfx('warp');
         showToast('워프 포탈!', '다른 포탈로 순간이동', 900);
         burst(p.px, p.py, '#c9a8ff', 24);
-        await wait(420);
+        await wait(380);
         p.pos = other;
-        const tp = tilePos(other, 0);
+        const tp = tilePos(other);
         p.px = tp.x; p.py = tp.y;
-        focusPlayer(p);
+        focusPlayer(p, true);
         burst(p.px, p.py, '#c9a8ff', 24);
-        await wait(260);
+        updateFooter();
+        await wait(220);
       }
       break;
     }
-    case 'shop':
-      await openShop(p);
-      break;
-    case 'ally':
-      await recruitAlly(p);
-      break;
-    case 'event':
-      await runEvent(p);
-      break;
-    case 'fork':
-      break; // choice already handled in walk
-    case 'rest':
-      showToast('쉼터', '잠깐 숨 고르기', 700);
-      break;
+    case 'shop': await openShop(p); break;
+    case 'ally': await recruitAlly(p); break;
+    case 'event': await runEvent(p); break;
+    case 'rest': showToast('쉼터', '잠깐 숨 고르기', 700); break;
     default: break;
   }
-  if (p.pos === (G.map.altLanes || []).find(b => b.start === p.pos)?.rejoin) p.lane = 0;
 }
 
-async function walkExtra(p, steps) {
-  for (let k = 0; k < steps; k++) {
-    if (p.pos >= BOARD.n - 1) break;
-    await hopTo(p, p.pos + 1, 110);
-    p.pos++;
+/* 별 쪽으로 n칸 (부스터/슬라이드) */
+async function advance(p, steps) {
+  let guard = 0;
+  while (steps-- > 0 && !G.ended && guard++ < 12) {
+    const nbs = neighborOf(p.pos);
+    if (!nbs.length) break;
+    let best = nbs[0], bd = 1e9;
+    nbs.forEach(n => {
+      const d = starDistOf(n);
+      const dd = d < 0 ? 999 : d;
+      if (dd < bd) { bd = dd; best = n; }
+    });
+    if (best === p.pos) break;
+    await hopTo(p, best, 120);
+    p.pos = best;
+    sfx('step');
+    await onContact(p, best);
+  }
+}
+
+/* 별 반대 방향으로 n칸 (함정/용암) */
+async function pushBack(p, steps) {
+  let guard = 0;
+  while (steps-- > 0 && !G.ended && guard++ < 12) {
+    const nbs = neighborOf(p.pos);
+    if (!nbs.length) break;
+    let best = nbs[0], bd = -1;
+    nbs.forEach(n => {
+      const d = starDistOf(n);
+      const dd = d < 0 ? -1 : d;
+      if (dd > bd) { bd = dd; best = n; }
+    });
+    await hopTo(p, best, 130);
+    p.pos = best;
     sfx('step');
   }
-  await afterMove(p, false);
 }
 
 /* ---------- duel / storm / chest ---------- */
@@ -1853,16 +2055,14 @@ async function runStorm(p) {
   showToast('눈폭풍 회오리!', '모두의 위치가 뒤섞입니다', 1300);
   burst(p.px, p.py, '#c9d8ff', 26);
   await wait(900);
-  const positions = G.players.map(o => o.pos);
-  const shuffled = shuffle(positions);
+  const positions = shuffle(G.players.map(o => o.pos));
   G.players.forEach((o, k) => {
-    o.pos = shuffled[k];
-    o.lane = 0;
-    const tp = tilePos(o.pos, 0);
+    o.pos = positions[k];
+    const tp = tilePos(o.pos);
     o.px = tp.x; o.py = tp.y;
     burst(o.px, o.py, '#c9d8ff', 8);
   });
-  focusPlayer(p);
+  focusPlayer(p, true);
   await wait(700);
 }
 
@@ -1898,9 +2098,9 @@ async function recruitAlly(p, fromChest) {
   sfx('star');
   burst(p.px, p.py, '#ff9ad5', 20); cheer(p, 900); iconPop(p, '동료', '#ff7fae'); screenShake(7, 320);
   updateHud();
-  if (p.bot) {
+  if (p.bot || p !== activePlayer()) {
     showToast('동료 영입! ' + ally.name, ally.bonusText + ' · 이동 +' + ally.step + '칸', 1200);
-    await wait(900);
+    await wait(700);
     return;
   }
   await askModal({
@@ -1911,16 +2111,19 @@ async function recruitAlly(p, fromChest) {
     buttons: [{ value: 'ok', label: '좋아!', primary: true }]
   });
   showToast(ally.name + ' 합류!', ally.bonusText + ' · 이동 +' + ally.step + '칸', 1100);
-  await wait(300);
+  await wait(250);
 }
 
 /* ---------- star ---------- */
 async function offerStar(p) {
-  if (p.coins < 10) return;
+  if (p.coins < 10) {
+    showToast('별을 살 코인이 부족해요', '별은 10코인 · 지금 ' + p.coins + '코인', 1000);
+    return;
+  }
   let buy;
   if (p.bot) {
-    buy = p.coins >= 10 && rnd() < .92;
-    await wait(300);
+    buy = p.coins >= 10 && rnd() < .94;
+    await wait(240);
   } else {
     buy = await askModal({
       title: '별을 살까요?',
@@ -1937,21 +2140,28 @@ async function offerStar(p) {
     sfx('star'); burst(p.px, p.py, '#ffe066', 26); cheer(p, 950); iconPop(p, '★', '#f5a623'); screenShake(8, 340);
     updateHud();
     showToast('별 획득!', p.name + ' ★' + p.stars + ' · 코인 -10', 1200);
-    await wait(500);
+    await wait(420);
     moveStar();
   }
 }
 
 function moveStar() {
-  let idx, tries = 0;
-  do {
-    idx = ri(4, BOARD.n - 4);
-    tries++;
-  } while (tries < 60 && (idx === G.starIndex || G.players.some(p => Math.abs(p.pos - idx) < 6) || ['shop', 'portal', 'finish', 'start', 'fork'].includes(BOARD.types[idx])));
+  const cand = [];
+  for (let i = 0; i < BOARD.n; i++) {
+    const ty = BOARD.types[i];
+    if (ty === 'shop' || ty === 'portal' || ty === 'start') continue;
+    if (i === G.starIndex) continue;
+    if (G.players.some(p => p.pos === i)) continue;
+    if (starDistOf(i) >= 0 && starDistOf(i) < 5) continue;
+    cand.push(i);
+  }
+  const idx = cand.length ? cand[Math.floor(RND() * cand.length)] : Math.floor(BOARD.n / 2);
   G.starIndex = idx;
-  const tp = tilePos(idx, 0);
+  refreshStarDist();
+  const tp = tilePos(idx);
   burst(tp.x, tp.y, '#ffe066', 24);
   sfx('star');
+  updateFooter();
 }
 
 /* ---------- shop ---------- */
@@ -2004,9 +2214,8 @@ async function useItem(p, key) {
     if (!leader) return;
     p.items.splice(idx, 1);
     const tp = p.pos; p.pos = leader.pos; leader.pos = tp;
-    const a = tilePos(p.pos, 0), b = tilePos(leader.pos, 0);
+    const a = tilePos(p.pos), b = tilePos(leader.pos);
     p.px = a.x; p.py = a.y; leader.px = b.x; leader.py = b.y;
-    p.lane = 0; leader.lane = 0;
     sfx('warp'); updateHud();
     showToast('위치 교환!', p.name + ' ↔ ' + leader.name, 1100);
     await wait(700);
@@ -2027,31 +2236,34 @@ async function useItem(p, key) {
 
 /* ---------- events ---------- */
 const EVENTS = [
-  { t: '코인 샤워!', d: '모두 +2코인', fn: () => G.players.forEach(p => gain(p, 2)) },
+  { t: '코인 샤워!', d: '모두 +2코인', fn: () => G.players.forEach(o => gain(o, 2)) },
   { t: '부자에게서 한 수!', d: '1등에게서 3코인을 뺏어옵니다', fn: (p) => {
       const rich = G.players.filter(o => o !== p).sort((a, b) => b.coins - a.coins)[0];
       if (rich) { const v = Math.min(3, rich.coins); gain(rich, -v); gain(p, v); }
     } },
   { t: '자리 바꾸기!', d: '가장 뒤처진 사람과 위치 교환', fn: (p) => {
-      const last = G.players.filter(o => o !== p).sort((a, b) => a.pos - b.pos)[0];
+      const last = G.players.filter(o => o !== p).sort((a, b) => starDistOf(b.pos) - starDistOf(a.pos))[0];
       if (last) {
         const tmp = p.pos; p.pos = last.pos; last.pos = tmp;
-        p.lane = 0; last.lane = 0;
-        const a = tilePos(p.pos, 0), b = tilePos(last.pos, 0);
+        const a = tilePos(p.pos), b = tilePos(last.pos);
         p.px = a.x; p.py = a.y; last.px = b.x; last.py = b.y;
       }
     } },
-  { t: '럭키!', d: '+5코인', fn: (p) => gain(p, 5) },
+  { t: '보물상자 발견!', d: '+6코인', fn: (p) => gain(p, 6) },
   { t: '해프닝…', d: '-3코인', fn: (p) => gain(p, -3) },
   { t: '순간이동!', d: '무작위 칸으로 이동', fn: (p) => {
-      p.pos = ri(5, BOARD.n - 5);
-      const tp = tilePos(p.pos, 0); p.px = tp.x; p.py = tp.y; p.lane = 0;
+      const i = Math.floor(RND() * BOARD.n);
+      p.pos = i;
+      const tp = tilePos(i); p.px = tp.x; p.py = tp.y;
     } },
   { t: '한 번 더!', d: '주사위를 한 번 더 굴립니다', fn: (p) => { p.extraRoll = true; } },
-  { t: '별빛이 반짝!', d: '별 타일로 이동합니다', fn: (p) => {
-      p.pos = G.starIndex;
-      const tp = tilePos(p.pos, 0); p.px = tp.x; p.py = tp.y; p.lane = 0;
-    } }
+  { t: '별빛이 반짝!', d: '별 타일 옆으로 이동합니다', fn: (p) => {
+      const nbs = neighborOf(G.starIndex);
+      const i = nbs.length ? nbs[Math.floor(RND() * nbs.length)] : G.starIndex;
+      p.pos = i;
+      const tp = tilePos(i); p.px = tp.x; p.py = tp.y;
+    } },
+  { t: '신발을 찾았다!', d: '별 쪽으로 3칸 이동', fn: (p) => { p._evPush = 3; } }
 ];
 
 async function runEvent(p) {
@@ -2060,9 +2272,10 @@ async function runEvent(p) {
   showToast(ev.t, ev.d, 1400);
   await wait(700);
   ev.fn(p);
+  if (p._evPush) { const n = p._evPush; p._evPush = 0; await advance(p, n); }
   cheer(p, 600);
   updateHud();
-  await wait(700);
+  await wait(600);
 }
 
 /* ---------- dice animation ---------- */
@@ -2084,7 +2297,7 @@ async function diceAnim(p, faces, title, golden) {
           G.diceBlock.hit = true;
           sfx('drum'); screenShake(7, 260);
           burst(p.px, p.py - 150, '#ffe066', 16);
-          iconPop(p, faces.map(f => f).join('+'), golden ? '#f5a623' : '#5b8cff');
+          iconPop(p, faces.join('+'), golden ? '#f5a623' : '#5b8cff');
         }
       }
       if (k < 1) requestAnimationFrame(fr);
@@ -2102,13 +2315,12 @@ async function minigamePhase() {
   G.phase = 'roulette';
   G.active = -1;
   updateHud(); updateFooter();
-  enableDice(false); hideItems();
+  enableDice(false); hideItems(); updateMoveBar();
   const mg = pickMinigame();
   await runRoulette(mg);
   if (G.ended) return;
   await playMinigame(mg);
   if (G.ended) return;
-  // star rotates every 2 rounds
   if (G.round % 2 === 0) moveStar();
   G.round++;
   if (G.round > G.rounds) { await showResults(); return; }
@@ -2129,7 +2341,6 @@ function pickMinigame() {
 }
 
 async function awardMinigame(ranks) {
-  // ranks: [{i, sortVal, label}] -> sorted best first
   const sorted = ranks.slice().sort((a, b) => b.sortVal - a.sortVal);
   const reward = [10, 6, 3, 1];
   const out = [];
@@ -3263,33 +3474,36 @@ function buildStart() {
 }
 
 function drawMapThumb(cv, map) {
-  const S = 2, W = 52, H = 52;
+  const S = 2, W = 54, H = 50;
   cv.width = W * S; cv.height = H * S;
   const c = cv.getContext('2d');
   c.scale(S, S);
   const g = c.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, map.bg[0]); g.addColorStop(1, map.bg[1]);
   c.fillStyle = g; c.fillRect(0, 0, W, H);
-  const pts = map.geo(map.w, map.h);
-  const pad = 5;
-  const sc = Math.min((W - pad * 2) / map.w, (H - pad * 2) / map.h);
-  const ox = (W - map.w * sc) / 2, oy = (H - map.h * sc) / 2;
-  c.lineJoin = 'round'; c.lineCap = 'round';
-  c.strokeStyle = 'rgba(0,0,0,.22)'; c.lineWidth = 4;
-  c.beginPath();
-  pts.forEach((p, i) => { const x = ox + p.x * sc, y = oy + p.y * sc; i ? c.lineTo(x, y) : c.moveTo(x, y); });
-  c.stroke();
-  c.strokeStyle = '#fff'; c.lineWidth = 2.4;
-  c.stroke();
-  c.strokeStyle = map.path.dash; c.lineWidth = .9; c.setLineDash([1.2, 2]);
-  c.stroke();
-  c.setLineDash([]);
-  c.fillStyle = map.tint[1];
-  c.beginPath(); c.arc(ox + pts[0].x * sc, oy + pts[0].y * sc, 2.4, 0, TAU); c.fill();
-  c.fillStyle = '#fff';
-  const last = pts[pts.length - 1];
-  drawStarShape(c, ox + last.x * sc, oy + last.y * sc, 3.4, .45); c.fill();
-  c.strokeStyle = '#c98a00'; c.lineWidth = .8; c.stroke();
+  const rows = map.grid, R = rows.length;
+  let C = 0; rows.forEach(r => { C = Math.max(C, r.length); });
+  const pad = 4;
+  const sc = Math.min((W - pad * 2) / C, (H - pad * 2) / R);
+  const ox = (W - C * sc) / 2, oy = (H - R * sc) / 2;
+  for (let r = 0; r < R; r++) {
+    for (let cc = 0; cc < rows[r].length; cc++) {
+      if (rows[r][cc] !== '#') continue;
+      c.fillStyle = map.tint[0];
+      c.fillRect(ox + cc * sc + .2, oy + r * sc + .2, sc - .4, sc - .4);
+    }
+  }
+  const st = map.start;
+  if (st) {
+    c.fillStyle = '#2b8a3a';
+    c.beginPath(); c.arc(ox + st[0] * sc + sc / 2, oy + st[1] * sc + sc / 2, sc * .55, 0, TAU); c.fill();
+  }
+  const sp = map.starStart;
+  if (sp) {
+    c.fillStyle = '#fff';
+    drawStarShape(c, ox + sp[0] * sc + sc / 2, oy + sp[1] * sc + sc / 2, sc * .9, .45); c.fill();
+    c.strokeStyle = '#c98a00'; c.lineWidth = .8; c.stroke();
+  }
 }
 
 /* ---------- HUD ---------- */
@@ -3340,17 +3554,26 @@ function setTurnTag(p) {
 function updateFooter() {
   const p = G.players[G.active];
   $('#roundInfo').textContent = '라운드 ' + Math.min(G.round, G.rounds) + ' / ' + G.rounds;
-  if (p) $('#zoneInfo').textContent = zoneOfTile(p.pos).name;
-  else $('#zoneInfo').textContent = G.map ? G.map.name : '';
+  if (p) {
+    const d = starDistOf(p.pos);
+    $('#zoneInfo').textContent = zoneOfTile(p.pos).name + (d >= 0 ? ' · ★까지 ' + d + '칸' : '');
+  } else $('#zoneInfo').textContent = G.map ? G.map.name : '';
   enableDice(false);
   if (p && !p.bot && G.phase === 'turn') enableDice(true);
   renderItems(p);
+  updateMoveBar();
 }
 
 function enableDice(on) {
   const b = $('#btnDice');
   b.classList.toggle('dis', !on);
-  $('#diceLabel').textContent = on ? '주사위 굴리기' : (G.busy ? '이동 중…' : (G.players[G.active]?.bot ? '봇 차례…' : '기다리는 중'));
+  let label;
+  if (G.move) label = '남은 ' + G.move.remain + '칸 · 칸을 탭!';
+  else if (on) label = '주사위 굴리기';
+  else if (G.busy) label = '이동 중…';
+  else if (G.players[G.active]?.bot) label = '봇 차례…';
+  else label = '기다리는 중';
+  $('#diceLabel').textContent = label;
 }
 
 function renderItems(p) {
@@ -3380,6 +3603,29 @@ function showToast(title, sub, ms) {
   clearTimeout(toastT);
   toastT = setTimeout(() => t.classList.remove('on'), ms || 1000);
 }
+
+/* ---------- 이동 HUD / 경로 확인 ---------- */
+function updateMoveBar() {
+  const bar = $('#moveBar');
+  if (!bar) return;
+  const mv = G.move;
+  if (!mv) { bar.classList.remove('on'); hideMoveConfirm(); return; }
+  bar.classList.add('on');
+  bar.classList.toggle('bot', !!mv.p.bot);
+  const d = starDistOf(mv ? mv.p.pos : 0);
+  bar.querySelector('.mb-rem').textContent = '남은 ' + mv.remain + '칸';
+  bar.querySelector('.mb-star').textContent = d >= 0 ? '★까지 ' + d + '칸' : '';
+  enableDice(false);
+}
+function showMoveConfirm(i, n) {
+  const el = $('#moveCfm');
+  if (!el || !G.move) return;
+  const d = starDistOf(i);
+  el.querySelector('.mc-s').innerHTML = n + '칸 이동' + (d >= 0 ? ' · <b>★까지 ' + d + '칸</b>' : '');
+  el.classList.add('on');
+  G.previewEpoch = (G.previewEpoch || 0) + 1;
+}
+function hideMoveConfirm() { const el = $('#moveCfm'); if (el) el.classList.remove('on'); }
 
 /* ---------- modal ---------- */
 let pendingModal = null;
@@ -3467,6 +3713,38 @@ function startBoardLoop() {
   boardRaf = requestAnimationFrame(step);
 }
 
+function viewSize() {
+  const cv = $('#cvBoard');
+  const r = cv.getBoundingClientRect();
+  return { w: Math.max(1, r.width), h: Math.max(1, r.height) };
+}
+
+function screenToWorld(sx, sy) {
+  const cv = $('#cvBoard'), r = cv.getBoundingClientRect();
+  const { w, h } = viewSize();
+  return { x: CAM.x + (sx - r.left - w / 2) / CAM.s, y: CAM.y + (sy - r.top - h / 2) / CAM.s };
+}
+
+function tileAtWorld(x, y) {
+  const cc = Math.round((x - MAP_MARGIN - GRID / 2) / GRID);
+  const rr = Math.round((y - MAP_MARGIN - GRID / 2) / GRID);
+  const i = BOARD.idx[cc + ',' + rr];
+  if (i === undefined) return -1;
+  const t = BOARD.tiles[i];
+  if (Math.abs(t.x - x) > GRID * .54 || Math.abs(t.y - y) > GRID * .54) return -1;
+  return i;
+}
+
+function clampCam() {
+  const { w, h } = viewSize();
+  const vw = w / CAM.s, vh = h / CAM.s;
+  const mx = 90, my = 90;
+  if (vw < MAP_W + mx * 2) CAM.x = clamp(CAM.x, vw / 2 - mx, MAP_W - vw / 2 + mx);
+  else CAM.x = MAP_W / 2;
+  if (vh < MAP_H + my * 2) CAM.y = clamp(CAM.y, vh / 2 - my, MAP_H - vh / 2 + my);
+  else CAM.y = MAP_H / 2;
+}
+
 function drawBoard(t, dt) {
   const cv = $('#cvBoard');
   const r = cv.getBoundingClientRect();
@@ -3479,30 +3757,31 @@ function drawBoard(t, dt) {
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.clearRect(0, 0, w, h);
 
-  // camera
   const act = G.players[G.active];
+  const manual = CAM.manual && (now() - CAM.manual < 2600);
   if (CAM.mode === 'full') {
     CAM.tx = MAP_W / 2; CAM.ty = MAP_H / 2;
-    CAM.ts = Math.min(w / MAP_W, h / MAP_H) * .97;
+    CAM.ts = Math.min(w / (MAP_W + 80), h / (MAP_H + 80)) * .99;
+  } else if (manual) {
+    CAM.tx = CAM.x; CAM.ty = CAM.y;
+    CAM.ts = clamp(Math.min(w / 1240, h / 1500), .24, .62) * CAM.zoom;
   } else {
     if (act) { CAM.tx = act.px; CAM.ty = act.py; }
-    CAM.ts = Math.min(w / 1300, h / 1950);
-    CAM.ts = clamp(CAM.ts, .2, .5);
+    CAM.ts = clamp(Math.min(w / 1240, h / 1500), .24, .62) * CAM.zoom;
   }
   const k = 1 - Math.pow(.0015, dt);
   CAM.x = lerp(CAM.x, CAM.tx, k);
   CAM.y = lerp(CAM.y, CAM.ty, k);
   CAM.s = lerp(CAM.s, CAM.ts, k);
-  const vw = w / CAM.s, vh = h / CAM.s;
-  if (vw < MAP_W) CAM.x = clamp(CAM.x, vw / 2, MAP_W - vw / 2); else CAM.x = MAP_W / 2;
-  if (vh < MAP_H) CAM.y = clamp(CAM.y, vh / 2, MAP_H - vh / 2); else CAM.y = MAP_H / 2;
+  if (!manual) clampCam();
 
+  const vw = w / CAM.s, vh = h / CAM.s;
   c.save();
   let shx = 0, shy = 0;
   if (G.shake) {
-    const k = (performance.now() - G.shake.t0) / G.shake.dur;
-    if (k < 1) {
-      const amp = G.shake.amp * (1 - k);
+    const kk = (performance.now() - G.shake.t0) / G.shake.dur;
+    if (kk < 1) {
+      const amp = G.shake.amp * (1 - kk);
       shx = Math.sin(performance.now() / 26) * amp;
       shy = Math.cos(performance.now() / 23) * amp * .7;
     } else G.shake = null;
@@ -3511,78 +3790,80 @@ function drawBoard(t, dt) {
   c.scale(CAM.s, CAM.s);
   c.translate(-CAM.x, -CAM.y);
 
-  // decor
   if (BOARD.decor) c.drawImage(BOARD.decor.cv, 0, 0, MAP_W, MAP_H);
 
   const x0 = CAM.x - vw / 2, x1 = CAM.x + vw / 2, y0 = CAM.y - vh / 2, y1 = CAM.y + vh / 2;
 
-  drawPathLine(c);
+  drawBoardPlate(c, x0, y0, x1, y1);
   drawZoneLabels(c);
   drawTiles(c, t, x0, y0, x1, y1);
+  drawMoveHints(c, t);
   drawStarToken(c, t);
   drawPlayerTokens(c, t, w);
   drawDiceBlock(c, t);
   drawFx(c, dt);
   c.restore();
 
-  // minimap frame
   if (CAM.mode === 'full') {
-    c.strokeStyle = 'rgba(255,255,255,.5)';
-    c.lineWidth = 2;
-    const s = CAM.s, px = w / 2 - MAP_W * s / 2, py = h / 2 - MAP_H * s / 2;
-    c.strokeRect(px + 2, py + 2, MAP_W * s - 4, MAP_H * s - 4);
+    const s = CAM.s;
+    const px = w / 2 - MAP_W * s / 2, py = h / 2 - MAP_H * s / 2;
+    c.strokeStyle = 'rgba(255,255,255,.42)'; c.lineWidth = 2;
+    c.strokeRect(px + 1, py + 1, MAP_W * s - 2, MAP_H * s - 2);
   }
 }
 
-function drawPathLine(c) {
+/* 광장 바닥 + 좁은 다리 난간 */
+function drawBoardPlate(c, x0, y0, x1, y1) {
   const map = BOARD.map;
-  c.lineJoin = 'round'; c.lineCap = 'round';
-  c.strokeStyle = 'rgba(20,10,30,.18)'; c.lineWidth = 122;
-  strokePts(c, BOARD.pts, 0, 8);
-  c.strokeStyle = map.path.edge; c.lineWidth = 118;
-  strokePts(c, BOARD.pts, 0, 0);
-  c.strokeStyle = map.path.base; c.lineWidth = 100;
-  strokePts(c, BOARD.pts, 0, 0);
-  c.strokeStyle = map.path.dash; c.lineWidth = 6; c.setLineDash([22, 30]);
-  strokePts(c, BOARD.pts, 0, 0);
-  c.setLineDash([]);
-  // branch lanes
-  (map.altLanes || []).forEach(br => {
-    const ids = [br.start];
-    for (let k = 1; k <= 4; k++) ids.push(br.start + k);
-    ids.push(br.rejoin);
-    c.beginPath();
-    ids.forEach((id, k) => {
-      const p = k === 0 || k === ids.length - 1 ? tilePos(id, 0) : tilePos(id, 2);
-      if (k === 0) c.moveTo(p.x, p.y); else c.lineTo(p.x, p.y);
-    });
-    c.strokeStyle = 'rgba(20,10,30,.16)'; c.lineWidth = 96; c.stroke();
-    c.strokeStyle = map.path.edge; c.lineWidth = 92; c.stroke();
-    c.strokeStyle = map.path.base; c.lineWidth = 76; c.stroke();
-  });
-}
-
-function strokePts(c, pts, dx, dy) {
-  c.beginPath();
-  for (let i = 0; i < pts.length; i += 2) {
-    const p = pts[i];
-    if (i === 0) c.moveTo(p.x + (dx || 0), p.y + (dy || 0));
-    else c.lineTo(p.x + (dx || 0), p.y + (dy || 0));
+  const S = GRID, R = S * .2;
+  c.save();
+  c.fillStyle = map.plate;
+  for (let i = 0; i < BOARD.n; i++) {
+    const p = BOARD.tiles[i];
+    if (p.x < x0 - S || p.x > x1 + S || p.y < y0 - S || p.y > y1 + S) continue;
+    roundRect(c, p.x - S / 2 - 1, p.y - S / 2 - 1, S + 2, S + 2, R); c.fill();
   }
-  c.stroke();
+  /* 다리 난간: 이웃이 없는 면에만 */
+  const railW = S * .075;
+  for (let k = 0; k < BOARD.narrow.length; k++) {
+    const i = BOARD.narrow[k];
+    const p = BOARD.tiles[i];
+    if (p.x < x0 - S || p.x > x1 + S || p.y < y0 - S || p.y > y1 + S) continue;
+    const sides = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    for (let s = 0; s < 4; s++) {
+      const dc = sides[s][0], dr = sides[s][1];
+      if (BOARD.idx[(p.c + dc) + ',' + (p.r + dr)] !== undefined) continue;
+      c.save();
+      c.strokeStyle = map.plate2; c.lineWidth = railW * 2.2; c.lineCap = 'round';
+      c.beginPath();
+      if (dc !== 0) {
+        const ex = p.x + dc * (S / 2 - railW);
+        c.moveTo(ex, p.y - S / 2 + S * .12); c.lineTo(ex, p.y + S / 2 - S * .12);
+      } else {
+        const ey = p.y + dr * (S / 2 - railW);
+        c.moveTo(p.x - S / 2 + S * .12, ey); c.lineTo(p.x + S / 2 - S * .12, ey);
+      }
+      c.stroke();
+      c.strokeStyle = map.rail; c.lineWidth = railW;
+      c.stroke();
+      c.restore();
+    }
+  }
+  c.restore();
 }
 
 function drawZoneLabels(c) {
-  const per = BOARD.n / 4;
-  BOARD.map.zones.forEach((z, i) => {
+  BOARD.map.zones.forEach((z, zi) => {
     let sx = 0, sy = 0, cnt = 0;
-    const from = Math.floor(i * per), to = Math.min(BOARD.n, Math.floor((i + 1) * per));
-    for (let k = from; k < to; k++) { sx += BOARD.pos[k].x; sy += BOARD.pos[k].y; cnt++; }
+    for (let i = 0; i < BOARD.n; i++) {
+      if (BOARD.zoneOf[i] !== zi) continue;
+      sx += BOARD.tiles[i].x; sy += BOARD.tiles[i].y; cnt++;
+    }
     if (!cnt) return;
     c.save();
-    c.globalAlpha = .16;
+    c.globalAlpha = .30;
     c.fillStyle = '#fff';
-    c.font = '900 56px -apple-system,sans-serif';
+    c.font = '900 ' + Math.round(22 / Math.max(.12, CAM.s)) + 'px -apple-system,sans-serif';
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(z.name, sx / cnt, sy / cnt);
     c.restore();
@@ -3590,58 +3871,134 @@ function drawZoneLabels(c) {
 }
 
 function drawTiles(c, t, x0, y0, x1, y1) {
-  const S = BOARD.ts || TILE_SIZE;
+  const S = GRID * .93;
   for (let i = 0; i < BOARD.n; i++) {
-    const p = BOARD.pos[i];
+    const p = BOARD.tiles[i];
     if (p.x < x0 - S || p.x > x1 + S || p.y < y0 - S || p.y > y1 + S) continue;
     const type = BOARD.types[i];
     const sp = BOARD.sprites[type] || BOARD.sprites.coin;
     c.drawImage(sp, p.x - S / 2, p.y - S / 2, S, S);
-    // alt lane tile
-    if (BOARD.alt[i]) {
-      const q = tilePos(i, 2);
-      const sp2 = BOARD.sprites[BOARD.alt[i]] || BOARD.sprites.coin;
-      c.save();
-      c.globalAlpha = .97;
-      c.drawImage(sp2, q.x - S * .43, q.y - S * .43, S * .86, S * .86);
-      c.restore();
-    }
   }
-  // active tile ring
+  /* 현재 칸 표시 */
   const act = G.players[G.active];
-  if (act && act.pos >= 0) {
-    const p = tilePos(act.pos, act.lane);
+  if (act) {
+    const p = tilePos(act.pos);
     c.save();
     c.strokeStyle = 'rgba(255,220,90,' + (.55 + .35 * Math.sin(t / 220)) + ')';
     c.lineWidth = 7;
-    roundRect(c, p.x - S / 2 - 6, p.y - S / 2 - 6, S + 12, S + 12, S * .3);
+    roundRect(c, p.x - GRID * .47, p.y - GRID * .47, GRID * .94, GRID * .94, GRID * .26);
     c.stroke();
     c.restore();
   }
 }
 
+/* 이동 가능 칸 안내 + 경로 미리보기 (화면 크기 고정) */
+function drawMoveHints(c, t) {
+  const mv = G.move;
+  if (!mv) return;
+  const p = mv.p;
+  if (p.bot || G.autoMove) return;
+  const reach = reachableFrom(p.pos, mv.remain);
+  const pulse = .5 + .5 * Math.sin(t / 200);
+  const U = 1 / Math.max(.12, CAM.s);      // 화면 px → 월드 px
+
+  /* 남은 칸으로 닿는 모든 칸: 옅은 표시 */
+  c.save();
+  for (let k = 0; k < reach.list.length; k++) {
+    const i = reach.list[k];
+    const q = tilePos(i);
+    c.globalAlpha = .13 + .07 * Math.sin(t / 330 + i * .7);
+    c.fillStyle = '#fff6c8';
+    roundRect(c, q.x - GRID * .43, q.y - GRID * .43, GRID * .86, GRID * .86, GRID * .25);
+    c.fill();
+  }
+  c.restore();
+
+  /* 바로 옆 칸: 반짝이는 테두리 + 칸 위 방향 화살표 */
+  const nbs = neighborOf(p.pos);
+  nbs.forEach(i => {
+    const q = tilePos(i);
+    const dx = BOARD.tiles[i].x - p.px, dy = BOARD.tiles[i].y - p.py;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len;
+    c.save();
+    c.strokeStyle = 'rgba(255,206,40,' + (.6 + .4 * pulse) + ')';
+    c.lineWidth = 5 * U;
+    roundRect(c, q.x - GRID * .45, q.y - GRID * .45, GRID * .9, GRID * .9, GRID * .27);
+    c.stroke();
+    /* 화살표 (이동 방향) */
+    const ax = q.x - ux * GRID * .2, ay = q.y - uy * GRID * .2 - GRID * .02;
+    const AH = 9 * U;
+    c.translate(ax, ay);
+    c.rotate(Math.atan2(uy, ux));
+    c.fillStyle = 'rgba(255,240,150,' + (.9 + .1 * pulse) + ')';
+    c.strokeStyle = 'rgba(140,84,0,.85)'; c.lineWidth = 2 * U;
+    c.beginPath(); c.moveTo(AH, 0); c.lineTo(-AH * .62, -AH * .8); c.lineTo(-AH * .62, AH * .8); c.closePath();
+    c.fill(); c.stroke();
+    c.restore();
+  });
+
+  /* 목표 칸 최단 경로 점선 + 남은 칸 표시 */
+  const pr = G.movePreview;
+  if (pr) {
+    const path = [p.pos].concat(pr.path);
+    c.save();
+    c.lineCap = 'round';
+    c.setLineDash([7 * U, 8 * U]);
+    c.strokeStyle = 'rgba(28,40,66,.6)'; c.lineWidth = 9 * U;
+    c.beginPath();
+    path.forEach((i, k) => { const q = tilePos(i); k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y); });
+    c.stroke();
+    c.strokeStyle = '#ffe066'; c.lineWidth = 5 * U;
+    c.stroke();
+    c.setLineDash([]);
+    pr.path.forEach((i, k) => {
+      const q = tilePos(i);
+      c.beginPath(); c.arc(q.x, q.y, 4 * U, 0, TAU);
+      c.fillStyle = k === pr.path.length - 1 ? '#ffb524' : 'rgba(255,255,255,.95)';
+      c.fill();
+      c.strokeStyle = 'rgba(120,80,0,.55)'; c.lineWidth = 1.6 * U; c.stroke();
+    });
+    const tq = tilePos(pr.target);
+    c.strokeStyle = 'rgba(255,214,74,.95)'; c.lineWidth = 5 * U;
+    roundRect(c, tq.x - GRID * .46, tq.y - GRID * .46, GRID * .92, GRID * .92, GRID * .27);
+    c.stroke();
+    const label = pr.path.length + '칸' + (starDistOf(pr.target) >= 0 ? ' · ★' + starDistOf(pr.target) : '');
+    c.font = '900 ' + (13 * U) + 'px -apple-system,"Apple SD Gothic Neo",sans-serif';
+    const tw = c.measureText(label).width;
+    const bw = tw + 20 * U, bh = 24 * U;
+    const by = tq.y - GRID * .8;
+    c.fillStyle = 'rgba(28,38,62,.94)';
+    roundRect(c, tq.x - bw / 2, by - bh / 2, bw, bh, 8 * U); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 1.6 * U; c.stroke();
+    c.fillStyle = '#ffe066';
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(label, tq.x, by + 1 * U);
+    c.restore();
+  }
+}
+
 function drawStarToken(c, t) {
-  const p = tilePos(G.starIndex, 0);
+  const p = tilePos(G.starIndex);
   const pulse = .5 + .5 * Math.sin(t / 260);
   c.save();
-  c.globalAlpha = .28 + .2 * pulse;
+  c.globalAlpha = .26 + .18 * pulse;
   c.fillStyle = '#ffe066';
-  c.beginPath(); c.arc(p.x, p.y, 86 + pulse * 12, 0, TAU); c.fill();
+  c.beginPath(); c.arc(p.x, p.y, GRID * .58 + pulse * GRID * .07, 0, TAU); c.fill();
   c.restore();
   c.save();
-  c.translate(p.x, p.y - 96 - Math.sin(t / 300) * 8);
+  c.translate(p.x, p.y - GRID * .62 - Math.sin(t / 300) * 7);
   c.fillStyle = '#ffdf5c';
   c.strokeStyle = '#c98a00'; c.lineWidth = 5;
-  drawStarShape(c, 0, 0, 40, .45); c.fill(); c.stroke();
+  drawStarShape(c, 0, 0, GRID * .27, .45); c.fill(); c.stroke();
   c.restore();
-  // sparkles
   for (let k = 0; k < 3; k++) {
     const a = t / 900 + k * 2.1;
     c.save();
     c.globalAlpha = .5 + .5 * Math.sin(a * 2);
     c.fillStyle = '#fff8c0';
     c.beginPath();
-    c.arc(p.x + Math.cos(a) * 62, p.y - 96 + Math.sin(a) * 34, 4, 0, TAU); c.fill();
+    c.arc(p.x + Math.cos(a) * GRID * .42, p.y - GRID * .55 + Math.sin(a) * GRID * .22, 4, 0, TAU); c.fill();
     c.restore();
   }
 }
@@ -3652,7 +4009,7 @@ function drawPlayerTokens(c, t, w) {
   const tn = performance.now();
   order.forEach(p => {
     const isAct = p.i === G.active;
-    const OFF = [[-40, 14], [40, 14], [-40, -32], [40, -32]];
+    const OFF = [[-27, 8], [27, 8], [-27, -26], [27, -26]];
     const off = OFF[p.i] || [0, 0];
     let xoff = 0, bob = p.hop || 0, tilt = p.tilt || 0;
     let sx = p.sx || 1, sy = p.sy || 1, flash = 0;
@@ -3668,31 +4025,52 @@ function drawPlayerTokens(c, t, w) {
       xoff += Math.sin(k * 46) * 9 * (1 - k);
       tilt += Math.sin(k * 38) * .2 * (1 - k);
     }
-    const x = p.px + off[0] + xoff, y = p.py + 26 + off[1];
+    const x = p.px + off[0] + xoff, y = p.py + 20 + off[1];
     const moving = (p.hop || 0) > .5;
     if (!moving) bob += Math.sin(t / 540 + p.i * 1.9) * 2.4;
     const blink = !moving && ((t + p.i * 1170) % 4700) < 130;
     let mood = 'normal';
     if (p.cheerAt && tn - p.cheerAt < p.cheerMs) mood = 'happy';
     else if (p.shakeAt && tn - p.shakeAt < p.shakeMs) mood = 'shock';
+    const H = 78;
     if (showChars) {
-      drawChar(c, x, y, 96, p.ci, { sel: isAct, time: t, bob: bob, tilt: tilt, sx: sx, sy: sy, flash: flash, blink: blink, mood: mood });
-      p.allies.forEach((id, k) => {
-        const ti = Math.min(p.trail.length - 1, 5 + k * 6);
+      drawChar(c, x, y, H, p.ci, { sel: isAct, time: t, bob: bob, tilt: tilt, sx: sx, sy: sy, flash: flash, blink: blink, mood: mood });
+      p.allies.forEach((id, kk) => {
+        const ti = Math.min(p.trail.length - 1, 5 + kk * 6);
         const tr = p.trail[Math.max(0, ti)];
-        const ax = tr ? tr.x - 34 : x - 46 - k * 22;
-        const ay = tr ? tr.y + 32 - (tr.hop || 0) * .5 : y + 6;
-        drawAlly(c, ax, ay, 46, id, t + k * 260);
+        const ax = tr ? tr.x - 30 : x - 42 - kk * 20;
+        const ay = tr ? tr.y + 28 - (tr.hop || 0) * .5 : y + 4;
+        drawAlly(c, ax, ay, 40, id, t + kk * 260);
       });
     } else {
       c.fillStyle = CHARS[p.ci].c;
       c.beginPath(); c.arc(p.px, p.py, xoff ? 23 : 22, 0, TAU); c.fill();
       c.strokeStyle = isAct ? '#fff' : 'rgba(255,255,255,.6)'; c.lineWidth = 4; c.stroke();
     }
+    /* 별까지 남은 칸 배지 */
+    const d = starDistOf(p.pos);
+    if (d >= 0) {
+      const bx = x, by = y - H * .78 - (moving ? p.hop * .3 : 0);
+      c.save();
+      c.globalAlpha = isAct ? .97 : .82;
+      const label = '★' + d;
+      const U2 = 1 / Math.max(.12, CAM.s);
+      c.font = '900 ' + (11 * U2) + 'px -apple-system,"Apple SD Gothic Neo",sans-serif';
+      const tw = c.measureText(label).width;
+      const bw = tw + 14 * U2, bh = 17 * U2;
+      c.fillStyle = isAct ? 'rgba(255,196,40,.96)' : 'rgba(32,44,70,.82)';
+      roundRect(c, bx - bw / 2, by - bh / 2, bw, bh, 6 * U2); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.4 * U2; c.stroke();
+      c.fillStyle = isAct ? '#3a2400' : '#ffe066';
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(label, bx, by + 1);
+      c.restore();
+    }
     if (isAct && showChars) {
-      const by = y - 118 - Math.abs(Math.sin(t / 300)) * 10;
-      c.fillStyle = '#ffd54a'; c.strokeStyle = '#a86900'; c.lineWidth = 3;
-      c.beginPath(); c.moveTo(x - 14, by - 12); c.lineTo(x + 14, by - 12); c.lineTo(x, by + 10); c.closePath(); c.fill(); c.stroke();
+      const U3 = 1 / Math.max(.12, CAM.s);
+      const by2 = y - H * .78 - 24 * U3 - Math.abs(Math.sin(t / 300)) * 6 * U3;
+      c.fillStyle = '#ffd54a'; c.strokeStyle = '#a86900'; c.lineWidth = 2 * U3;
+      c.beginPath(); c.moveTo(x - 10 * U3, by2 - 8 * U3); c.lineTo(x + 10 * U3, by2 - 8 * U3); c.lineTo(x, by2 + 6 * U3); c.closePath(); c.fill(); c.stroke();
     }
   });
 }
@@ -3896,6 +4274,65 @@ function startConfetti() {
 }
 function stopConfetti() { if (resRaf) { cancelAnimationFrame(resRaf); resRaf = null; } }
 
+/* ---------- board pointer: 탭 이동 / 드래그 패닝 / 핀치 줌 ---------- */
+function bindBoardPointer() {
+  const cv = $('#cvBoard');
+  const pts = new Map();
+  let pinchD = 0, moved = false, startT = 0;
+
+  const pinchDist = () => {
+    const a = Array.from(pts.values());
+    if (a.length < 2) return 0;
+    return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+  };
+  cv.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 1) { moved = false; startT = now(); }
+    if (pts.size === 2) pinchD = pinchDist();
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    const prev = pts.get(e.pointerId);
+    const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+    if (pts.size >= 2) {
+      const d = pinchDist();
+      if (pinchD > 0 && d > 0) CAM.zoom = clamp(CAM.zoom * (d / pinchD), .55, 2.2);
+      pinchD = d; CAM.manual = now(); moved = true;
+      return;
+    }
+    if (moved) {
+      CAM.x -= dx / CAM.s; CAM.y -= dy / CAM.s;
+      CAM.manual = now();
+      clampCam();
+    }
+  });
+  const end = e => {
+    if (!pts.has(e.pointerId)) return;
+    const wasAlone = pts.size === 1;
+    pts.delete(e.pointerId);
+    if (wasAlone && !moved && now() - startT < 650) {
+      const wp = screenToWorld(e.clientX, e.clientY);
+      const i = tileAtWorld(wp.x, wp.y);
+      if (i >= 0) {
+        const res = tapTile(i);
+        if (res === 'step' || res === 'preview') haptic(10);
+      }
+    }
+    if (pts.size === 0) { moved = false; }
+    pinchD = 0;
+  };
+  cv.addEventListener('pointerup', end);
+  cv.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pinchD = 0; moved = false; });
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    CAM.zoom = clamp(CAM.zoom * (e.deltaY > 0 ? .92 : 1.08), .55, 2.2);
+    CAM.manual = now();
+  }, { passive: false });
+}
+
 /* ---------- input ---------- */
 function bindInput() {
   $('#btnStart').addEventListener('click', () => {
@@ -3915,9 +4352,14 @@ function bindInput() {
   });
   $('#btnMap').addEventListener('click', () => {
     CAM.mode = CAM.mode === 'full' ? 'follow' : 'full';
+    CAM.manual = 0; CAM.zoom = 1;
     $('#btnMap').classList.toggle('on', CAM.mode === 'full');
     sfx('click');
   });
+  const goBtn = $('#btnGo'), stayBtn = $('#btnStay');
+  if (goBtn) goBtn.addEventListener('click', () => { if (confirmMove()) { sfx('click'); haptic(12); } });
+  if (stayBtn) stayBtn.addEventListener('click', () => { cancelMove(); sfx('click'); });
+  bindBoardPointer();
   $('#btnMute').addEventListener('click', () => {
     AU.unlock();
     AU.setMuted(!AU.muted);
@@ -3927,6 +4369,7 @@ function bindInput() {
   document.addEventListener('keydown', e => {
     if (e.repeat) return;
     const k = e.key.toLowerCase();
+    if (k === 'escape') { cancelMove(); return; }
     if (k === 'q') padTap(0);
     else if (k === 'p') padTap(1);
     else if (k === 'z') padTap(2);
@@ -3969,13 +4412,16 @@ window.__pickleParty = {
       mapId: G.mapId, starIndex: G.starIndex, busy: G.busy, ended: G.ended,
       players: G.players.map(p => ({
         i: p.i, name: p.name, bot: p.bot, coins: p.coins, stars: p.stars, pos: p.pos,
-        lane: p.lane, allies: p.allies.slice(), items: p.items.slice(), mgWins: p.mgWins,
+        distStar: starDistOf(p.pos), allies: p.allies.slice(), items: p.items.slice(), mgWins: p.mgWins,
         x: Math.round(p.px), y: Math.round(p.py)
       })),
       minigames: MINIGAMES.map(m => m.key),
       lastRoll: G.lastRoll,
       lastMinigame: G.lastMg, history: G.mgHistory.slice(),
-      modal: !!pendingModal, camMode: CAM.mode
+      modal: !!pendingModal, camMode: CAM.mode,
+      move: G.move ? { player: G.move.p.i, remain: G.move.remain, total: G.move.total } : null,
+      preview: G.movePreview ? { target: G.movePreview.target, path: G.movePreview.path.slice() } : null,
+      waitingForTap: !!G.moveWaiter
     };
   },
   start(cfg) {
@@ -3984,6 +4430,7 @@ window.__pickleParty = {
     setScreen('board');
     buildHud();
     G.autoAnswer = cfg && cfg.autoAnswer === false ? false : true;
+    G.autoMove = !!(cfg && cfg.autoMove);
     startRound();
     return true;
   },
@@ -3995,14 +4442,52 @@ window.__pickleParty = {
   tap(i) { padTap(i); return true; },
   answer(v) { if (pendingModal) pendingModal.close(v); return true; },
   setAutoAnswer(v) { G.autoAnswer = !!v; },
+  setAutoMove(v) { G.autoMove = !!v; if (G.autoMove && G.moveWaiter) submitMove(autoPlan(G.move ? G.move.p : null)); return G.autoMove; },
   forceMinigame(key) { G.forcedMg = key; },
   setSpeed(x) { TIME_SCALE = Math.max(.25, x || 1); },
-  setSeed(n) { setSeed(n); },
+  setSeed(n) {
+    setSeed(n); return true;
+  },
   forceDice(n) { G.forceDice = n; return true; },
   mute(v) { AU.setMuted(v); return AU.muted; },
-  mapView(on) { CAM.mode = on ? 'full' : 'follow'; $('#btnMap').classList.toggle('on', CAM.mode === 'full'); },
+  mapView(on) { CAM.mode = on ? 'full' : 'follow'; CAM.manual = 0; $('#btnMap').classList.toggle('on', CAM.mode === 'full'); },
   audioState() { return { ctx: !!AU.ctx, state: AU.ctx ? AU.ctx.state : null, muted: AU.muted, track: AU.track }; },
+  cam() {
+    const cv = $('#cvBoard'), r = cv.getBoundingClientRect();
+    return { x: CAM.x, y: CAM.y, s: CAM.s, mode: CAM.mode, left: r.left, top: r.top, w: r.width, h: r.height };
+  },
+  screenOf(i) {
+    const cv = $('#cvBoard'), r = cv.getBoundingClientRect();
+    const t = tilePos(i);
+    return { x: r.left + r.width / 2 + (t.x - CAM.x) * CAM.s, y: r.top + r.height / 2 + (t.y - CAM.y) * CAM.s };
+  },
   tiles() { return BOARD.types.slice(); },
+  boardInfo() {
+    return {
+      id: BOARD.map.id, name: BOARD.map.name, n: BOARD.n, cols: BOARD.cols, rows: BOARD.rows,
+      start: BOARD.start, star: BOARD.starIndex, portals: Object.keys(BOARD.portals).length,
+      narrow: BOARD.narrow.length, w: MAP_W, h: MAP_H,
+      cells: BOARD.tiles.map(t => ({ i: t.i, c: t.c, r: t.r, deg: t.deg, type: BOARD.types[t.i] }))
+    };
+  },
+  dist(i) { const d = starDistOf(i); return d; },
+  neighbors(i) { return neighborOf(i).slice(); },
+  pathTo(i) { return activePlayer() ? bfsPath(activePlayer().pos, i) : null; },
+  reachable() { return G.move ? reachableFrom(G.move.p.pos, G.move.remain).list.slice() : []; },
+  tapTile(i) { return tapTile(i); },
+  confirmMove() { return confirmMove(); },
+  cancelMove() { return cancelMove(); },
+  moveInfo() {
+    const p = activePlayer();
+    if (!G.move) return null;
+    return {
+      remain: G.move.remain, total: G.move.total, pos: G.move.p.pos,
+      dist: starDistOf(G.move.p.pos), neighbors: neighborOf(G.move.p.pos).slice(),
+      reachable: reachableFrom(G.move.p.pos, G.move.remain).list.slice(),
+      preview: G.movePreview ? { target: G.movePreview.target, path: G.movePreview.path.slice() } : null,
+      waiting: !!G.moveWaiter, auto: !!G.autoMove
+    };
+  },
   jumpMinigame() { if (G.phase === 'board') { G.turn = G.players.length; minigamePhase(); } },
   async runMinigame(key) {
     const def = MINI_BY_KEY[key];
@@ -4014,14 +4499,15 @@ window.__pickleParty = {
   },
   setPos(i, pos) {
     const p = G.players[i];
-    p.pos = pos; p.lane = 0;
-    const tp = tilePos(pos, 0); p.px = tp.x; p.py = tp.y;
+    p.pos = pos;
+    const tp = tilePos(pos); p.px = tp.x; p.py = tp.y;
     focusPlayer(p, true);
+    updateFooter();
     return true;
   },
   async tile(i, pos) {
     const p = G.players[i];
-    if (pos !== undefined) { p.pos = pos; const tp = tilePos(pos, 0); p.px = tp.x; p.py = tp.y; }
+    if (pos !== undefined) { p.pos = pos; const tp = tilePos(pos); p.px = tp.x; p.py = tp.y; }
     await applyTile(p);
     return { coins: p.coins, stars: p.stars, pos: p.pos, allies: p.allies.slice(), items: p.items.slice() };
   },
@@ -4029,8 +4515,9 @@ window.__pickleParty = {
     for (let k = 0; k < (n || 1); k++) {
       const p = activePlayer();
       if (!p) break;
-      if (p.bot) { await wait(400); await doTurn(p); }
-      else { await doTurn(p); }
+      if (p.bot || !G.autoMove) { G.autoMove = true; }
+      await wait(120);
+      if (!p.bot) await doTurn(p);
       await wait(100);
     }
     return true;
