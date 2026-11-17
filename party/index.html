@@ -391,7 +391,7 @@ canvas{display:block}
         <div class="row" style="margin-top:9px"><span class="row-l">라운드</span><div class="seg" id="segRounds"></div></div>
       </div>
       <button id="btnStart" class="big-btn">파티 시작!</button>
-      <div class="hint">보드 3종(169·177·206칸) · 발판은 8종 · 물음표/벌칙 룰렛 · 운명의 버튼<br>시작하면 동료와 스타 위치를 컷씬으로 알려줘요</div>
+      <div class="hint">보드 3종(169·177·206칸) · 발판은 8종 · 물음표/벌칙 룰렛 · 운명의 버튼<br>시작하면 동료·대표 기믹·스타 위치를 컷씬으로 알려줘요 · 별은 누가 사면 새 자리로 이동</div>
     </div>
   </section>
 
@@ -2985,7 +2985,7 @@ async function minigamePhase() {
   if (G.ended) return;
   await playMinigame(mg);
   if (G.ended) return;
-  if (G.round % 2 === 0) { moveStar(); await starSpawnCutscene(); }
+  /* 스타는 라운드가 바뀌어도 그대로 — 누가 별을 사면 그 자리에서 즉시 새 위치로 이동 */
   G.round++;
   if (G.round > G.rounds) { await showResults(); return; }
   await startRound();
@@ -4304,7 +4304,7 @@ function buildGuide() {
   const list = ['coin', 'event', 'trap', 'fate', 'shop', 'ally', 'star'];
   list.forEach(type => {
     const info = type === 'star'
-      ? { name: '별', desc: '코인 10개로 별 +1' }
+      ? { name: '별', desc: '코인 10개로 별 +1 · 누가 사면 새 자리로 이동' }
       : (TILE_INFO[type] || { name: type, desc: '' });
     const item = document.createElement('div');
     item.className = 'gitem';
@@ -5466,7 +5466,7 @@ window.__pickleParty = {
   get state() {
     return {
       screen: G.screen, phase: G.phase, round: G.round, rounds: G.rounds, active: G.active,
-      mapId: G.mapId, starIndex: G.starIndex, busy: G.busy, ended: G.ended,
+      mapId: G.mapId, starIndex: G.starIndex, gimmickIndex: BOARD.gimmickIndex, busy: G.busy, ended: G.ended,
       players: G.players.map(p => ({
         i: p.i, name: p.name, bot: p.bot, coins: p.coins, stars: p.stars, pos: p.pos,
         distStar: starDistOf(p.pos), allies: p.allies.slice(), items: p.items.slice(), mgWins: p.mgWins,
@@ -5628,10 +5628,10 @@ window.__pickleParty = {
    ========================================================= */
 
 /* ---------- 카메라: 영화처럼 천천히 따라가기 ---------- */
-function camFly(x, y, zoom, ms) {
+function camFly(x, y, zoom, ms, k) {
   const dur = Math.max(200, (ms || 900) / TIME_SCALE);
   CAM.fx = { x: x, y: y, t0: performance.now(), dur: dur, zoom: zoom || 1.5, hold: true };
-  CAM.k = .055;
+  CAM.k = k || .055;
 }
 function camRelease() {
   CAM.fx = null;
@@ -5714,7 +5714,7 @@ async function cutBeat(o) {
   if (el) el.classList.toggle('bad', o.tone === 'bad');
   cutBanner(o);
   const ms = o.ms || 1400;
-  if (o.x !== undefined && o.y !== undefined) camFly(o.x, o.y, o.zoom || 1.55, ms);
+  if (o.x !== undefined && o.y !== undefined) camFly(o.x, o.y, o.zoom || 1.55, ms, o.camK);
   if (o.fx) CutFX.start(o.fx, ms / TIME_SCALE, o.color, o.good !== false);
   if (o.shake) setTimeout(() => screenShake(o.shake, o.shakeMs || 460), 90);
   sfx(o.sfx || 'star');
@@ -5754,7 +5754,7 @@ async function starGetSequence(p, fromPos) {
   const sp = tilePos(G.starIndex);
   await cutBeat({
     title: '새로운 스타 등장!', sub: '별이 다른 자리로 옮겨갔어요 · ★까지 ' + starDistOf(G.players[0] ? G.players[0].pos : 0) + '칸', icon: '✦',
-    x: sp.x, y: sp.y, zoom: 1.7, ms: 1600, fx: 'stars', color: '#ffe066', sfx: 'warp', shake: 7
+    x: sp.x, y: sp.y, zoom: 1.7, ms: 1600, fx: 'stars', color: '#ffe066', sfx: 'warp', shake: 7, camK: .006
   });
   hideCutShell();
   await wait(120);
@@ -5773,7 +5773,7 @@ async function starSpawnCutscene() {
   await wait(100);
 }
 
-/* ---------- 게임 시작: 동료 & 스타 위치 소개 ---------- */
+/* ---------- 게임 시작: 동료 · 대표 기믹 · 운명의 버튼 · 스타 소개 ---------- */
 async function introCutscene() {
   const el = cutEl();
   if (!el) return;
@@ -5796,11 +5796,23 @@ async function introCutscene() {
       x: p2.x, y: p2.y, zoom: 1.95, ms: 1200, fx: 'hearts', color: '#ff8fc8', sfx: 'buy'
     });
   }
-  const sp = tilePos(G.starIndex);
-  await cutBeat({
-    title: '스타가 여기에 나타났어요!', sub: '코인 10개로 별을 살 수 있어요', icon: '★',
-    x: sp.x, y: sp.y, zoom: 2.0, ms: 1650, fx: 'stars', color: '#ffe066', sfx: 'star', shake: 6
-  });
+  /* 이 맵의 첫 번째 대표 기믹 */
+  const gi = BOARD.gimmickIndex;
+  if (gi !== undefined && gi >= 0) {
+    const gm = BOARD.map.gimmick || { name: '대표 기믹', desc: '', kind: 'gate' };
+    const gp = tilePos(gi);
+    const isValve = gm.kind === 'valve';
+    const isGlacier = gm.kind === 'glacier';
+    await cutBeat({
+      title: '대표 기믹 · ' + gm.name,
+      sub: gm.desc || '이 맵의 큰 기믹이 발동!',
+      icon: gm.kind === 'gate' ? '◎' : isValve ? '▲' : '❄',
+      x: gp.x, y: gp.y, zoom: 1.95, ms: 1800, camK: .02,
+      fx: isValve ? 'eruption' : isGlacier ? 'glacier' : 'stars',
+      good: !isValve, color: isValve ? '#ff8a3c' : isGlacier ? '#7ef0e0' : '#c9a8ff',
+      sfx: isValve ? 'boom' : isGlacier ? 'boost' : 'warp', shake: isValve ? 8 : 4
+    });
+  }
 
   if (fate.length) {
     const tp = tilePos(fate[0]);
@@ -5810,6 +5822,12 @@ async function introCutscene() {
       x: tp.x, y: tp.y, zoom: 1.9, ms: 1500, fx: 'pulse', color: '#ffd166', sfx: 'event'
     });
   }
+
+  const sp = tilePos(G.starIndex);
+  await cutBeat({
+    title: '스타가 여기에 나타났어요!', sub: '코인 10개로 별을 살 수 있어요 · 별은 누가 사면 새 자리로 이동!', icon: '★',
+    x: sp.x, y: sp.y, zoom: 2.0, ms: 1650, fx: 'stars', color: '#ffe066', sfx: 'star', shake: 6
+  });
   const me = G.players[G.active >= 0 ? G.active : 0];
   if (me) {
     await cutBeat({
