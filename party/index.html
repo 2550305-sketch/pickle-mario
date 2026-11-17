@@ -391,7 +391,7 @@ canvas{display:block}
         <div class="row" style="margin-top:9px"><span class="row-l">라운드</span><div class="seg" id="segRounds"></div></div>
       </div>
       <button id="btnStart" class="big-btn">파티 시작!</button>
-      <div class="hint">보드 3종(169·177·206칸) · 발판은 8종 · 물음표/벌칙 룰렛 · 운명의 버튼<br>시작하면 동료·대표 기믹·스타 위치를 컷씬으로 알려줘요 · 별은 누가 사면 새 자리로 이동</div>
+      <div class="hint">보드 3종(169·177·206칸) · 발판은 8종 · 룰렛 · 운명의 버튼<br>시작하면 동료·대표 기믹·스타를 컷씬으로 소개<br>별은 누가 사면 새 자리로 이동</div>
     </div>
   </section>
 
@@ -4304,7 +4304,7 @@ function buildGuide() {
   const list = ['coin', 'event', 'trap', 'fate', 'shop', 'ally', 'star'];
   list.forEach(type => {
     const info = type === 'star'
-      ? { name: '별', desc: '코인 10개로 별 +1 · 누가 사면 새 자리로 이동' }
+      ? { name: '별', desc: '코인 10개로 별 +1<br>누가 사면 새 자리로 이동' }
       : (TILE_INFO[type] || { name: type, desc: '' });
     const item = document.createElement('div');
     item.className = 'gitem';
