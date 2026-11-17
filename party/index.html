@@ -1720,7 +1720,6 @@ async function runMovement(p, steps) {
       plan = await waitForMoveChoice();
     }
     if (G.ended) break;
-    if (window.__DBG_MOVE) console.log('[mv] plan', JSON.stringify(plan), 'remain', G.move && G.move.remain);
     if (!plan || !plan.length) continue;
     for (let k = 0; k < plan.length; k++) {
       if (!G.move || G.move.remain <= 0 || G.ended) break;
@@ -1732,7 +1731,6 @@ async function runMovement(p, steps) {
       sfx('step');
       dust(p.px, p.py, 2);
       updateMoveBar(); updateFooter();
-      if (window.__DBG_MOVE) console.log('[mv] step', ni, 'remain', G.move && G.move.remain);
       await onContact(p, ni);
       if (G.ended) break;
     }
