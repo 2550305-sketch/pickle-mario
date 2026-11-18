@@ -837,7 +837,7 @@ const MAPS = [
     bridgeTypes: ['coin', 'event', 'coin', 'trap', 'coin', 'ally', 'coin', 'trap'],
     fateCount: 2,
     gimmick: { at: [10, 2], name: '고대 워프 게이트', icon: 'gate', kind: 'gate',
-      desc: '별이 있는 쪽으로 순간이동 + 코인 8' }
+      desc: '별이 있는 쪽으로 순간이동 + 코인 8 · 1회 사용 후 자리 이동' }
   },
   {
     id: 'volcano', name: '용암 성곽', badge: '고위험',
@@ -893,7 +893,7 @@ const MAPS = [
     bridgeTypes: ['coin', 'event', 'coin', 'trap', 'coin', 'ally', 'trap', 'coin'],
     fateCount: 3,
     gimmick: { at: [16, 12], name: '대분화 용암 밸브', icon: 'valve', kind: 'valve',
-      desc: '용암이 폭발! 상대 코인 -3, 나는 +8' }
+      desc: '용암이 폭발! 상대 코인 -3, 나는 +8 · 1회 사용 후 자리 이동' }
   },
   {
     id: 'ice', name: '얼음 빙하', badge: '변덕',
@@ -949,7 +949,7 @@ const MAPS = [
     bridgeTypes: ['coin', 'event', 'coin', 'trap', 'coin', 'ally', 'coin', 'trap'],
     fateCount: 3,
     gimmick: { at: [20, 4], name: '빙하 대이동', icon: 'glacier', kind: 'glacier',
-      desc: '빙판을 타고 별 쪽으로 6칸 + 코인' }
+      desc: '빙판을 타고 별 쪽으로 6칸 + 코인 · 1회 사용 후 자리 이동' }
   }
 ];
 
@@ -963,16 +963,17 @@ MAPS.forEach(m => {
 });
 
 /* ---------- 발판 종류: 돌 판 위 원형 배지 색 + 아이콘 + 설명 ----------
-   3차 개편: 자잘한 발판(보석·워프·쉼터·부스트 등)은 모두 물음표 룰렛 안으로,
-   함정/용암/빙판은 벌칙 룰렛으로 통합. 남는 발판은 8종뿐. */
+   3차 개편: 자잘한 발판(보석·쉼터·부스트 등)은 모두 물음표 룰렛 안으로,
+   함정/용암/빙판은 벌칙 룰렛으로 통합. 남는 발판은 8종뿐.
+   4차: 룰렛의 '순간 워프'는 너무 세서 뺐다(대신 '한 번 더'). 대표 기믹은 1회 사용 후 자리를 옮긴다. */
 const TILE_INFO = {
   coin:   { badge: '#2f72c8', badge2: '#1b4a8e', icon: 'coin', name: '코인', desc: '코인 3~5개를 얻어요' },
-  event:  { badge: '#2fa84f', badge2: '#14652c', icon: 'event', name: '물음표 룰렛', desc: '룰렛이 돌아가요 · 보석·워프·부스트' },
+  event:  { badge: '#2fa84f', badge2: '#14652c', icon: 'event', name: '물음표 룰렛', desc: '룰렛이 돌아가요 · 보석·대시·쉼터' },
   trap:   { badge: '#d93b3b', badge2: '#861a1a', icon: 'trap', name: '벌칙 룰렛', desc: '벌칙 룰렛 · 코인·후퇴·반토막' },
   fate:   { badge: '#ffc23c', badge2: '#c22a12', icon: 'fate', name: '운명의 버튼', desc: '모두에게 좋은 일 · 나쁜 일' },
   shop:   { badge: '#e07b1d', badge2: '#9c520a', icon: 'shop', name: '상점', desc: '코인으로 주사위 아이템 구매' },
   ally:   { badge: '#37a6e6', badge2: '#1666a0', icon: 'ally', name: '동료', desc: '동료 영입, 주사위 +1~2칸' },
-  gimmick:{ badge: '#ffd23c', badge2: '#b88900', icon: 'gimmick', name: '대표 기믹', desc: '맵의 큰 기믹이 발동!' },
+  gimmick:{ badge: '#ffd23c', badge2: '#b88900', icon: 'gimmick', name: '대표 기믹', desc: '맵의 큰 기믹이 발동!<br>한 번 쓰면 다른 자리로 옮겨가요' },
   start:  { badge: '#3aa35a', badge2: '#236b3a', icon: 'start', name: '출발', desc: '모두 여기서 시작해요' }
 };
 
@@ -1133,9 +1134,16 @@ function buildBoard(mapId) {
   }
 
   /* 맵 대표 기믹 랜드마크 */
+  BOARD.gimmickPrev = 'coin';
   if (map.gimmick && map.gimmick.at) {
-    const gi = put('gimmick', map.gimmick.at);
-    if (gi >= 0) BOARD.gimmickIndex = gi;
+    const gcr = map.gimmick.at;
+    const gAt = idx[gcr[0] + ',' + gcr[1]];
+    const gWas = gAt !== undefined ? (BOARD.types[gAt] || 'coin') : 'coin';
+    const gi = put('gimmick', gcr);
+    if (gi >= 0) {
+      BOARD.gimmickIndex = gi;
+      BOARD.gimmickPrev = gWas === 'gimmick' ? 'coin' : gWas;
+    }
   }
 
   /* 별 위치 */
@@ -2077,13 +2085,13 @@ async function doTurn(p) {
   let d1 = 0, d2 = 0, total = 0;
   if (G.forceDice) { d1 = G.forceDice; G.forceDice = null; total = d1; await diceAnim(p, [d1], null); }
   else if (mode === 'double') {
-    d1 = ri(1, 10); d2 = ri(1, 10); total = d1 + d2;
+    d1 = ri(1, 6); d2 = ri(1, 6); total = d1 + d2;
     await diceAnim(p, [d1, d2], '더블 주사위!');
   } else if (mode === 'gold') {
-    d1 = ri(10, 15); total = d1;
-    await diceAnim(p, [d1], '황금 주사위!', true);
+    d1 = ri(1, 6); total = d1 + 3;
+    await diceAnim(p, [d1], '황금 주사위!', true, 3);
   } else {
-    d1 = ri(1, 10); total = d1;
+    d1 = ri(1, 6); total = d1;
     await diceAnim(p, [d1], null);
   }
   const bonus = allySteps(p);
@@ -2343,7 +2351,7 @@ async function applyTile(p, depth) {
    ========================================================= */
 const QUESTION_WHEEL = [
   { key: 'gem', full: '보석 잭팟', label: '보석', icon: '💎', color: '#14b8a6', note: '보석 +8~12코인' },
-  { key: 'warp', full: '순간 워프', label: '워프', icon: '🌀', color: '#7b5bd6', note: '별 바로 옆으로 이동' },
+  { key: 'again', full: '한 번 더!', label: '한번더', icon: '🔄', color: '#7b5bd6', note: '주사위를 한 번 더' },
   { key: 'dash', full: '대시 부스트', label: '대시', icon: '🚀', color: '#3b82f6', note: '별 쪽으로 3칸 전진' },
   { key: 'rest', full: '따뜻한 쉼터', label: '쉼터', icon: '🏕', color: '#4ade80', note: '쉬면서 +5코인' },
   { key: 'item', full: '랜덤 아이템', label: '아이템', icon: '🎁', color: '#f59e0b', note: '상점 아이템 1개 획득' },
@@ -2382,13 +2390,6 @@ async function runWheel(p, kind) {
   await wait(fast ? 120 : 260);
 }
 
-function nearStarTile(p) {
-  const nbs = neighborOf(G.starIndex).filter(i => !G.players.some(o => o !== p && o.pos === i));
-  const pool = nbs.length ? nbs : neighborOf(G.starIndex);
-  if (!pool.length) return G.starIndex;
-  return pool[Math.floor(RND() * pool.length)];
-}
-
 async function giveRandomItem(p) {
   const keys = Object.keys(ITEMS);
   for (let tryN = 0; tryN < 6; tryN++) {
@@ -2414,16 +2415,9 @@ async function applyQuestion(p, key) {
       showToast('보석 발견! +' + amt + '코인', '물음표가 대박이었어요', 1200);
       break;
     }
-    case 'warp': {
-      const dest = nearStarTile(p);
-      sfx('warp'); burst(p.px, p.py, '#c9a8ff', 26);
-      await wait(260);
-      p.pos = dest;
-      const tp = tilePos(dest);
-      p.px = tp.x; p.py = tp.y;
-      focusPlayer(p, true);
-      burst(p.px, p.py, '#ffe066', 24); cheer(p, 800);
-      showToast('순간 워프!', '별 바로 옆으로 이동', 1200);
+    case 'again': {
+      p.extraRoll = true; sfx('event'); burst(p.px, p.py, '#c9a8ff', 18); cheer(p, 750);
+      showToast('한 번 더!', '주사위를 한 번 더 굴려요', 1200);
       break;
     }
     case 'dash': {
@@ -2630,6 +2624,65 @@ async function pushBack(p, steps) {
 }
 
 /* ---------- 맵 대표 기믹 ---------- */
+/* 기믹이 옮겨갈 수 있는 자리: 지나가는 평범한 발판(코인·물음표·벌칙).
+   별·출발·상점·동료·운명의 버튼·플레이어가 서 있는 칸은 제외하고, 옛 자리에서 충분히 먼 곳만 고른다. */
+function gimmickSpots(from) {
+  const dist = bfsFrom(from).dist;
+  const taken = {};
+  G.players.forEach(o => { taken[o.pos] = 1; });
+  const out = [];
+  for (let i = 0; i < BOARD.n; i++) {
+    if (i === from || i === G.starIndex || i === BOARD.start) continue;
+    if (taken[i]) continue;
+    const t = BOARD.types[i];
+    if (t === 'shop' || t === 'ally' || t === 'fate' || t === 'gimmick' || t === 'start') continue;
+    if (starDistOf(i) === 0 || starDistOf(i) === 1) continue;   /* 별 바로 옆은 피한다 */
+    out.push({ i: i, d: dist[i] < 0 ? 999 : dist[i] });
+  }
+  return out;
+}
+
+/* 한 번 쓴 기믹은 빛무리와 함께 사라지고, 다른 자리에 다시 나타난다 (3개 맵 공통) */
+async function moveGimmick(p, color) {
+  const gm = BOARD.map.gimmick;
+  const from = BOARD.gimmickIndex;
+  if (!gm || from === undefined || from < 0 || G.ended) return;
+  const spots = gimmickSpots(from);
+  if (!spots.length) return;
+  let pool = spots.filter(s => s.d >= 6);
+  if (!pool.length) pool = spots.filter(s => s.d >= 4);
+  if (!pool.length) pool = spots.filter(s => s.d >= 2);
+  if (!pool.length) pool = spots;
+  const dest = pool[Math.floor(RND() * pool.length)].i;
+  const oldTp = tilePos(from), newTp = tilePos(dest);
+  const col = color || '#ffe066';
+
+  /* 옛 자리: 빛무리와 함께 사라짐 */
+  burst(oldTp.x, oldTp.y, col, 28);
+  sfx('pop');
+  showToast(gm.name + ' 사용 완료', '기믹이 다른 자리로 옮겨갑니다', 1150);
+  await wait(480);
+
+  /* 자리 교체 — 옛 자리는 원래 발판으로, 새 자리는 기믹으로 */
+  BOARD.types[from] = BOARD.gimmickPrev || 'coin';
+  BOARD.gimmickPrev = BOARD.types[dest] === 'gimmick' ? 'coin' : BOARD.types[dest];
+  BOARD.types[dest] = 'gimmick';
+  BOARD.gimmickIndex = dest;
+  updateFooter();
+
+  /* 새 자리로 카메라 이동 — 토스트가 뜬 동안 새 자리를 보여준다 */
+  camFly(newTp.x, newTp.y, 1.34, 2100, .05);
+  await wait(780);
+  burst(newTp.x, newTp.y, col, 32);
+  sfx('star');
+  showToast('기믹 이동!', gm.name + ' — 저쪽에 새로 나타났어요', 1250);
+  await wait(1100);
+  camRelease();
+  CAM.k = .05;
+  focusPlayer(p);
+  await wait(200);
+}
+
 async function runGimmick(p) {
   const gm = BOARD.map.gimmick;
   if (!gm) return;
@@ -2677,6 +2730,7 @@ async function runGimmick(p) {
     gain(p, 5); cheer(p, 700);
     await wait(320);
   }
+  if (!G.ended) await moveGimmick(p, gf.color);
   updateHud(); updateFooter();
 }
 
@@ -2685,7 +2739,7 @@ async function runDuel(p) {
   const others = G.players.filter(o => o !== p);
   if (!others.length) return;
   const foe = pick(others);
-  const a = ri(1, 10) + allySteps(p), b = ri(1, 10) + allySteps(foe);
+  const a = ri(1, 6) + allySteps(p), b = ri(1, 6) + allySteps(foe);
   sfx('whistle');
   let title, sub;
   if (a >= b) {
@@ -2824,8 +2878,8 @@ function moveStar() {
 
 /* ---------- shop ---------- */
 const ITEMS = {
-  double: { name: '더블 주사위', short: '더블', cost: 12, desc: '주사위 2개(최대 20칸)', color: '#ff9f43' },
-  gold: { name: '황금 주사위', short: '황금', cost: 10, desc: '10~15칸 이동', color: '#f5c518' },
+  double: { name: '더블 주사위', short: '더블', cost: 12, desc: '주사위 2개(최대 12칸)', color: '#ff9f43' },
+  gold: { name: '황금 주사위', short: '황금', cost: 10, desc: '주사위 눈금 + 보너스 3칸 (4~9칸)', color: '#f5c518' },
   swap: { name: '위치 바꾸기', short: '교환', cost: 8, desc: '1등과 자리를 바꿉니다', color: '#7b8cff' }
 };
 
@@ -2943,7 +2997,7 @@ async function runEvent(p) {
 }
 
 /* ---------- dice animation ---------- */
-async function diceAnim(p, faces, title, golden) {
+async function diceAnim(p, faces, title, golden, extraSteps) {
   sfx('dice');
   G.diceFaces = faces; G.diceGolden = !!golden; G.diceShake = now();
   const top = p ? p.py - 150 : 0;
@@ -2969,7 +3023,7 @@ async function diceAnim(p, faces, title, golden) {
     }
     requestAnimationFrame(fr);
   });
-  if (title) showToast(title, faces.map(f => f + '칸').join(' + ') + ' 이동', 900);
+  if (title) showToast(title, faces.map(f => f + '칸').join(' + ') + (extraSteps ? ' + 보너스 ' + extraSteps + '칸' : '') + ' 이동', 900);
   await wait(title ? 460 : 300);
 }
 
