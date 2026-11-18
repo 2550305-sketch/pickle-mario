@@ -2190,8 +2190,8 @@ const GROUND_ART = {
   deck:  { top: ['#c99a63', '#a97a45'], edge: '#7d5528', cliff: ['#6a4a28', '#3f2a14'], rim: ['#8d6432', '#5d4220'], speck: '#e0b787' },
   stone: { top: ['#e6e0d0', '#cec6b2'], edge: '#a49a86', cliff: ['#9c9280', '#645c4c'], rim: ['#cbc3b0', '#9a9180'], speck: '#f4efdf' },
   basalt:{ top: ['#6b5750', '#3c2b27'], edge: '#241816', cliff: ['#3a2a25', '#1a1010'], rim: ['#4c3a33', '#2a1c18'], speck: '#8a6a58' },
-  ice:   { top: ['#eafaff', '#b9dcf0'], edge: '#7fb3d0', cliff: ['#8dc0d8', '#4f86a4'], rim: ['#cfeaf8', '#96c4dd'], speck: '#ffffff' },
-  snow:  { top: ['#ffffff', '#dbeefa'], edge: '#a9cde4', cliff: ['#b3d3e8', '#6f9bbb'], rim: ['#cfe6f4', '#9dc1d9'], speck: '#f2fbff' }
+  ice:   { top: ['#e8f8ff', '#a9d3ea'], edge: '#6ea3c2', cliff: ['#8dc0d8', '#437a99'], rim: ['#bfe0f2', '#7fa9c4'], speck: '#ffffff' },
+  snow:  { top: ['#fdfeff', '#c6e2f2'], edge: '#87b3cd', cliff: ['#a8cde2', '#5f8cab'], rim: ['#c2dced', '#84a8c0'], speck: '#f4fcff' }
 };
 
 /* =========================================================
@@ -2268,7 +2268,7 @@ function paintSea(c, map, seed) {
     }
   } else if (map.kind === 'ice') {
     const g = c.createLinearGradient(0, 0, W * .3, H);
-    g.addColorStop(0, '#7fb8d8'); g.addColorStop(.4, '#bfe4f4'); g.addColorStop(1, '#5d92b8');
+    g.addColorStop(0, '#5f9ec6'); g.addColorStop(.4, '#8fc6de'); g.addColorStop(1, '#38719b');
     c.fillStyle = g; c.fillRect(0, 0, W, H);
     /* 얼음판 균열 */
     for (let k = 0; k < 60; k++) {
@@ -3642,6 +3642,7 @@ function createGame(cfg) {
   G.rounds = cfg.rounds || 4;
   G.round = 1;
   G.minigameLog = []; G.mgOrder = []; G.lastMg = -1; G.bag = null; G.mgHistory = [];
+  G.bags = {}; G.mgModePlan = null; G.mgTeams = null; G.lastMgMode = null;
   G.fx = []; G.texts = []; G.icons = []; G.ended = false;
   G.move = null; G.movePreview = null; G.moveWaiter = null;
   buildBoard(G.mapId);
@@ -4698,7 +4699,8 @@ function buildModePlan(rounds) {
 function pickMinigame() {
   if (G.forcedMg) { const f = MINIGAMES.find(m => m.key === G.forcedMg); G.forcedMg = null; if (f) return f; }
   if (!G.mgModePlan) G.mgModePlan = buildModePlan(G.rounds);
-  const want = G.mgModePlan[(G.round - 1) % G.mgModePlan.length] || 'ffa';
+  let want = G.mgModePlan[(G.round - 1) % G.mgModePlan.length] || 'ffa';
+  if (G.players.length < 4) want = 'ffa';     /* 2~3명이면 팀전 대신 개인전 */
   const modeOf = m => m.team || 'ffa';
   G.bags = G.bags || {};
   const pickFrom = mode => {
