@@ -126,6 +126,21 @@ canvas{display:block}
 #btnMap.on{background:#ffe9a8}
 #btnMute{top:51px}
 #btnMute.muted{background:rgba(255,220,220,.96)}
+/* 길 측정 버튼 */
+#btnMeasure{position:absolute;left:8px;top:42px;width:auto;height:34px;padding:0 11px;border-radius:12px;
+  background:rgba(255,255,255,.94);box-shadow:0 3px 10px rgba(30,60,110,.22);
+  display:flex;align-items:center;justify-content:center;gap:4px;z-index:5;
+  font-size:11.5px;font-weight:900;color:#2c5c78;letter-spacing:-.2px;transition:.15s}
+#btnMeasure.on{background:linear-gradient(180deg,#ffe066,#ffb524);color:#5a3300;
+  box-shadow:0 4px 12px rgba(207,129,8,.42)}
+#btnMeasure:active{transform:scale(.95)}
+#measureBar{position:absolute;left:50%;bottom:12px;transform:translate(-50%,14px);z-index:6;
+  display:flex;align-items:center;gap:8px;padding:7px 13px;border-radius:14px;
+  background:rgba(14,28,46,.9);color:#d9f7ff;font-size:11.5px;font-weight:900;
+  box-shadow:0 8px 22px rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:.18s;
+  white-space:nowrap;max-width:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis}
+#measureBar.on{opacity:1;transform:translate(-50%,0)}
+#measureBar .mb-ic{color:#7ff0ff;font-size:13px}
 #turnTag{position:absolute;left:8px;top:8px;border-radius:11px;padding:5px 10px;font-size:11.5px;
   font-weight:900;color:#fff;background:#5ad35a;box-shadow:0 4px 12px rgba(0,0,0,.18);
   transition:.18s;pointer-events:none;max-width:calc(100% - 110px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -358,6 +373,29 @@ canvas{display:block}
 .wh-res.bad{color:#ff9b9b}
 .wh-tip{font-size:10.5px;font-weight:800;color:#9fb2d8}
 
+/* ============ 팀전 표시 ============ */
+.mo-mode{font-style:normal;font-size:11px;font-weight:900;color:#1b1330;background:#ffe066;border-radius:7px;padding:2px 7px;vertical-align:middle;letter-spacing:.4px}
+.mo-teams{display:flex;align-items:center;gap:6px;width:100%;max-width:320px;margin:1px 0}
+.mtm{flex:1;background:rgba(255,255,255,.08);border-radius:11px;padding:5px 7px;display:flex;flex-direction:column;gap:2px;border:2px solid transparent}
+.mtm.t-blue{border-color:#4a86ff;background:rgba(74,134,255,.18)}
+.mtm.t-red{border-color:#ff5364;background:rgba(255,83,100,.18)}
+.mtm .mt-l{font-size:10.5px;font-weight:900;color:#fff;display:flex;align-items:center;gap:4px}
+.mtm .mt-l small{font-size:9px;font-weight:800;opacity:.85}
+.mtm .mt-a{display:flex;gap:1px}
+.mtm .mt-n{font-size:9px;font-weight:800;color:#cfd6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mo-vs{font-size:11px;font-weight:900;color:#ffe066;letter-spacing:.5px}
+.mo-teamres{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:900}
+.mo-teamres .t-blue{color:#9dc0ff}
+.mo-teamres .t-red{color:#ffb3ba}
+.mo-teamres .mo-dash{color:rgba(255,255,255,.5);font-size:12px}
+.mrank.t-blue{border-left:3px solid #4a86ff}
+.mrank.t-red{border-left:3px solid #ff5364}
+.mrank .rnm small{display:block;font-size:9px;font-weight:800;opacity:.75}
+.pad.t-blue{box-shadow:inset 0 -5px 0 rgba(0,0,0,.24),inset 0 3px 0 rgba(255,255,255,.3),0 0 0 2px rgba(255,255,255,.55),0 5px 12px rgba(0,0,0,.28)}
+.pad.t-red{box-shadow:inset 0 -5px 0 rgba(0,0,0,.24),inset 0 3px 0 rgba(255,255,255,.3),0 0 0 2px rgba(255,255,255,.55),0 5px 12px rgba(0,0,0,.28)}
+.pad .pn .tdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#fff;margin-right:4px;opacity:.9}
+.rl-tag{font-style:normal;font-size:9.5px;font-weight:900;color:#1b1330;background:#8fe3a0;border-radius:5px;padding:1px 4px;margin-left:3px;vertical-align:middle}
+
 /* ============ MINI: 예시 영상(데모) + READY! ============ */
 .mo-demo{position:relative;width:100%;max-width:320px;height:150px;border-radius:14px;overflow:hidden;
   background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 2px rgba(255,255,255,.22),0 8px 20px rgba(0,0,0,.32);margin-top:2px}
@@ -391,7 +429,7 @@ canvas{display:block}
         <div class="row" style="margin-top:9px"><span class="row-l">라운드</span><div class="seg" id="segRounds"></div></div>
       </div>
       <button id="btnStart" class="big-btn">파티 시작!</button>
-      <div class="hint">보드 3종(169·177·206칸) · 발판은 8종 · 룰렛 · 운명의 버튼<br>시작하면 동료·대표 기믹·스타를 컷씬으로 소개<br>별은 누가 사면 새 자리로 이동</div>
+      <div class="hint">넓어진 섬 지도 3종(바다·다리·랜드마크) · 발판 8종 · 룰렛<br>카메라는 지금 차례인 사람을 따라가요 · 📏 길 측정 버튼<br>미니게임은 개인전 · 2대2 · 1대3 팀전</div>
     </div>
   </section>
 
@@ -411,9 +449,11 @@ canvas{display:block}
       <canvas id="cvBoard"></canvas>
       <button id="btnMap" class="float-btn" aria-label="전체 지도"></button>
       <button id="btnMute" class="float-btn" aria-label="소리"></button>
+      <button id="btnMeasure" aria-label="길 측정">📏 길 측정</button>
       <div id="turnTag">피클 차례</div>
       <div id="toast"><div class="tt"></div><div class="ts"></div></div>
       <div id="moveBar"><span class="mb-rem">남은 0칸</span><span class="mb-star"></span></div>
+      <div id="measureBar"><span class="mb-ic">📏</span><span id="measureTip">발판을 눌러 최단 칸수를 확인</span></div>
       <div id="moveCfm">
         <div><div class="mc-t">여기로 이동?</div><div class="mc-s">0칸 이동</div></div>
         <button id="btnGo">이동</button><button id="btnStay">취소</button>
@@ -779,24 +819,358 @@ function haptic(ms) {
   try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) { }
 }
 /* =========================================================
-   피클 파티 — 그리드 보드 (넓은 광장 + 좁은 다리), 카메라, 렌더
+   피클 파티 — 맵 설계도(섬 · 다리 · 랜드마크) → 격자 생성
+   ---------------------------------------------------------
+   마리오 파티 잼버리 '굼바 석호'처럼 넓은 바다 위에 섬들이 떠 있고,
+   섬 안은 길 선 없이 발판만 놓이고 섬 사이는 나무 다리·돌다리·부두로 잇는다.
+   설계도(PLAN)를 코드로 적고 여기서 격자 문자열로 펼친 뒤,
+   buildBoard(20_board.js)가 그 격자를 그대로 읽는다.
    ========================================================= */
 
-let MAP_W = 2900, MAP_H = 1700;
-const GRID = 134;                 // 타일 간격(월드 px) — 큼직한 판
-const MAP_MARGIN = 170;           // 맵 가장자리 여백
-const TILE_SIZE = GRID;
+const GRID = 134;          // 타일 간격(월드 px)
+const MAP_MARGIN = 200;    // 맵 가장자리 여백
 
-/* ---------- 맵 3종: 꼬불꼬불 얇은 사행로 + 성벽/장애물 ----------
-   '#' = 길, 'X' = 장애물 블록(바위·무너진 성벽·용암 기둥·빙벽, 통행 불가), '.' = 없음
-   모든 맵 100칸 이상, 1칸 폭 통로 중심 + 작은 2×2·3×3 회랑, 막다른 길 없음. */
+const cellKey = (c, r) => c + ',' + r;
+
+/* ---------- 섬 모양 ---------- */
+function inHole(is, dc, dr) {
+  const holes = is.holes;
+  if (!holes) return false;
+  for (let i = 0; i < holes.length; i++) {
+    const h = holes[i];
+    if (dc >= h.dx && dc < h.dx + h.w && dr >= h.dy && dr < h.dy + h.h) return true;
+  }
+  return false;
+}
+function insideIsland(is, dc, dr) {
+  if (dc < 0 || dr < 0 || dc >= is.w || dr >= is.h) return false;
+  if (inHole(is, dc, dr)) return false;
+  if (is.shape === 'rect') return true;
+  const cx = (is.w - 1) / 2, cy = (is.h - 1) / 2;
+  const rx = Math.max(.75, is.w / 2 - .02), ry = Math.max(.75, is.h / 2 - .02);
+  const nx = (dc - cx) / rx, ny = (dr - cy) / ry;
+  return nx * nx + ny * ny <= 1.04;
+}
+
+/* ---------- 두 점을 L자(계단)로 잇는 칸 목록 ---------- */
+function lCells(a, b, bend) {
+  const out = [];
+  let c = a[0], r = a[1];
+  const hFirst = (bend || 'h') === 'h';
+  const stepH = () => { while (c !== b[0]) { c += c < b[0] ? 1 : -1; out.push([c, r]); } };
+  const stepV = () => { while (r !== b[1]) { r += r < b[1] ? 1 : -1; out.push([c, r]); } };
+  if (hFirst) { stepH(); stepV(); } else { stepV(); stepH(); }
+  return out;
+}
+
+/* ---------- 설계도 → 격자 ----------
+   반환: { grid:[문쟈열], kind:{"c,r":'plaza'|'bridge'|'dock'}, ground:{"c,r":'grass'|...},
+           island:{"c,r":섬 인덱스}, bridges:[{cells, k}], auto:자동 보수 다리 수 } */
+function planToGrid(plan) {
+  const W = plan.cols, H = plan.rows;
+  const solid = new Uint8Array(W * H);
+  const kind = {}, ground = {}, islandOf = {};
+  const at = (c, r) => r * W + c;
+  const inB = (c, r) => c >= 0 && r >= 0 && c < W && r < H;
+
+  (plan.islands || []).forEach((is, idx) => {
+    for (let dr = 0; dr < is.h; dr++) {
+      for (let dc = 0; dc < is.w; dc++) {
+        if (!insideIsland(is, dc, dr)) continue;
+        const c = is.c + dc, r = is.r + dr;
+        if (!inB(c, r)) continue;
+        solid[at(c, r)] = 1;
+        kind[cellKey(c, r)] = 'plaza';
+        ground[cellKey(c, r)] = is.k || 'grass';
+        islandOf[cellKey(c, r)] = idx;
+      }
+    }
+  });
+
+  const bridges = [];
+  (plan.bridges || []).forEach(b => {
+    const cells = [];
+    for (let i = 0; i < b.pts.length - 1; i++) {
+      const seg = lCells(b.pts[i], b.pts[i + 1], (b.bend && i === 0) ? b.bend : 'h');
+      seg.forEach(q => cells.push(q));
+    }
+    cells.forEach(([c, r]) => {
+      if (!inB(c, r)) return;
+      if (solid[at(c, r)]) return;              // 섬 안이면 그대로 발판
+      solid[at(c, r)] = 1;
+      kind[cellKey(c, r)] = 'bridge';
+      ground[cellKey(c, r)] = b.k || 'wood';
+    });
+    bridges.push({ cells: cells, k: b.k || 'wood' });
+  });
+
+  /* ---------- 연결 상태 진단 (보수 전) ---------- */
+  const comps0 = gridComponents(solid, W, H);
+  const diag = comps0.map(comp => {
+    const isl = {};
+    comp.forEach(([c, r]) => { const k = islandOf[cellKey(c, r)]; if (k !== undefined) isl[k] = 1; });
+    return { cells: comp.length, islands: Object.keys(isl).map(Number) };
+  }).sort((a, b) => b.cells - a.cells);
+
+  /* ---------- 연결 보수: 끊긴 타일 덩어리를 가장 가까운 곳끼리 다리로 잇는다 ---------- */
+  let auto = 0;
+  for (let guard = 0; guard < 12; guard++) {
+    const comps = gridComponents(solid, W, H);
+    if (comps.length <= 1) break;
+    comps.sort((a, b) => b.length - a.length);
+    const main = comps[0];
+    let best = null;
+    for (let k = 1; k < comps.length; k++) {
+      comps[k].forEach(p => {
+        main.forEach(q => {
+          const d = Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]);
+          if (!best || d < best.d) best = { d: d, a: q, b: p };
+        });
+      });
+    }
+    if (!best) break;
+    const seg = lCells(best.a, best.b, Math.abs(best.b[0] - best.a[0]) < Math.abs(best.b[1] - best.a[1]) ? 'v' : 'h');
+    seg.forEach(([c, r]) => {
+      if (!inB(c, r)) return;
+      if (!solid[at(c, r)]) { solid[at(c, r)] = 1; kind[cellKey(c, r)] = 'bridge'; ground[cellKey(c, r)] = plan.healKind || 'wood'; }
+    });
+    bridges.push({ cells: seg, k: plan.healKind || 'wood' });
+    auto++;
+  }
+
+  const grid = [];
+  for (let r = 0; r < H; r++) {
+    let s = '';
+    for (let c = 0; c < W; c++) s += solid[at(c, r)] ? '#' : '.';
+    grid.push(s);
+  }
+  return { grid: grid, kind: kind, ground: ground, islandOf: islandOf, bridges: bridges, auto: auto, diag: diag };
+}
+
+function gridComponents(solid, W, H) {
+  const seen = new Uint8Array(W * H);
+  const comps = [];
+  for (let r = 0; r < H; r++) {
+    for (let c = 0; c < W; c++) {
+      const i = r * W + c;
+      if (!solid[i] || seen[i]) continue;
+      const q = [[c, r]]; seen[i] = 1;
+      const comp = [];
+      for (let h = 0; h < q.length; h++) {
+        const cur = q[h];
+        comp.push(cur);
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dc, dr]) => {
+          const nc = cur[0] + dc, nr = cur[1] + dr;
+          if (nc < 0 || nr < 0 || nc >= W || nr >= H) return;
+          const ni = nr * W + nc;
+          if (!solid[ni] || seen[ni]) return;
+          seen[ni] = 1; q.push([nc, nr]);
+        });
+      }
+      comps.push(comp);
+    }
+  }
+  return comps;
+}
+
+/* ---------- 설계도에서 좌표 집기 ---------- */
+function planCell(plan, spec, gen) {
+  /* spec: {is:섬인덱스, dx, dy} 또는 [c,r] */
+  if (!spec) return null;
+  if (Array.isArray(spec)) return spec.slice();
+  const is = (plan.islands || [])[spec.is];
+  if (!is) return null;
+  const c = is.c + (spec.dx === undefined ? Math.floor(is.w / 2) : spec.dx);
+  const r = is.r + (spec.dy === undefined ? Math.floor(is.h / 2) : spec.dy);
+  if (gen && gen.kind[cellKey(c, r)]) return [c, r];
+  /* 섬 모양 밖이면 가까운 발판으로 */
+  return nearestPlanCell(gen, c, r);
+}
+function nearestPlanCell(gen, c, r) {
+  let best = null, bd = 1e9;
+  Object.keys(gen.kind).forEach(k => {
+    const p = k.split(',').map(Number);
+    const d = Math.abs(p[0] - c) + Math.abs(p[1] - r);
+    if (d < bd) { bd = d; best = p; }
+  });
+  return best;
+}
+
+/* =========================================================
+   설계도 3종
+   ========================================================= */
+const MAP_PLANS = {
+  /* ---------- 초원 유적: 석호의 초록 섬들 + 거대 유적 신전 ---------- */
+  meadow: {
+    cols: 46, rows: 32, healKind: 'wood',
+    islands: [
+      { c: 2,  r: 23, w: 6, h: 5, k: 'sand',  shape: 'blob' },   /* 0 출발 해변 */
+      { c: 12, r: 24, w: 6, h: 5, k: 'grass', shape: 'blob' },   /* 1 남쪽 초원 */
+      { c: 22, r: 25, w: 7, h: 4, k: 'deck',  shape: 'rect' },   /* 2 부두 갑판 */
+      { c: 34, r: 23, w: 6, h: 5, k: 'grass', shape: 'blob' },   /* 3 남동 초원 */
+      { c: 15, r: 16, w: 6, h: 5, k: 'grass', shape: 'blob' },   /* 4 가운데 섬 */
+      { c: 26, r: 14, w: 6, h: 5, k: 'grass', shape: 'blob' },   /* 5 호수 섬 */
+      { c: 3,  r: 13, w: 6, h: 5, k: 'grass', shape: 'blob' },   /* 6 서쪽 섬 */
+      { c: 11, r: 10, w: 6, h: 5, k: 'grass', shape: 'blob' },   /* 7 북서 초원 */
+      { c: 21, r: 7,  w: 8, h: 5, k: 'stone', shape: 'rect', holes: [{ dx: 2, dy: 1, w: 4, h: 2 }] },   /* 8 신전 대지 */
+      { c: 33, r: 9,  w: 6, h: 5, k: 'grass', shape: 'blob' },   /* 9 북동 초원 */
+      { c: 2,  r: 4,  w: 5, h: 4, k: 'sand',  shape: 'blob' },   /* 10 북서 모래섬 */
+      { c: 12, r: 2,  w: 6, h: 4, k: 'grass', shape: 'blob' },   /* 11 북쪽 초원 */
+      { c: 30, r: 1,  w: 7, h: 4, k: 'grass', shape: 'blob' }    /* 12 북동 끝섬 */
+    ],
+    bridges: [
+      { pts: [[7, 25], [12, 25]], k: 'wood' },
+      { pts: [[17, 26], [22, 26]], k: 'dock' },
+      { pts: [[28, 27], [34, 27]], k: 'wood' },
+      { pts: [[4, 23], [4, 17]], k: 'wood' },
+      { pts: [[8, 14], [11, 14]], k: 'stone' },
+      { pts: [[17, 11], [21, 11]], k: 'stone' },
+      { pts: [[29, 10], [33, 10]], k: 'wood' },
+      { pts: [[15, 24], [15, 20]], k: 'wood' },
+      { pts: [[20, 17], [26, 17]], k: 'wood' },
+      { pts: [[27, 25], [27, 18]], k: 'dock' },
+      { pts: [[33, 13], [31, 14]], k: 'wood', bend: 'v' },
+      { pts: [[4, 7], [4, 13]], k: 'wood' },
+      { pts: [[6, 6], [11, 10]], k: 'stone' },
+      { pts: [[14, 5], [14, 10]], k: 'wood' },
+      { pts: [[18, 5], [21, 7]], k: 'stone', bend: 'v' },
+      { pts: [[31, 4], [28, 7]], k: 'wood', bend: 'v' },
+      { pts: [[33, 4], [33, 9]], k: 'wood' },
+      { pts: [[14, 18], [8, 17]], k: 'stone' }
+    ],
+    landmarks: [
+      { k: 'temple', is: 8, dx: 4, dy: 2 },
+      { k: 'hut', is: 1, dx: 4, dy: 1 },
+      { k: 'hut', is: 9, dx: 1, dy: 3 },
+      { k: 'ship', is: 2, dx: 5, dy: 3 },
+      { k: 'waterfall', is: 5, dx: 2, dy: 4 }
+    ],
+    place: {
+      start: { is: 0, dx: 1, dy: 2 },
+      star: { is: 8, dx: 4, dy: 3 },
+      gimmick: { is: 8, dx: 1, dy: 3 },
+      shop: [{ is: 1, dx: 2, dy: 2 }, { is: 9, dx: 3, dy: 1 }],
+      ally: [{ is: 6, dx: 2, dy: 2 }, { is: 4, dx: 4, dy: 1 }]
+    }
+  },
+
+  /* ---------- 용암 성곽: 현무암 대지 + 거대 화산 ---------- */
+  volcano: {
+    cols: 44, rows: 30, healKind: 'stone',
+    islands: [
+      { c: 2,  r: 21, w: 6, h: 5, k: 'basalt', shape: 'blob' },
+      { c: 12, r: 22, w: 6, h: 5, k: 'basalt', shape: 'blob' },
+      { c: 22, r: 23, w: 7, h: 4, k: 'deck',   shape: 'rect' },
+      { c: 33, r: 21, w: 6, h: 5, k: 'basalt', shape: 'blob' },
+      { c: 14, r: 15, w: 6, h: 5, k: 'basalt', shape: 'blob' },
+      { c: 25, r: 13, w: 6, h: 5, k: 'basalt', shape: 'blob' },
+      { c: 2,  r: 12, w: 6, h: 5, k: 'basalt', shape: 'blob' },
+      { c: 10, r: 9,  w: 6, h: 5, k: 'basalt', shape: 'blob' },
+      { c: 21, r: 6,  w: 9, h: 5, k: 'stone',  shape: 'rect', holes: [{ dx: 2, dy: 1, w: 5, h: 2 }] },
+      { c: 32, r: 8,  w: 6, h: 5, k: 'basalt', shape: 'blob' },
+      { c: 2,  r: 3,  w: 5, h: 4, k: 'basalt', shape: 'blob' },
+      { c: 11, r: 1,  w: 6, h: 4, k: 'basalt', shape: 'blob' },
+      { c: 29, r: 1,  w: 7, h: 4, k: 'basalt', shape: 'blob' }
+    ],
+    bridges: [
+      { pts: [[7, 23], [12, 23]], k: 'stone' },
+      { pts: [[17, 24], [22, 24]], k: 'stone' },
+      { pts: [[28, 25], [33, 25]], k: 'stone' },
+      { pts: [[4, 21], [4, 16]], k: 'stone' },
+      { pts: [[7, 13], [10, 13]], k: 'stone' },
+      { pts: [[15, 10], [21, 10]], k: 'stone' },
+      { pts: [[29, 9], [32, 9]], k: 'stone' },
+      { pts: [[15, 22], [15, 19]], k: 'stone' },
+      { pts: [[19, 16], [25, 16]], k: 'stone' },
+      { pts: [[27, 23], [27, 17]], k: 'stone' },
+      { pts: [[31, 12], [30, 15]], k: 'stone', bend: 'v' },
+      { pts: [[4, 6], [4, 12]], k: 'stone' },
+      { pts: [[6, 5], [10, 9]], k: 'stone' },
+      { pts: [[13, 4], [13, 9]], k: 'stone' },
+      { pts: [[17, 4], [21, 6]], k: 'stone', bend: 'v' },
+      { pts: [[30, 4], [29, 6]], k: 'stone', bend: 'v' },
+      { pts: [[32, 3], [32, 8]], k: 'stone' },
+      { pts: [[13, 17], [7, 16]], k: 'stone' }
+    ],
+    landmarks: [
+      { k: 'volcano', is: 8, dx: 4, dy: 1 },
+      { k: 'lavaPool', is: 5, dx: 3, dy: 4 },
+      { k: 'hut', is: 1, dx: 1, dy: 1 },
+      { k: 'obelisk', is: 6, dx: 3, dy: 1 }
+    ],
+    place: {
+      start: { is: 0, dx: 1, dy: 2 },
+      star: { is: 8, dx: 4, dy: 3 },
+      gimmick: { is: 8, dx: 1, dy: 2 },
+      shop: [{ is: 3, dx: 3, dy: 2 }, { is: 9, dx: 2, dy: 2 }],
+      ally: [{ is: 1, dx: 4, dy: 2 }, { is: 5, dx: 3, dy: 2 }]
+    }
+  },
+
+  /* ---------- 얼음 빙하: 유빙 사이 빙하 교각 + 거대 빙산 ---------- */
+  ice: {
+    cols: 46, rows: 32, healKind: 'ice',
+    islands: [
+      { c: 2,  r: 22, w: 6, h: 5, k: 'snow',  shape: 'blob' },
+      { c: 13, r: 24, w: 6, h: 5, k: 'snow',  shape: 'blob' },
+      { c: 23, r: 25, w: 7, h: 4, k: 'deck',  shape: 'rect' },
+      { c: 35, r: 22, w: 6, h: 5, k: 'snow',  shape: 'blob' },
+      { c: 16, r: 16, w: 6, h: 5, k: 'snow',  shape: 'blob' },
+      { c: 27, r: 14, w: 6, h: 5, k: 'snow',  shape: 'blob' },
+      { c: 3,  r: 12, w: 6, h: 5, k: 'snow',  shape: 'blob' },
+      { c: 12, r: 9,  w: 6, h: 5, k: 'snow',  shape: 'blob' },
+      { c: 23, r: 6,  w: 9, h: 5, k: 'ice',   shape: 'rect', holes: [{ dx: 2, dy: 1, w: 5, h: 2 }] },
+      { c: 35, r: 8,  w: 6, h: 5, k: 'snow',  shape: 'blob' },
+      { c: 2,  r: 3,  w: 5, h: 4, k: 'snow',  shape: 'blob' },
+      { c: 13, r: 1,  w: 6, h: 4, k: 'snow',  shape: 'blob' },
+      { c: 31, r: 1,  w: 7, h: 4, k: 'snow',  shape: 'blob' }
+    ],
+    bridges: [
+      { pts: [[7, 24], [13, 24]], k: 'ice' },
+      { pts: [[18, 26], [23, 26]], k: 'ice' },
+      { pts: [[29, 27], [35, 27]], k: 'ice' },
+      { pts: [[4, 22], [4, 16]], k: 'ice' },
+      { pts: [[8, 13], [12, 13]], k: 'ice' },
+      { pts: [[17, 10], [23, 10]], k: 'ice' },
+      { pts: [[31, 9], [35, 9]], k: 'ice' },
+      { pts: [[16, 24], [16, 20]], k: 'ice' },
+      { pts: [[21, 17], [27, 17]], k: 'ice' },
+      { pts: [[28, 25], [28, 18]], k: 'ice' },
+      { pts: [[34, 12], [32, 14]], k: 'ice', bend: 'v' },
+      { pts: [[4, 6], [4, 12]], k: 'ice' },
+      { pts: [[7, 5], [12, 9]], k: 'ice' },
+      { pts: [[15, 4], [15, 9]], k: 'ice' },
+      { pts: [[19, 4], [23, 6]], k: 'ice', bend: 'v' },
+      { pts: [[32, 4], [30, 6]], k: 'ice', bend: 'v' },
+      { pts: [[34, 3], [34, 8]], k: 'ice' },
+      { pts: [[15, 18], [9, 16]], k: 'ice' }
+    ],
+    landmarks: [
+      { k: 'iceberg', is: 8, dx: 4, dy: 1 },
+      { k: 'hut', is: 1, dx: 1, dy: 1 },
+      { k: 'crystal', is: 5, dx: 4, dy: 3 },
+      { k: 'snowman', is: 3, dx: 4, dy: 3 }
+    ],
+    place: {
+      start: { is: 0, dx: 1, dy: 2 },
+      star: { is: 8, dx: 4, dy: 3 },
+      gimmick: { is: 8, dx: 1, dy: 2 },
+      shop: [{ is: 1, dx: 2, dy: 2 }, { is: 9, dx: 2, dy: 2 }],
+      ally: [{ is: 6, dx: 2, dy: 2 }, { is: 4, dx: 4, dy: 1 }]
+    }
+  }
+};
+
+/* =========================================================
+   MAPS — 화면·규칙 메타데이터 + 설계도 펼치기
+   ========================================================= */
 const MAPS = [
   {
     id: 'meadow', name: '초원 유적', badge: '기본',
-    desc: '초원을 가로지르는 사행 미로 169칸 · 황금빛 유적',
+    desc: '석호 위 초록 섬 13곳 · 나무 다리와 거대 유적 신전',
     gimmicks: ['고대 워프 게이트', '운명의 버튼', '동료 영입'],
     kind: 'meadow', tint: ['#9be07a'],
-    bg: ['#cfe9b0', '#7cbb87'],
+    bg: ['#b9e6d8', '#3f8fbf'],
     stone: ['#ded8c8', '#c2b8a4', '#8d8370'],
     plate: '#9c917c', plate2: '#69604f', rail: '#ded5bd',
     path: { edge: '#69604f', base: '#efe6cf', dash: '#ffcf8a' },
@@ -806,45 +1180,24 @@ const MAPS = [
       { name: '호수 숲', sky: '#9fdcc4' },
       { name: '무지개 고원', sky: '#c9b8ff' }
     ],
-    grid: [
-      '...........................',
-      '...........................',
-      '..#####.#################..',
-      '..#X#.#X#.#X#XX.#.#...#X#..',
-      '..#.#############.#######..',
-      '..#.##....XX......#X#X..#..',
-      '..#################X###X#..',
-      '......#..XX.XX##.X..X.#.#..',
-      '..###.#####X###########X#..',
-      '..#.#.#.#X#.#.#.#.#.#X#.#..',
-      '..#####.#####.#########.#..',
-      '..#..X#.#X..#.#.#XX.###.#..',
-      '..#####X#################..',
-      '...........................',
-      '...........................'
-    ],
     patterns: [
       ['coin', 'coin', 'event', 'coin'],
       ['coin', 'event', 'coin', 'trap'],
       ['coin', 'event', 'trap', 'coin'],
       ['coin', 'event', 'coin', 'trap']
     ],
-    start: [2, 2], starStart: [24, 12],
-    specials: {
-      shop: [[24, 2], [6, 10]],
-      ally: [[4, 6], [20, 12]]
-    },
     bridgeTypes: ['coin', 'event', 'coin', 'trap', 'coin', 'ally', 'coin', 'trap'],
-    fateCount: 2,
-    gimmick: { at: [10, 2], name: '고대 워프 게이트', icon: 'gate', kind: 'gate',
-      desc: '별이 있는 쪽으로 순간이동 + 코인 8 · 1회 사용 후 자리 이동' }
+    fateCount: 3,
+    gimmick: { name: '고대 워프 게이트', icon: 'gate', kind: 'gate',
+      desc: '별이 있는 쪽으로 순간이동 + 코인 8 · 1회 사용 후 자리 이동' },
+    plan: MAP_PLANS.meadow
   },
   {
     id: 'volcano', name: '용암 성곽', badge: '고위험',
-    desc: '동심 성벽 고리 177칸 · 대분화 용암 밸브',
+    desc: '용암 바다 위 현무암 대지 13곳 · 돌다리와 대화산',
     gimmicks: ['대분화 용암 밸브', '운명의 버튼', '화산 대폭발'],
     kind: 'volcano', tint: ['#c96a3e'],
-    bg: ['#3a1c1e', '#8f3520'],
+    bg: ['#3a1c1e', '#a83a1c'],
     stone: ['#a1897a', '#7d655a', '#4e3a31'],
     plate: '#3a2320', plate2: '#211311', rail: '#7b4a34',
     path: { edge: '#2a1512', base: '#5c3a30', dash: '#ff9f43' },
@@ -854,53 +1207,24 @@ const MAPS = [
       { name: '용암 회랑', sky: '#a8321c' },
       { name: '분화구 심장', sky: '#d1441f' }
     ],
-    grid: [
-      '.................................',
-      '.................................',
-      '..#############################..',
-      '..#.............#.............#..',
-      '..#.............#.............#..',
-      '..#.............#.............#..',
-      '..#.......#############.......#..',
-      '..#.......#.....#.....#.......#..',
-      '..#.......#.....#.....#.......#..',
-      '..#.......#.....#.....#.......#..',
-      '..##......#...#####...#.....###..',
-      '..##......#...#...#...#.....###..',
-      '..#.......#############.......#..',
-      '..#.......#...#.#X#...#.......#..',
-      '..#.......#...#.###...#.......#..',
-      '..#.......#...#...#...#.......#..',
-      '..#.......#####.#######.......#..',
-      '..#.............#.............#..',
-      '..#.............#.............#..',
-      '..#.............#.............#..',
-      '..#############################..',
-      '.................................',
-      '.................................'
-    ],
     patterns: [
       ['coin', 'trap', 'event', 'coin'],
       ['coin', 'trap', 'event', 'coin'],
       ['coin', 'event', 'trap', 'coin'],
       ['coin', 'trap', 'event', 'trap']
     ],
-    start: [2, 2], starStart: [30, 20],
-    specials: {
-      shop: [[16, 2], [2, 20]],
-      ally: [[2, 4], [22, 12]]
-    },
     bridgeTypes: ['coin', 'event', 'coin', 'trap', 'coin', 'ally', 'trap', 'coin'],
     fateCount: 3,
-    gimmick: { at: [16, 12], name: '대분화 용암 밸브', icon: 'valve', kind: 'valve',
-      desc: '용암이 폭발! 상대 코인 -3, 나는 +8 · 1회 사용 후 자리 이동' }
+    gimmick: { name: '대분화 용암 밸브', icon: 'valve', kind: 'valve',
+      desc: '용암이 폭발! 상대 코인 -3, 나는 +8 · 1회 사용 후 자리 이동' },
+    plan: MAP_PLANS.volcano
   },
   {
     id: 'ice', name: '얼음 빙하', badge: '변덕',
-    desc: '두 섬과 좁은 다리 206칸 · 빙하 대이동',
+    desc: '얼음 바다 위 유빙 13곳 · 빙하 교각과 거대 빙산',
     gimmicks: ['빙하 대이동', '운명의 버튼', '빙하의 심판'],
     kind: 'ice', tint: ['#a8e4ff'],
-    bg: ['#eaf9ff', '#93c4e2'],
+    bg: ['#d8f2ff', '#6b9fc4'],
     stone: ['#eef8ff', '#c9dbe8', '#7c9db1'],
     plate: '#7fb0cc', plate2: '#4f86a8', rail: '#dff4ff',
     path: { edge: '#4f86a8', base: '#eaf9ff', dash: '#9fd8ff' },
@@ -910,57 +1234,57 @@ const MAPS = [
       { name: '얼음 동굴', sky: '#c9d8ff' },
       { name: '오로라 언덕', sky: '#b6f0e0' }
     ],
-    grid: [
-      '.........................',
-      '.........................',
-      '..#####################..',
-      '..#X#.##....XX.X.X.X.X#..',
-      '..#X#.#################..',
-      '..#.#.......#.#X#.#.#X#..',
-      '..#X#########X#.#######..',
-      '..#.#...XX..#.#X#...#.#..',
-      '..#############X#######..',
-      '........#.........#......',
-      '........#.........#......',
-      '........#.........#......',
-      '........#.........#......',
-      '........#.........#......',
-      '..#######X#######.#####..',
-      '..#.....#.#.#.#.#.###X#..',
-      '..#.#####X#.#.###X#X#.#..',
-      '..#.#..XX.#.#.#.#X#.#.#..',
-      '..#########.#X#####.###..',
-      '..#..X#...#X#.#...#.#.#..',
-      '..#########.###########..',
-      '.........................',
-      '.........................'
-    ],
     patterns: [
       ['coin', 'event', 'coin', 'trap'],
       ['coin', 'event', 'trap', 'coin'],
       ['coin', 'event', 'coin', 'trap'],
       ['coin', 'event', 'trap', 'coin']
     ],
-    start: [2, 2], starStart: [22, 20],
-    specials: {
-      shop: [[22, 2], [2, 20]],
-      ally: [[6, 4], [18, 18]]
-    },
     bridgeTypes: ['coin', 'event', 'coin', 'trap', 'coin', 'ally', 'coin', 'trap'],
     fateCount: 3,
-    gimmick: { at: [20, 4], name: '빙하 대이동', icon: 'glacier', kind: 'glacier',
-      desc: '빙판을 타고 별 쪽으로 6칸 + 코인 · 1회 사용 후 자리 이동' }
+    gimmick: { name: '빙하 대이동', icon: 'glacier', kind: 'glacier',
+      desc: '빙판을 타고 별 쪽으로 6칸 + 코인 · 1회 사용 후 자리 이동' },
+    plan: MAP_PLANS.ice
   }
 ];
 
-
 MAPS.forEach(m => {
-  m.n = m.grid.reduce((s, row) => s + (row.split('#').length - 1), 0);
+  const gen = planToGrid(m.plan);
+  m.grid = gen.grid;
+  m.kindMap = gen.kind;
+  m.groundMap = gen.ground;
+  m.islandMap = gen.islandOf;
+  m.bridges = gen.bridges;
+  m.autoBridges = gen.auto;
+  m.diag = gen.diag;
+
+  /* 좌표 채우기 */
+  m.start = planCell(m.plan, m.plan.place.start, gen);
+  m.starStart = planCell(m.plan, m.plan.place.star, gen);
+  m.gimmick.at = planCell(m.plan, m.plan.place.gimmick, gen);
+  m.specials = {};
+  Object.keys(m.plan.place).forEach(k => {
+    if (k === 'start' || k === 'star' || k === 'gimmick') return;
+    m.specials[k] = (m.plan.place[k] || []).map(sp => planCell(m.plan, sp, gen)).filter(Boolean);
+  });
+  m.landmarkPos = (m.plan.landmarks || []).map(l => {
+    const p = planCell(m.plan, l, gen) || [0, 0];
+    return { k: l.k, c: p[0], r: p[1] };
+  });
+
+  /* 칸 수·크기 */
   let C = 0; m.grid.forEach(r => { C = Math.max(C, r.length); });
   m.cols = C; m.rows = m.grid.length;
+  m.n = m.grid.reduce((s, row) => s + (row.split('#').length - 1), 0);
   m.w = MAP_MARGIN * 2 + C * GRID;
   m.h = MAP_MARGIN * 2 + m.grid.length * GRID;
 });
+/* =========================================================
+   피클 파티 — 그리드 보드 (넓은 광장 + 좁은 다리), 카메라, 렌더
+   ========================================================= */
+
+let MAP_W = 2900, MAP_H = 1700;
+const TILE_SIZE = GRID;
 
 /* ---------- 발판 종류: 돌 판 위 원형 배지 색 + 아이콘 + 설명 ----------
    3차 개편: 자잘한 발판(보석·쉼터·부스트 등)은 모두 물음표 룰렛 안으로,
@@ -1044,8 +1368,11 @@ function buildBoard(mapId) {
       }
       if (row[c] !== '#') continue;
       const i = tiles.length;
-      tiles.push({ i, c, r, x: MAP_MARGIN + c * GRID + GRID / 2, y: MAP_MARGIN + r * GRID + GRID / 2, deg: 0 });
-      idx[c + ',' + r] = i;
+      const key = c + ',' + r;
+      const kind = (map.kindMap && map.kindMap[key]) || 'plaza';
+      const gnd = (map.groundMap && map.groundMap[key]) || 'grass';
+      tiles.push({ i, c, r, x: MAP_MARGIN + c * GRID + GRID / 2, y: MAP_MARGIN + r * GRID + GRID / 2, deg: 0, k: kind, ground: gnd });
+      idx[key] = i;
     }
   }
   BOARD.walls = walls;
@@ -1071,13 +1398,26 @@ function buildBoard(mapId) {
   if (start === undefined) { console.warn('[board] start 좌표가 타일이 아님:', map.start); start = 0; }
   BOARD.start = start;
 
-  /* 좌표 → 인덱스 (없으면 경고 후 무시) */
+  /* 좌표 → 인덱스 (없으면 가장 가까운 발판으로) */
+  const nearestTile = (c, r) => {
+    let best = -1, bd = 1e9;
+    for (let i = 0; i < tiles.length; i++) {
+      const d = Math.abs(tiles[i].c - c) + Math.abs(tiles[i].r - r);
+      if (d < bd) { bd = d; best = i; }
+    }
+    return best;
+  };
   const put = (type, cr) => {
-    const j = idx[cr[0] + ',' + cr[1]];
-    if (j === undefined) { console.warn('[board] ' + map.id + ' 좌표 없음:', type, cr); return -1; }
+    let j = idx[cr[0] + ',' + cr[1]];
+    if (j === undefined) {
+      j = nearestTile(cr[0], cr[1]);
+      console.warn('[board] ' + map.id + ' 좌표 보정:', type, cr, '→', j >= 0 ? [tiles[j].c, tiles[j].r] : 'none');
+    }
+    if (j === undefined || j < 0) return -1;
     BOARD.types[j] = type;
     return j;
   };
+  BOARD.nearestTile = nearestTile;
 
   /* BFS 순서로 구역·타일 종류 배정 */
   const first = bfsFrom(start);
@@ -1218,6 +1558,15 @@ function buildBoard(mapId) {
 
   buildDecor(map);
   BOARD.sprites = buildSprites();
+
+  /* 연결 확인: 시작점에서 갈 수 없는 발판이 있으면 알린다 */
+  const reach = bfsFrom(start).dist;
+  let orphan = 0;
+  for (let i = 0; i < n; i++) if (reach[i] < 0) orphan++;
+  BOARD.orphan = orphan;
+  if (orphan) console.warn('[board] ' + map.id + ' 고립 발판 ' + orphan + '칸');
+  BOARD.bridgeCount = tiles.filter(t => t.k === 'bridge').length;
+  BOARD.plazaCount = n - BOARD.bridgeCount;
 }
 
 function tilePos(i) {
@@ -1228,175 +1577,14 @@ function tileType(i) { return BOARD.types[clamp(i, 0, BOARD.n - 1)]; }
 function zoneOfTile(i) { return BOARD.map.zones[BOARD.zoneOf[clamp(i, 0, BOARD.n - 1)]] || BOARD.map.zones[0]; }
 function neighborOf(i) { return BOARD.nb[i] || []; }
 
-/* ---------- decor ---------- */
+/* ---------- decor: 24_decor.js 가 바다·섬·다리·소품을 그린다 ---------- */
 function buildDecor(map) {
-  const S = .55;
-  const cv = document.createElement('canvas');
-  cv.width = Math.round(MAP_W * S); cv.height = Math.round(MAP_H * S);
-  const c = cv.getContext('2d');
-  c.scale(S, S);
-  const rr = mulberry32(4242 + map.grid.length);
-
-  const g = c.createLinearGradient(0, 0, MAP_W * .2, MAP_H);
-  g.addColorStop(0, map.bg[0]); g.addColorStop(1, map.bg[1]);
-  c.fillStyle = g; c.fillRect(0, 0, MAP_W, MAP_H);
-
-  /* 구역별 옅은 색 번짐 (광장 분위기) */
-  map.zones.forEach((z, zi) => {
-    const own = BOARD.tiles.filter(t => BOARD.zoneOf[t.i] === zi);
-    if (!own.length) return;
-    c.globalAlpha = .17;
-    c.fillStyle = z.sky;
-    own.forEach(t => {
-      c.beginPath(); c.arc(t.x, t.y, GRID * 1.5, 0, TAU); c.fill();
-    });
-    c.globalAlpha = 1;
-  });
-
-  if (map.kind === 'volcano') {
-    /* 분화구와 균열 */
-    const cx = MAP_W / 2, cy = MAP_H / 2;
-    const rg = c.createRadialGradient(cx, cy, 40, cx, cy, GRID * 6.5);
-    rg.addColorStop(0, 'rgba(255,170,60,.55)'); rg.addColorStop(.5, 'rgba(230,70,20,.30)');
-    rg.addColorStop(1, 'rgba(120,30,10,0)');
-    c.fillStyle = rg;
-    c.beginPath(); c.arc(cx, cy, GRID * 6.5, 0, TAU); c.fill();
-    for (let k = 0; k < 90; k++) {
-      const x = rr() * MAP_W, y = rr() * MAP_H;
-      if (rr() < .35) {
-        c.strokeStyle = 'rgba(255,120,30,' + (.18 + rr() * .3) + ')';
-        c.lineWidth = 2 + rr() * 5;
-        c.beginPath(); c.moveTo(x, y);
-        let px = x, py = y;
-        for (let s = 0; s < 4; s++) { px += (rr() - .5) * 120; py += (rr() - .5) * 120; c.lineTo(px, py); }
-        c.stroke();
-      } else {
-        c.fillStyle = 'rgba(20,10,10,' + (.2 + rr() * .3) + ')';
-        c.beginPath(); c.ellipse(x, y, 30 + rr() * 70, 18 + rr() * 40, rr() * 3, 0, TAU); c.fill();
-      }
-    }
-  } else if (map.kind === 'ice') {
-    for (let k = 0; k < 26; k++) {
-      const x = rr() * MAP_W, y = rr() * MAP_H;
-      c.fillStyle = 'rgba(255,255,255,' + (.18 + rr() * .3) + ')';
-      c.beginPath(); c.ellipse(x, y, 90 + rr() * 170, 40 + rr() * 70, rr() * 3, 0, TAU); c.fill();
-      c.strokeStyle = 'rgba(150,210,240,.4)'; c.lineWidth = 1.6;
-      c.beginPath(); c.ellipse(x, y, 90 + rr() * 170, 40 + rr() * 70, rr() * 3, 0, TAU); c.stroke();
-    }
-    c.fillStyle = 'rgba(180,240,220,.12)';
-    c.fillRect(0, 0, MAP_W, MAP_H * .3);
-  } else {
-    for (let k = 0; k < 12; k++) {
-      const x = rr() * MAP_W, y = rr() * MAP_H;
-      c.fillStyle = 'rgba(120,200,255,.26)';
-      c.beginPath(); c.ellipse(x, y, 90 + rr() * 150, 44 + rr() * 90, rr() * 3, 0, TAU); c.fill();
-    }
-    for (let k = 0; k < 22; k++) {
-      const x = rr() * MAP_W, y = rr() * MAP_H;
-      c.fillStyle = 'rgba(255,255,255,.18)';
-      c.beginPath(); c.ellipse(x, y, 170 + rr() * 190, 70 + rr() * 90, 0, 0, TAU); c.fill();
-    }
-  }
-
-  /* 길에서 떨어진 곳에 장식 — 좁은 회랑 사이 빈 칸에도 놓이도록 반경 판정 */
-  const far = (x, y) => {
-    const cc = Math.round((x - MAP_MARGIN - GRID / 2) / GRID), rr2 = Math.round((y - MAP_MARGIN - GRID / 2) / GRID);
-    for (let dc = -2; dc <= 2; dc++) for (let dr = -2; dr <= 2; dr++) {
-      const j = BOARD.idx[(cc + dc) + ',' + (rr2 + dr)];
-      if (j === undefined) continue;
-      const t = BOARD.tiles[j];
-      if (Math.hypot(t.x - x, t.y - y) < GRID * .66) return false;
-    }
-    return true;
-  };
-  const count = Math.round(MAP_W * MAP_H / 46000);
-  for (let k = 0; k < count; k++) {
-    let x, y, tries = 0;
-    do { x = 24 + rr() * (MAP_W - 48); y = 24 + rr() * (MAP_H - 48); tries++; } while (!far(x, y) && tries < 40);
-    if (tries >= 40) continue;
-    drawDecorItem(c, map.kind, x, y, .7 + rr() * .7, rr);
-  }
-  BOARD.decor = { cv, S };
-}
-
-function drawDecorItem(c, kind, x, y, s, rr) {
-  if (kind === 'meadow') {
-    const t = rr();
-    if (t < .42) {
-      c.fillStyle = '#a9743f'; c.fillRect(x - 7 * s, y - 4 * s, 14 * s, 46 * s);
-      c.fillStyle = '#6cc24a';
-      c.beginPath(); c.arc(x, y - 24 * s, 30 * s, 0, TAU); c.fill();
-      c.beginPath(); c.arc(x - 24 * s, y - 6 * s, 22 * s, 0, TAU); c.fill();
-      c.beginPath(); c.arc(x + 24 * s, y - 6 * s, 22 * s, 0, TAU); c.fill();
-      c.fillStyle = '#8ede63';
-      c.beginPath(); c.arc(x - 8 * s, y - 32 * s, 15 * s, 0, TAU); c.fill();
-    } else if (t < .68) {
-      c.fillStyle = '#79cf52';
-      c.beginPath(); c.ellipse(x, y, 34 * s, 21 * s, 0, 0, TAU); c.fill();
-      c.fillStyle = '#93e06b';
-      c.beginPath(); c.ellipse(x - 10 * s, y - 8 * s, 18 * s, 11 * s, 0, 0, TAU); c.fill();
-    } else if (t < .9) {
-      c.fillStyle = '#7fbf55'; c.fillRect(x - 2 * s, y - 2 * s, 4 * s, 18 * s);
-      c.fillStyle = ['#ff8fb0', '#ffd94a', '#ff9f43', '#c68cff'][Math.floor(rr() * 4)];
-      for (let i = 0; i < 5; i++) {
-        const a = i / 5 * TAU;
-        c.beginPath(); c.arc(x + Math.cos(a) * 7 * s, y - 4 * s + Math.sin(a) * 7 * s, 5 * s, 0, TAU); c.fill();
-      }
-      c.fillStyle = '#fff6c2'; c.beginPath(); c.arc(x, y - 4 * s, 3.2 * s, 0, TAU); c.fill();
-    } else {
-      c.fillStyle = 'rgba(120,200,255,.5)';
-      c.beginPath(); c.ellipse(x, y, 62 * s, 30 * s, 0, 0, TAU); c.fill();
-      c.fillStyle = 'rgba(255,255,255,.4)';
-      c.beginPath(); c.ellipse(x - 14 * s, y - 8 * s, 22 * s, 8 * s, 0, 0, TAU); c.fill();
-    }
-  } else if (kind === 'volcano') {
-    const t = rr();
-    if (t < .38) {
-      c.fillStyle = 'rgba(255,120,20,.8)';
-      c.beginPath(); c.ellipse(x, y, 58 * s, 28 * s, 0, 0, TAU); c.fill();
-      c.fillStyle = 'rgba(255,220,80,.7)';
-      c.beginPath(); c.ellipse(x - 10 * s, y - 4 * s, 24 * s, 10 * s, 0, 0, TAU); c.fill();
-      c.strokeStyle = 'rgba(90,20,10,.5)'; c.lineWidth = 5 * s;
-      c.beginPath(); c.ellipse(x, y, 58 * s, 28 * s, 0, 0, TAU); c.stroke();
-    } else if (t < .7) {
-      c.fillStyle = '#4a2b28';
-      c.beginPath(); c.moveTo(x - 38 * s, y + 22 * s); c.lineTo(x - 16 * s, y - 30 * s);
-      c.lineTo(x + 12 * s, y - 20 * s); c.lineTo(x + 34 * s, y + 22 * s); c.closePath(); c.fill();
-      c.fillStyle = '#6a3c34';
-      c.beginPath(); c.moveTo(x - 16 * s, y - 30 * s); c.lineTo(x + 12 * s, y - 20 * s); c.lineTo(x, y + 8 * s); c.closePath(); c.fill();
-    } else if (t < .88) {
-      c.fillStyle = '#3a231f'; c.fillRect(x - 5 * s, y, 10 * s, 36 * s);
-      c.fillStyle = 'rgba(255,150,40,.95)';
-      c.beginPath(); c.ellipse(x, y - 8 * s, 13 * s, 20 * s, 0, 0, TAU); c.fill();
-      c.fillStyle = 'rgba(255,240,150,.95)';
-      c.beginPath(); c.ellipse(x, y - 4 * s, 6 * s, 11 * s, 0, 0, TAU); c.fill();
-    } else {
-      c.strokeStyle = 'rgba(230,220,200,.55)'; c.lineWidth = 6 * s; c.lineCap = 'round';
-      c.beginPath(); c.moveTo(x - 20 * s, y - 12 * s); c.lineTo(x + 20 * s, y + 12 * s); c.stroke();
-      c.beginPath(); c.moveTo(x - 20 * s, y + 12 * s); c.lineTo(x + 20 * s, y - 12 * s); c.stroke();
-    }
-  } else {
-    const t = rr();
-    if (t < .46) {
-      c.fillStyle = 'rgba(150,225,255,.85)';
-      const h = 46 * s, w = 24 * s;
-      c.beginPath(); c.moveTo(x, y - h); c.lineTo(x + w, y - h * .3);
-      c.lineTo(x + w * .6, y + 20 * s); c.lineTo(x - w * .6, y + 20 * s);
-      c.lineTo(x - w, y - h * .3); c.closePath(); c.fill();
-      c.fillStyle = 'rgba(255,255,255,.55)';
-      c.beginPath(); c.moveTo(x, y - h); c.lineTo(x + w * .5, y - h * .2); c.lineTo(x, y + 10 * s); c.closePath(); c.fill();
-    } else if (t < .78) {
-      c.fillStyle = '#f4fcff';
-      c.beginPath(); c.ellipse(x, y + 10 * s, 48 * s, 26 * s, 0, 0, TAU); c.fill();
-      c.fillStyle = 'rgba(190,230,255,.65)';
-      c.beginPath(); c.ellipse(x + 14 * s, y + 16 * s, 20 * s, 10 * s, 0, 0, TAU); c.fill();
-    } else {
-      c.fillStyle = 'rgba(150,220,255,.5)';
-      c.beginPath(); c.ellipse(x, y, 64 * s, 32 * s, 0, 0, TAU); c.fill();
-      c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 3;
-      c.beginPath(); c.moveTo(x - 40 * s, y - 4 * s); c.lineTo(x + 10 * s, y + 8 * s); c.lineTo(x + 46 * s, y - 6 * s); c.stroke();
-    }
-  }
+  const art = buildWorldArt(map);       /* 24_decor.js */
+  BOARD.decor = art.decor;              /* 정적 캔버스 (바다·섬·다리·지형) */
+  BOARD.props = art.props;              /* 개별 소품 (매 프레임 뷰컬링) */
+  BOARD.emit = art.emit;                /* 연기·물보라·눈 같은 움직이는 요소 */
+  BOARD.waves = art.waves;              /* 물결 반짝임 위치 */
+  BOARD.shore = art.shore;              /* 물가 잔물결 위치 */
 }
 
 /* ---------- tile sprites: 차분한 돌 판 + 중앙 원형 배지 + 아이콘 ---------- */
@@ -1416,9 +1604,64 @@ function buildSprites() {
     c.scale(S, S);
     drawGridTileArt(c, type, TILE_SIZE);
     out[type] = cv;
+    /* 섬 · 광장용 둥근 발판 */
+    const cv2 = document.createElement('canvas');
+    cv2.width = size; cv2.height = size;
+    const c2 = cv2.getContext('2d');
+    c2.scale(S, S);
+    drawRoundPadArt(c2, type, TILE_SIZE);
+    out[type + '@pad'] = cv2;
   });
   out.__wall = buildWallSprite(BOARD.map.kind);
   return out;
+}
+
+/* 둥근 광장 발판: 바다·잔디 위에 놓인 색 원판 (마리오 파티 스타일) */
+function drawRoundPadArt(c, type, s) {
+  const info = TILE_INFO[type] || TILE_INFO.coin;
+  const st = (BOARD.map && BOARD.map.stone) || ['#ded8c8', '#c2b8a4', '#8d8370'];
+  const cx = s / 2, cy = s / 2, R = s * .425;
+  const rr = mulberry32(hash32(type + 'pad' + s));
+
+  /* 바닥 그림자 */
+  c.fillStyle = 'rgba(16,20,32,.30)';
+  c.beginPath(); c.ellipse(cx + s * .01, cy + s * .045, R * .98, R * .86, 0, 0, TAU); c.fill();
+
+  /* 돌 테두리 */
+  const g0 = c.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+  g0.addColorStop(0, st[0]); g0.addColorStop(.55, st[1]); g0.addColorStop(1, st[2]);
+  c.fillStyle = g0;
+  c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.fill();
+  c.strokeStyle = 'rgba(30,34,46,.45)'; c.lineWidth = s * .022;
+  c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.stroke();
+  c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = s * .012;
+  c.beginPath(); c.arc(cx, cy - s * .006, R * .97, Math.PI * 1.05, Math.PI * 1.95); c.stroke();
+
+  /* 색 원판 */
+  const r2 = R * .78;
+  const bg = c.createRadialGradient(cx - r2 * .34, cy - r2 * .42, r2 * .12, cx, cy, r2);
+  bg.addColorStop(0, info.badge); bg.addColorStop(1, info.badge2);
+  c.fillStyle = bg;
+  c.beginPath(); c.arc(cx, cy, r2, 0, TAU); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = s * .024;
+  c.beginPath(); c.arc(cx, cy, r2 - s * .012, 0, TAU); c.stroke();
+  c.strokeStyle = 'rgba(16,20,32,.22)'; c.lineWidth = s * .010;
+  c.beginPath(); c.arc(cx, cy, r2 + s * .012, 0, TAU); c.stroke();
+
+  /* 광택 · 이음 결 */
+  c.fillStyle = 'rgba(255,255,255,.20)';
+  c.beginPath(); c.ellipse(cx - r2 * .26, cy - r2 * .38, r2 * .48, r2 * .26, -.5, 0, TAU); c.fill();
+  for (let i = 0; i < 12; i++) {
+    const a = rr() * TAU, rad = R * (.86 + rr() * .12);
+    c.fillStyle = 'rgba(40,44,58,.12)';
+    c.beginPath(); c.arc(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad, s * (.006 + rr() * .012), 0, TAU); c.fill();
+  }
+
+  /* 아이콘 */
+  c.save();
+  c.translate(cx, cy);
+  drawTileIcon(c, type, s * 1.02);
+  c.restore();
 }
 
 function roundRect(c, x, y, w, h, r) {
@@ -1929,6 +2172,1405 @@ function drawAlly(c, x, y, h, id, t) {
   c.beginPath(); c.arc(-R * .32, -R * 1.1, R * .13, 0, TAU); c.fill();
   c.beginPath(); c.arc(R * .32, -R * 1.1, R * .13, 0, TAU); c.fill();
   c.restore();
+}
+/* =========================================================
+   피클 파티 — 월드 아트 (24_decor.js)
+   ---------------------------------------------------------
+   바다 · 섬 지형 · 나무다리/돌다리/부두 · 랜드마크 · 소품 · 움직이는 요소
+   정적인 것은 한 장의 캔버스(decor)에 미리 그리고,
+   소품은 스프라이트로 만들어 매 프레임 뷰컬링하며 그린다.
+   ========================================================= */
+
+const DECOR_S = .6;                    /* 정적 캔버스 해상도 배율 */
+const DECOR_LAYERS = { prop: 1, front: 2 };
+
+const GROUND_ART = {
+  grass: { top: ['#8fdd6a', '#5fbb52'], edge: '#4e9c47', cliff: ['#7d6a52', '#4c3f2e'], rim: ['#b9b19c', '#8a8271'], speck: '#a9ec86' },
+  sand:  { top: ['#f7e6b4', '#e4cd8e'], edge: '#c8ad6a', cliff: ['#cbb27a', '#8f7a4c'], rim: ['#e8d29a', '#bfa76e'], speck: '#fff5d6' },
+  deck:  { top: ['#c99a63', '#a97a45'], edge: '#7d5528', cliff: ['#6a4a28', '#3f2a14'], rim: ['#8d6432', '#5d4220'], speck: '#e0b787' },
+  stone: { top: ['#e6e0d0', '#cec6b2'], edge: '#a49a86', cliff: ['#9c9280', '#645c4c'], rim: ['#cbc3b0', '#9a9180'], speck: '#f4efdf' },
+  basalt:{ top: ['#6b5750', '#3c2b27'], edge: '#241816', cliff: ['#3a2a25', '#1a1010'], rim: ['#4c3a33', '#2a1c18'], speck: '#8a6a58' },
+  ice:   { top: ['#eafaff', '#b9dcf0'], edge: '#7fb3d0', cliff: ['#8dc0d8', '#4f86a4'], rim: ['#cfeaf8', '#96c4dd'], speck: '#ffffff' },
+  snow:  { top: ['#ffffff', '#dbeefa'], edge: '#a9cde4', cliff: ['#b3d3e8', '#6f9bbb'], rim: ['#cfe6f4', '#9dc1d9'], speck: '#f2fbff' }
+};
+
+/* =========================================================
+   1. 정적 월드 그리기 진입점
+   ========================================================= */
+function buildWorldArt(map) {
+  const S = DECOR_S;
+  const cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.round(MAP_W * S));
+  cv.height = Math.max(1, Math.round(MAP_H * S));
+  const c = cv.getContext('2d');
+  c.scale(S, S);
+  c.lineJoin = 'round'; c.lineCap = 'round';
+
+  const seed = 1000 + map.id.length * 77 + map.grid.length;
+
+  paintSea(c, map, seed);
+  paintIslands(c, map, seed);
+  paintBridges(c, map);
+  paintSeaDetails(c, map, seed);
+  paintGroundLandmarks(c, map, seed);
+
+  const props = collectProps(map, seed);
+  const shore = collectShore(map);
+  /* 큰 구조물(신전·화산·빙산·배·오두막)은 소품처럼 매 프레임 그려 발판과 겹침을 정리한다 */
+  (map.landmarkPos || []).forEach((lm, i) => {
+    if (BIG_LANDMARKS.indexOf(lm.k) < 0) return;
+    const is = map.plan.islands[lm.is];
+    let x = cellX(lm.c), y = cellY(lm.r);
+    if (is && is.holes && is.holes.length) {
+      const h = is.holes[0];
+      x = cellX(is.c + h.dx + (h.w - 1) / 2);
+      y = cellY(is.r + h.dy + (h.h - 1) / 2) + GRID * .30;
+    } else if (is) {
+      y = cellY(is.r) - GRID * .10;
+    }
+    props.push({ k: '@' + lm.k, big: true, x: x, y: y, s: 1, ph: i * 1.3 });
+  });
+  props.sort((a, b) => a.y - b.y);
+  const emit = collectEmitters(map, seed, props);
+  const waves = collectWaves(map, seed);
+  const flakes = collectFlakes(map, seed);
+
+  return { decor: { cv: cv, S: S }, props: props, emit: emit, waves: waves, flakes: flakes, shore: shore };
+}
+
+/* ---------- 좌표 ---------- */
+const cellX = c => MAP_MARGIN + c * GRID + GRID / 2;
+const cellY = r => MAP_MARGIN + r * GRID + GRID / 2;
+
+/* =========================================================
+   2. 바다 / 용암 바다 / 얼음 바다
+   ========================================================= */
+function paintSea(c, map, seed) {
+  const rr = mulberry32(seed);
+  const W = MAP_W, H = MAP_H;
+  if (map.kind === 'volcano') {
+    const g = c.createLinearGradient(0, 0, W * .4, H);
+    g.addColorStop(0, '#2a1210'); g.addColorStop(.45, '#5e1d12'); g.addColorStop(1, '#1b0d0c');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    /* 용암 강 */
+    for (let k = 0; k < 26; k++) {
+      let x = rr() * W, y = rr() * H;
+      c.strokeStyle = 'rgba(255,' + Math.round(90 + rr() * 90) + ',20,' + (.20 + rr() * .4) + ')';
+      c.lineWidth = 6 + rr() * 26;
+      c.beginPath(); c.moveTo(x, y);
+      for (let s = 0; s < 5; s++) { x += (rr() - .5) * 380; y += (rr() - .5) * 320; c.lineTo(x, y); }
+      c.stroke();
+    }
+    /* 식은 암반 덩어리 */
+    for (let k = 0; k < 70; k++) {
+      c.fillStyle = 'rgba(20,12,12,' + (.25 + rr() * .35) + ')';
+      c.beginPath(); c.ellipse(rr() * W, rr() * H, 40 + rr() * 130, 24 + rr() * 70, rr() * 3, 0, TAU); c.fill();
+    }
+  } else if (map.kind === 'ice') {
+    const g = c.createLinearGradient(0, 0, W * .3, H);
+    g.addColorStop(0, '#7fb8d8'); g.addColorStop(.4, '#bfe4f4'); g.addColorStop(1, '#5d92b8');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    /* 얼음판 균열 */
+    for (let k = 0; k < 60; k++) {
+      let x = rr() * W, y = rr() * H;
+      c.strokeStyle = 'rgba(255,255,255,' + (.18 + rr() * .32) + ')';
+      c.lineWidth = 1 + rr() * 3;
+      c.beginPath(); c.moveTo(x, y);
+      for (let s = 0; s < 4; s++) { x += (rr() - .5) * 220; y += (rr() - .5) * 180; c.lineTo(x, y); }
+      c.stroke();
+    }
+    for (let k = 0; k < 34; k++) {
+      c.fillStyle = 'rgba(240,252,255,' + (.22 + rr() * .3) + ')';
+      c.beginPath(); c.ellipse(rr() * W, rr() * H, 70 + rr() * 150, 38 + rr() * 70, rr() * 3, 0, TAU); c.fill();
+    }
+  } else {
+    const g = c.createLinearGradient(0, 0, W * .25, H);
+    g.addColorStop(0, '#65b9dd'); g.addColorStop(.42, '#3f97c6'); g.addColorStop(1, '#2a6b98');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    /* 깊이감 (큰 얼룩) */
+    for (let k = 0; k < 26; k++) {
+      c.fillStyle = 'rgba(24,86,130,' + (.05 + rr() * .10) + ')';
+      c.beginPath(); c.ellipse(rr() * W, rr() * H, 160 + rr() * 320, 90 + rr() * 190, rr() * 3, 0, TAU); c.fill();
+    }
+    for (let k = 0; k < 18; k++) {
+      c.fillStyle = 'rgba(150,225,245,' + (.05 + rr() * .08) + ')';
+      c.beginPath(); c.ellipse(rr() * W, rr() * H, 120 + rr() * 260, 60 + rr() * 150, rr() * 3, 0, TAU); c.fill();
+    }
+    /* 잔물결 */
+    for (let k = 0; k < 520; k++) {
+      const x = rr() * W, y = rr() * H;
+      const rad = 16 + rr() * 40;
+      c.strokeStyle = 'rgba(255,255,255,' + (.10 + rr() * .16) + ')';
+      c.lineWidth = 2 + rr() * 3.4;
+      c.beginPath();
+      c.arc(x, y, rad, Math.PI * .12, Math.PI * .88);
+      c.stroke();
+      if (rr() < .3) {
+        c.strokeStyle = 'rgba(12,64,100,' + (.06 + rr() * .08) + ')';
+        c.lineWidth = 2.6;
+        c.beginPath(); c.arc(x + 6, y + 5, rad, Math.PI * .2, Math.PI * .8); c.stroke();
+      }
+    }
+  }
+}
+
+/* 물가 디테일: 부표·작은 바위·물보라 */
+function paintSeaDetails(c, map, seed) {
+  const rr = mulberry32(seed + 51);
+  const W = MAP_W, H = MAP_H;
+  const isLand = (x, y) => {
+    const cc = Math.round((x - MAP_MARGIN - GRID / 2) / GRID);
+    const rrr = Math.round((y - MAP_MARGIN - GRID / 2) / GRID);
+    if (map.grid[rrr] === undefined) return false;
+    const ch = map.grid[rrr][cc];
+    return ch === '#';
+  };
+  for (let k = 0; k < 330; k++) {
+    const x = 40 + rr() * (W - 80), y = 40 + rr() * (H - 80);
+    if (isLand(x, y)) continue;
+    const t = rr();
+    if (map.kind === 'volcano') {
+      if (t < .4) {
+        c.fillStyle = 'rgba(255,140,40,' + (.25 + rr() * .3) + ')';
+        c.beginPath(); c.ellipse(x, y, 10 + rr() * 26, 6 + rr() * 12, 0, 0, TAU); c.fill();
+      } else if (t < .7) {
+        c.fillStyle = 'rgba(30,20,18,.85)';
+        c.beginPath();
+        c.ellipse(x, y, 14 + rr() * 26, 9 + rr() * 16, rr() * 3, 0, TAU); c.fill();
+        c.strokeStyle = 'rgba(255,120,40,.35)'; c.lineWidth = 2; c.stroke();
+      }
+    } else if (map.kind === 'ice') {
+      if (t < .55) {
+        c.fillStyle = 'rgba(255,255,255,' + (.5 + rr() * .4) + ')';
+        c.beginPath();
+        const w = 12 + rr() * 34, h = 8 + rr() * 20;
+        c.moveTo(x - w, y); c.lineTo(x - w * .3, y - h); c.lineTo(x + w * .5, y - h * .7);
+        c.lineTo(x + w, y + h * .2); c.lineTo(x - w * .2, y + h * .4); c.closePath(); c.fill();
+      }
+    } else {
+      if (t < .22) {
+        /* 부표 */
+        c.fillStyle = 'rgba(255,255,255,.75)';
+        c.beginPath(); c.arc(x, y, 4 + rr() * 3, 0, TAU); c.fill();
+        c.fillStyle = 'rgba(230,80,60,.9)';
+        c.beginPath(); c.arc(x, y, 2 + rr() * 2, 0, TAU); c.fill();
+      } else if (t < .5) {
+        c.strokeStyle = 'rgba(255,255,255,' + (.10 + rr() * .12) + ')';
+        c.lineWidth = 2;
+        c.beginPath(); c.arc(x, y, 10 + rr() * 20, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+      } else if (t < .62) {
+        c.fillStyle = 'rgba(90,80,70,.9)';
+        c.beginPath(); c.ellipse(x, y, 9 + rr() * 16, 6 + rr() * 10, rr() * 3, 0, TAU); c.fill();
+      }
+    }
+  }
+}
+
+/* =========================================================
+   3. 섬 지형
+   ========================================================= */
+function inHoleAt(is, x, y) {
+  if (!is.holes) return false;
+  for (let i = 0; i < is.holes.length; i++) {
+    const h = is.holes[i];
+    const x0 = cellX(is.c + h.dx) - GRID * .5, y0 = cellY(is.r + h.dy) - GRID * .5;
+    const x1 = x0 + (h.w - 1) * GRID + GRID, y1 = y0 + (h.h - 1) * GRID + GRID;
+    if (x > x0 && x < x1 && y > y0 && y < y1) return true;
+  }
+  return false;
+}
+
+function islandCenter(is) {
+  return { x: cellX(is.c + (is.w - 1) / 2), y: cellY(is.r + (is.h - 1) / 2) };
+}
+
+/* 섬 외곽선 경로 (매끈한 유기적 형태) */
+function islandPath(c, is, seed, withHoles) {
+  const ctr = islandCenter(is);
+  const rx = ((is.w - 1) * GRID) / 2 + GRID * .46;
+  const ry = ((is.h - 1) * GRID) / 2 + GRID * .46;
+  c.beginPath();
+  if (withHoles && is.holes) {
+    is.holes.forEach(h => {
+      const hx = cellX(is.c + h.dx) - GRID * .5;
+      const hy = cellY(is.r + h.dy) - GRID * .5;
+      const hw = (h.w - 1) * GRID + GRID, hh = (h.h - 1) * GRID + GRID, r = GRID * .3;
+      const xx = hx, yy = hy;
+      c.moveTo(xx + r, yy);
+      c.arcTo(xx + hw, yy, xx + hw, yy + hh, r);
+      c.arcTo(xx + hw, yy + hh, xx, yy + hh, r);
+      c.arcTo(xx, yy + hh, xx, yy, r);
+      c.arcTo(xx, yy, xx + hw, yy, r);
+      c.closePath();
+    });
+  }
+  if (is.shape === 'rect') {
+    const x = ctr.x - rx, y = ctr.y - ry, w = rx * 2, h = ry * 2, r = GRID * .28;
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+    return;
+  }
+  const rr = mulberry32(seed + is.c * 31 + is.r * 17);
+  const N = 26;
+  const pts = [];
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * TAU;
+    const jit = .93 + rr() * .14;
+    pts.push([ctr.x + Math.cos(a) * rx * jit, ctr.y + Math.sin(a) * ry * jit]);
+  }
+  c.moveTo((pts[0][0] + pts[N - 1][0]) / 2, (pts[0][1] + pts[N - 1][1]) / 2);
+  for (let i = 0; i < N; i++) {
+    const p = pts[i], q = pts[(i + 1) % N];
+    c.quadraticCurveTo(p[0], p[1], (p[0] + q[0]) / 2, (p[1] + q[1]) / 2);
+  }
+  c.closePath();
+}
+
+function paintIslands(c, map, seed) {
+  const islands = map.plan.islands;
+  islands.forEach((is, idx) => {
+    const art = GROUND_ART[is.k] || GROUND_ART.grass;
+    const hole = !!(is.holes && is.holes.length);
+
+    /* 1) 물 위 그림자 (섬이 떠 있는 느낌) */
+    c.save();
+    c.translate(0, 22);
+    islandPath(c, is, seed + idx * 13, hole);
+    c.fillStyle = 'rgba(8,34,58,.30)'; c.fill('evenodd');
+    c.restore();
+
+    /* 2) 얕은 물 / 물보라 테두리 */
+    c.save();
+    islandPath(c, is, seed + idx * 13, false);
+    if (map.kind === 'volcano') {
+      c.strokeStyle = 'rgba(255,140,50,.34)'; c.lineWidth = 26; c.stroke();
+    } else if (map.kind === 'ice') {
+      c.strokeStyle = 'rgba(235,250,255,.55)'; c.lineWidth = 26; c.stroke();
+    } else {
+      c.strokeStyle = 'rgba(150,235,240,.55)'; c.lineWidth = 32; c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,.32)'; c.lineWidth = 15; c.stroke();
+    }
+    c.restore();
+
+    /* 3) 절벽면 (아래로 살짝 밀어 입체감) */
+    c.save();
+    c.translate(0, 34);
+    islandPath(c, is, seed + idx * 13, hole);
+    const cliffA = art.rim || art.cliff;
+    const cg = c.createLinearGradient(0, cellY(is.r) - GRID, 0, cellY(is.r + is.h) + GRID);
+    cg.addColorStop(0, cliffA[1]); cg.addColorStop(1, art.cliff[1]);
+    c.fillStyle = cg; c.fill('evenodd');
+    c.restore();
+
+    /* 4) 지형 윗면 — 바깥은 바위 테두리, 안쪽은 잔디 (절벽 위 평원) */
+    islandPath(c, is, seed + idx * 13, hole);
+    const ctr = islandCenter(is);
+    const rimA = art.rim || art.cliff;
+    const rockG = c.createLinearGradient(ctr.x, ctr.y - 260, ctr.x, ctr.y + 240);
+    rockG.addColorStop(0, rimA[0]); rockG.addColorStop(1, rimA[1]);
+    c.fillStyle = rockG; c.fill('evenodd');
+
+    const tg = c.createLinearGradient(ctr.x - 240, ctr.y - 240, ctr.x + 240, ctr.y + 260);
+    tg.addColorStop(0, art.top[0]); tg.addColorStop(.6, art.top[1]); tg.addColorStop(1, art.edge);
+    const rim = is.k === 'sand' ? 20 : 16;
+    const rx0 = ((is.w - 1) * GRID) / 2 + GRID * .46;
+    const ry0 = ((is.h - 1) * GRID) / 2 + GRID * .46;
+    c.save();
+    c.translate(ctr.x, ctr.y);
+    c.scale(1 - rim / rx0, 1 - rim / ry0);
+    c.translate(-ctr.x, -ctr.y);
+    islandPath(c, is, seed + idx * 13, hole);
+    c.fillStyle = tg; c.fill('evenodd');
+    c.restore();
+    c.save();
+    islandPath(c, is, seed + idx * 13, hole);
+    c.clip('evenodd');
+    islandPath(c, is, seed + idx * 13, false);
+    /* 바위 테두리 결 */
+    const rr2 = mulberry32(seed + idx * 97);
+    c.strokeStyle = 'rgba(30,26,20,.22)'; c.lineWidth = 2;
+    for (let k = 0; k < 40; k++) {
+      const a = rr2() * TAU;
+      const rrad = .5 + rr2() * .06;
+      const px = ctr.x + Math.cos(a) * (((is.w - 1) * GRID / 2 + GRID * .46) * rrad);
+      const py = ctr.y + Math.sin(a) * (((is.h - 1) * GRID / 2 + GRID * .46) * rrad);
+      if (inHoleAt(is, px, py)) continue;
+      c.beginPath(); c.moveTo(px, py); c.lineTo(px + (rr2() - .5) * 12, py + 10 + rr2() * 14); c.stroke();
+    }
+    c.restore();
+
+    /* 5) 물가 모래 shelf */
+    if (is.k === 'grass' || is.k === 'snow' || is.k === 'sand') {
+      c.save();
+      islandPath(c, is, seed + idx * 13, hole);
+      c.clip('evenodd');
+      islandPath(c, is, seed + idx * 13, false);
+      c.strokeStyle = is.k === 'snow' ? 'rgba(232,246,255,.85)' : 'rgba(250,236,190,.8)';
+      c.lineWidth = 9; c.stroke();
+      c.restore();
+    }
+
+    /* 6) 테두리 */
+    islandPath(c, is, seed + idx * 13, false);
+    c.strokeStyle = art.edge; c.lineWidth = 4; c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,.32)'; c.lineWidth = 1.6; c.stroke();
+
+    /* 7) 표면 질감 */
+    c.save();
+    islandPath(c, is, seed + idx * 13, hole);
+    c.clip('evenodd');
+    paintGroundTexture(c, is, map, idx);
+    /* 가장자리 안쪽 그늘 */
+    islandPath(c, is, seed + idx * 13, hole);
+    c.strokeStyle = 'rgba(0,0,0,.06)'; c.lineWidth = 20; c.stroke();
+    c.restore();
+
+    /* 8) 구멍(랜드마크 자리) 테두리 */
+    if (hole) {
+      is.holes.forEach(h => {
+        const hx = cellX(is.c + h.dx) - GRID * .5;
+        const hy = cellY(is.r + h.dy) - GRID * .5;
+        const hw = (h.w - 1) * GRID + GRID, hh = (h.h - 1) * GRID + GRID, r = GRID * .3;
+        c.strokeStyle = 'rgba(10,40,70,.28)'; c.lineWidth = 16;
+        roundRect(c, hx, hy, hw, hh, r); c.stroke();
+        c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 3;
+        roundRect(c, hx + 4, hy + 4, hw - 8, hh - 8, r - 3); c.stroke();
+      });
+    }
+  });
+}
+
+function paintGroundTexture(c, is, map, idx) {
+  const rr = mulberry32(900 + idx * 71 + map.id.length);
+  const ctr = islandCenter(is);
+  const rx = ((is.w - 1) * GRID) / 2 + GRID * .4;
+  const ry = ((is.h - 1) * GRID) / 2 + GRID * .4;
+  const x0 = ctr.x - rx - GRID, y0 = ctr.y - ry - GRID;
+  const w = rx * 2 + GRID * 2, h = ry * 2 + GRID * 2;
+  const art = GROUND_ART[is.k] || GROUND_ART.grass;
+
+  if (is.k === 'deck') {
+    /* 나무 갑판 */
+    c.fillStyle = 'rgba(0,0,0,.06)';
+    for (let y = y0; y < y0 + h; y += 26) c.fillRect(x0, y, w, 2);
+    for (let k = 0; k < 30; k++) {
+      c.fillStyle = 'rgba(90,60,30,' + (.08 + rr() * .12) + ')';
+      c.fillRect(x0 + rr() * w, y0 + rr() * h, 30 + rr() * 70, 3 + rr() * 4);
+    }
+  } else if (is.k === 'ice' || is.k === 'snow') {
+    for (let k = 0; k < 22; k++) {
+      c.strokeStyle = 'rgba(150,205,235,' + (.18 + rr() * .3) + ')';
+      c.lineWidth = 1 + rr() * 2;
+      let x = x0 + rr() * w, y = y0 + rr() * h;
+      c.beginPath(); c.moveTo(x, y);
+      for (let s = 0; s < 3; s++) { x += (rr() - .5) * 90; y += (rr() - .5) * 70; c.lineTo(x, y); }
+      c.stroke();
+    }
+    for (let k = 0; k < 26; k++) {
+      c.fillStyle = 'rgba(255,255,255,' + (.25 + rr() * .3) + ')';
+      c.beginPath(); c.ellipse(x0 + rr() * w, y0 + rr() * h, 20 + rr() * 40, 9 + rr() * 18, rr() * 3, 0, TAU); c.fill();
+    }
+  } else if (is.k === 'basalt') {
+    for (let k = 0; k < 26; k++) {
+      c.fillStyle = 'rgba(18,12,12,' + (.15 + rr() * .25) + ')';
+      c.beginPath(); c.ellipse(x0 + rr() * w, y0 + rr() * h, 24 + rr() * 46, 14 + rr() * 26, rr() * 3, 0, TAU); c.fill();
+    }
+    for (let k = 0; k < 14; k++) {
+      c.strokeStyle = 'rgba(255,130,40,' + (.2 + rr() * .3) + ')';
+      c.lineWidth = 1.6 + rr() * 2.4;
+      let x = x0 + rr() * w, y = y0 + rr() * h;
+      c.beginPath(); c.moveTo(x, y);
+      for (let s = 0; s < 4; s++) { x += (rr() - .5) * 110; y += (rr() - .5) * 90; c.lineTo(x, y); }
+      c.stroke();
+    }
+  } else if (is.k === 'sand') {
+    for (let k = 0; k < 60; k++) {
+      c.fillStyle = 'rgba(255,255,255,' + (.18 + rr() * .3) + ')';
+      c.beginPath(); c.arc(x0 + rr() * w, y0 + rr() * h, .8 + rr() * 1.8, 0, TAU); c.fill();
+      c.fillStyle = 'rgba(180,150,90,' + (.12 + rr() * .18) + ')';
+      c.beginPath(); c.arc(x0 + rr() * w, y0 + rr() * h, 1 + rr() * 2.4, 0, TAU); c.fill();
+    }
+  } else if (is.k === 'stone') {
+    c.strokeStyle = 'rgba(80,74,60,.28)'; c.lineWidth = 1.6;
+    for (let k = 0; k < 16; k++) {
+      const x = x0 + rr() * w, y = y0 + rr() * h;
+      c.strokeRect(x, y, 40 + rr() * 60, 30 + rr() * 40);
+    }
+  } else {
+    /* 잔디: 풀더미 + 꽃 */
+    for (let k = 0; k < 40; k++) {
+      const x = x0 + rr() * w, y = y0 + rr() * h;
+      c.fillStyle = 'rgba(96,176,72,' + (.16 + rr() * .24) + ')';
+      c.beginPath(); c.ellipse(x, y, 22 + rr() * 54, 12 + rr() * 30, rr() * 3, 0, TAU); c.fill();
+    }
+    for (let k = 0; k < 90; k++) {
+      const x = x0 + rr() * w, y = y0 + rr() * h;
+      c.strokeStyle = 'rgba(58,132,48,.5)'; c.lineWidth = 2.6;
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x - 4, y - 10); c.moveTo(x, y); c.lineTo(x + 4, y - 11); c.stroke();
+    }
+    for (let k = 0; k < 14; k++) {
+      const x = x0 + rr() * w, y = y0 + rr() * h;
+      c.fillStyle = ['#ff8fb0', '#ffd94a', '#ff9f43', '#c68cff'][Math.floor(rr() * 4)];
+      for (let i = 0; i < 5; i++) {
+        const a = i / 5 * TAU;
+        c.beginPath(); c.arc(x + Math.cos(a) * 4, y + Math.sin(a) * 4, 3, 0, TAU); c.fill();
+      }
+      c.fillStyle = '#fff6c2'; c.beginPath(); c.arc(x, y, 2, 0, TAU); c.fill();
+    }
+  }
+  void art;
+}
+
+/* =========================================================
+   4. 다리 / 부두 / 빙판 교각
+   ========================================================= */
+function tileAtCell(c, r) {
+  if (r < 0 || r >= BOARD.map.grid.length) return null;
+  const row = BOARD.map.grid[r];
+  if (c < 0 || c >= row.length) return null;
+  return row[c] === '#' ? 1 : null;
+}
+
+function paintBridges(c, map) {
+  const tiles = BOARD.tiles;
+  const bridgeTiles = tiles.filter(t => t.k === 'bridge');
+  /* 갑판 아래 그늘 (물 위에 떠 보이게) */
+  bridgeTiles.forEach(t => {
+    c.save();
+    c.fillStyle = 'rgba(10,20,30,.28)';
+    const w = GRID * 1.02, h = GRID * .62;
+    c.beginPath(); c.ellipse(t.x, t.y + GRID * .30, w * .5, h * .5, 0, 0, TAU); c.fill();
+    c.restore();
+  });
+  bridgeTiles.forEach(t => paintBridgeCell(c, t, t.ground));
+}
+
+function paintBridgeCell(c, t, kind) {
+  const x = t.x, y = t.y;
+  const half = GRID * .52;
+  const openN = !tileAtCell(t.c, t.r - 1), openS = !tileAtCell(t.c, t.r + 1);
+  const openW = !tileAtCell(t.c - 1, t.r), openE = !tileAtCell(t.c + 1, t.r);
+  const horiz = !openW || !openE;
+  const deckW = half * 2, deckH = half * 2;
+
+  if (kind === 'stone') {
+    const g = c.createLinearGradient(0, y - half, 0, y + half);
+    g.addColorStop(0, '#c4bbaa'); g.addColorStop(.5, '#a79d8c'); g.addColorStop(1, '#7d7462');
+    c.fillStyle = g;
+    roundRect(c, x - half, y - half, deckW, deckH, GRID * .10); c.fill();
+    /* 판석 이음 */
+    c.save();
+    roundRect(c, x - half, y - half, deckW, deckH, GRID * .10); c.clip();
+    c.strokeStyle = 'rgba(74,68,56,.42)'; c.lineWidth = 2;
+    for (let k = -2; k <= 2; k++) {
+      c.beginPath();
+      if (horiz) { c.moveTo(x + k * GRID * .34, y - half); c.lineTo(x + k * GRID * .34 - 6, y + half); }
+      else { c.moveTo(x - half, y + k * GRID * .34); c.lineTo(x + half, y + k * GRID * .34 - 6); }
+      c.stroke();
+    }
+    c.fillStyle = 'rgba(255,255,255,.14)';
+    c.fillRect(x - half, y - half, deckW, 5);
+    c.restore();
+    c.strokeStyle = 'rgba(48,42,34,.55)'; c.lineWidth = 2.6;
+    roundRect(c, x - half, y - half, deckW, deckH, GRID * .10); c.stroke();
+    /* 난간 (낮은 돌담) */
+    const rail = (x1, y1, x2, y2) => {
+      c.strokeStyle = 'rgba(52,46,38,.35)'; c.lineWidth = 11;
+      c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+      c.strokeStyle = '#d6cdb8'; c.lineWidth = 7;
+      c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+    };
+    if (openN) rail(x - half, y - half + 3, x + half, y - half + 3);
+    if (openS) rail(x - half, y + half - 3, x + half, y + half - 3);
+    if (openW) rail(x - half + 3, y - half, x - half + 3, y + half);
+    if (openE) rail(x + half - 3, y - half, x + half - 3, y + half);
+  } else if (kind === 'ice') {
+    const g = c.createLinearGradient(0, y - half, 0, y + half);
+    g.addColorStop(0, 'rgba(235,252,255,.96)'); g.addColorStop(.55, 'rgba(196,232,248,.95)'); g.addColorStop(1, 'rgba(150,200,225,.95)');
+    c.fillStyle = g;
+    roundRect(c, x - half, y - half, deckW, deckH, GRID * .12); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 3;
+    roundRect(c, x - half, y - half, deckW, deckH, GRID * .12); c.stroke();
+    c.strokeStyle = 'rgba(110,170,205,.55)'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x - half * .7, y - half * .4); c.lineTo(x - half * .1, y + half * .3); c.lineTo(x + half * .6, y - half * .2); c.stroke();
+  } else {
+    /* 나무 다리 · 부두 */
+    const dark = kind === 'dock' ? '#7a4d24' : '#8b5a2b';
+    const mid = kind === 'dock' ? '#b98550' : '#c08f57';
+    const light = kind === 'dock' ? '#d8ab74' : '#dcae76';
+    c.fillStyle = dark;
+    roundRect(c, x - half - 2, y - half + 4, deckW + 4, deckH, GRID * .10); c.fill();
+    const g = c.createLinearGradient(0, y - half, 0, y + half);
+    g.addColorStop(0, light); g.addColorStop(.5, mid); g.addColorStop(1, dark);
+    c.fillStyle = g;
+    roundRect(c, x - half, y - half, deckW, deckH, GRID * .10); c.fill();
+    /* 판자 이음선 */
+    c.strokeStyle = 'rgba(90,56,26,.4)'; c.lineWidth = 2;
+    for (let k = 1; k < 4; k++) {
+      if (horiz) { c.beginPath(); c.moveTo(x - half + (deckW * k / 4), y - half); c.lineTo(x - half + (deckW * k / 4), y + half); c.stroke(); }
+      else { c.beginPath(); c.moveTo(x - half, y - half + (deckH * k / 4)); c.lineTo(x + half, y - half + (deckH * k / 4)); c.stroke(); }
+    }
+    /* 난간 기둥 */
+    c.fillStyle = '#6b431f';
+    if (openN) { c.fillRect(x - half, y - half - 3, deckW, 7); }
+    if (openS) { c.fillRect(x - half, y + half - 4, deckW, 7); }
+    if (openW) { c.fillRect(x - half - 3, y - half, 7, deckH); }
+    if (openE) { c.fillRect(x + half - 4, y - half, 7, deckH); }
+    c.fillStyle = 'rgba(255,255,255,.18)';
+    c.fillRect(x - half + 4, y - half + 4, deckW - 8, 5);
+  }
+}
+
+/* =========================================================
+   5. 랜드마크 (사원 · 화산 · 빙산 · 오두막 · 배 …)
+   ========================================================= */
+const BIG_LANDMARKS = ['temple', 'volcano', 'iceberg', 'ship', 'hut'];
+
+/* 지면에 붙는 작은 구조물은 정적 캔버스에 */
+function paintGroundLandmarks(c, map, seed) {
+  (map.landmarkPos || []).forEach((lm, idx) => {
+    const x = cellX(lm.c), y = cellY(lm.r);
+    if (BIG_LANDMARKS.indexOf(lm.k) >= 0) return;
+    if (lm.k === 'lavaPool') drawLavaPool(c, x, y, seed + idx);
+    else if (lm.k === 'obelisk') drawObelisk(c, x, y - GRID * .2, seed + idx);
+    else if (lm.k === 'crystal') drawCrystal(c, x, y - GRID * .2, seed + idx);
+    else if (lm.k === 'waterfall') drawWaterfall(c, x, y, seed + idx);
+    else if (lm.k === 'snowman') drawSnowman(c, x, y - GRID * .2, seed + idx);
+  });
+}
+
+function paintBigLandmark(c, kind, x, y, seed) {
+  if (kind === 'temple') drawTemple(c, x, y, seed);
+  else if (kind === 'volcano') drawVolcano(c, x, y, seed);
+  else if (kind === 'iceberg') drawIceberg(c, x, y, seed);
+  else if (kind === 'hut') drawHut(c, x, y, seed);
+  else if (kind === 'ship') drawShip(c, x, y, seed);
+}
+
+/* 거대 유적 신전: 계단식 피라미드 + 기둥 + 깃발 */
+function drawTemple(c, x, y, seed) {
+  const rr = mulberry32(seed);
+  const W = GRID * 3.3, H = GRID * 2.5;
+  c.save();
+  c.fillStyle = 'rgba(20,26,20,.22)';
+  c.beginPath(); c.ellipse(x, y + H * .16, W * .52, H * .18, 0, 0, TAU); c.fill();
+  for (let tier = 0; tier < 4; tier++) {
+    const w = W * (1 - tier * .19), h = H * .20;
+    const ty = y + H * .10 - tier * h;
+    const g = c.createLinearGradient(x - w / 2, ty, x + w / 2, ty + h);
+    g.addColorStop(0, '#e8e0c8'); g.addColorStop(.5, '#c9bfa0'); g.addColorStop(1, '#8f8468');
+    c.fillStyle = g;
+    c.beginPath();
+    c.moveTo(x - w / 2, ty); c.lineTo(x + w / 2, ty);
+    c.lineTo(x + w / 2 - 8, ty + h); c.lineTo(x - w / 2 + 8, ty + h);
+    c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(70,62,48,.5)'; c.lineWidth = 2; c.stroke();
+    /* 벽돌 결 */
+    c.strokeStyle = 'rgba(120,108,86,.35)'; c.lineWidth = 1.4;
+    for (let k = 1; k < 5; k++) {
+      const bx = x - w / 2 + (w * k / 5);
+      c.beginPath(); c.moveTo(bx, ty + 2); c.lineTo(bx - 2, ty + h - 2); c.stroke();
+    }
+  }
+  /* 꼭대기 제단 */
+  const topY = y + H * .10 - 4 * H * .20;
+  c.fillStyle = '#b8ae92';
+  roundRect(c, x - W * .16, topY - H * .10, W * .32, H * .12, 4); c.fill();
+  c.strokeStyle = 'rgba(70,62,48,.5)'; c.lineWidth = 2; c.stroke();
+  /* 기둥 4개 */
+  for (let k = 0; k < 4; k++) {
+    const px = x - W * .34 + k * (W * .22);
+    if (k === 1 || k === 2) continue;
+    c.fillStyle = '#ded4b8';
+    c.fillRect(px - 7, topY - H * .30, 14, H * .30);
+    c.fillStyle = '#f2ead0'; c.fillRect(px - 9, topY - H * .32, 18, 7);
+    c.strokeStyle = 'rgba(70,62,48,.4)'; c.lineWidth = 1.4;
+    c.strokeRect(px - 7, topY - H * .30, 14, H * .30);
+  }
+  /* 이끼 · 덩굴 */
+  c.strokeStyle = 'rgba(90,160,80,.55)'; c.lineWidth = 2.4;
+  for (let k = 0; k < 7; k++) {
+    let px = x - W * .4 + rr() * W * .8, py = y + H * .06;
+    c.beginPath(); c.moveTo(px, py);
+    for (let s = 0; s < 3; s++) { px += (rr() - .5) * 18; py -= 10 + rr() * 16; c.lineTo(px, py); }
+    c.stroke();
+  }
+  /* 깃발 */
+  c.strokeStyle = '#7a5a30'; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(x + W * .30, topY - H * .30); c.lineTo(x + W * .30, topY - H * .62); c.stroke();
+  c.fillStyle = '#e2554d';
+  c.beginPath(); c.moveTo(x + W * .30, topY - H * .62);
+  c.quadraticCurveTo(x + W * .42, topY - H * .56, x + W * .30, topY - H * .48);
+  c.closePath(); c.fill();
+  c.restore();
+}
+
+/* 화산: 원뿔 + 분화구 + 흘러내린 용암 */
+function drawVolcano(c, x, y, seed) {
+  const rr = mulberry32(seed);
+  const W = GRID * 4.4, H = GRID * 3.5;
+  c.save();
+  c.fillStyle = 'rgba(30,10,6,.35)';
+  c.beginPath(); c.ellipse(x, y + H * .06, W * .54, H * .16, 0, 0, TAU); c.fill();
+  /* 산체 */
+  const g = c.createLinearGradient(x - W * .5, y, x + W * .5, y);
+  g.addColorStop(0, '#4a3128'); g.addColorStop(.45, '#6b4436'); g.addColorStop(1, '#33201a');
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(x - W * .52, y + H * .04);
+  c.quadraticCurveTo(x - W * .26, y - H * .42, x - W * .13, y - H * .52);
+  c.lineTo(x + W * .13, y - H * .52);
+  c.quadraticCurveTo(x + W * .28, y - H * .40, x + W * .52, y + H * .04);
+  c.closePath(); c.fill();
+  /* 능선 */
+  c.strokeStyle = 'rgba(20,12,10,.45)'; c.lineWidth = 3;
+  for (let k = 0; k < 5; k++) {
+    const bx = x - W * .38 + k * W * .19;
+    c.beginPath(); c.moveTo(bx, y + H * .02); c.quadraticCurveTo(x + (bx - x) * .4, y - H * .2, x + (bx - x) * .18, y - H * .5); c.stroke();
+  }
+  /* 용암 줄기 */
+  for (let k = 0; k < 6; k++) {
+    let px = x + (rr() - .5) * W * .22, py = y - H * .46;
+    c.strokeStyle = 'rgba(255,' + Math.round(90 + rr() * 80) + ',20,.92)';
+    c.lineWidth = 5 + rr() * 5;
+    c.beginPath(); c.moveTo(px, py);
+    for (let s = 0; s < 4; s++) {
+      px += (rr() - .5) * W * .14; py += H * .12 + rr() * H * .08;
+      c.lineTo(px, py);
+    }
+    c.stroke();
+    c.strokeStyle = 'rgba(255,225,120,.6)'; c.lineWidth = 2;
+    c.stroke();
+  }
+  /* 분화구 */
+  c.fillStyle = '#2a1512';
+  c.beginPath(); c.ellipse(x, y - H * .52, W * .16, H * .06, 0, 0, TAU); c.fill();
+  const cg = c.createRadialGradient(x, y - H * .53, 4, x, y - H * .53, W * .2);
+  cg.addColorStop(0, 'rgba(255,240,160,.95)'); cg.addColorStop(.4, 'rgba(255,140,40,.85)'); cg.addColorStop(1, 'rgba(180,40,10,0)');
+  c.fillStyle = cg;
+  c.beginPath(); c.ellipse(x, y - H * .53, W * .18, H * .07, 0, 0, TAU); c.fill();
+  /* 바위 파편 */
+  for (let k = 0; k < 12; k++) {
+    c.fillStyle = 'rgba(30,20,18,.8)';
+    c.beginPath(); c.ellipse(x + (rr() - .5) * W * .95, y + (rr() - .2) * H * .16, 6 + rr() * 12, 4 + rr() * 8, 0, 0, TAU); c.fill();
+  }
+  c.restore();
+}
+
+/* 빙산: 유리 같은 결정 덩어리 */
+function drawIceberg(c, x, y, seed) {
+  const rr = mulberry32(seed);
+  const W = GRID * 3.2, H = GRID * 2.9;
+  c.save();
+  c.fillStyle = 'rgba(40,90,130,.28)';
+  c.beginPath(); c.ellipse(x, y + H * .1, W * .5, H * .14, 0, 0, TAU); c.fill();
+  const shards = [
+    { dx: -.34, h: .72, w: .34 },
+    { dx: .02, h: 1.0, w: .42 },
+    { dx: .34, h: .62, w: .30 }
+  ];
+  shards.forEach((s, i) => {
+    const bx = x + s.dx * W * .8, hh = H * s.h * .78, ww = W * s.w * .5;
+    const g = c.createLinearGradient(bx - ww, y, bx + ww, y - hh);
+    g.addColorStop(0, 'rgba(215,245,255,.98)');
+    g.addColorStop(.45, 'rgba(150,215,245,.95)');
+    g.addColorStop(.75, 'rgba(110,180,225,.95)');
+    g.addColorStop(1, 'rgba(240,253,255,.98)');
+    c.fillStyle = g;
+    c.beginPath();
+    c.moveTo(bx - ww, y);
+    c.lineTo(bx - ww * .55, y - hh * .55);
+    c.lineTo(bx - ww * .1, y - hh);
+    c.lineTo(bx + ww * .5, y - hh * .72);
+    c.lineTo(bx + ww, y - hh * .18);
+    c.lineTo(bx + ww * .7, y);
+    c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 2; c.stroke();
+    /* 안쪽 결정면 */
+    c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1.6;
+    c.beginPath(); c.moveTo(bx - ww * .1, y - hh); c.lineTo(bx - ww * .2, y - hh * .3); c.stroke();
+    c.beginPath(); c.moveTo(bx + ww * .5, y - hh * .72); c.lineTo(bx + ww * .1, y - hh * .2); c.stroke();
+    void rr; void i;
+  });
+  c.restore();
+}
+
+/* 티키 오두막: 짚지붕 + 나무 벽 + 간판 */
+function drawHut(c, x, y, seed) {
+  const rr = mulberry32(seed);
+  const W = GRID * 2.1, H = GRID * 1.8;
+  c.save();
+  c.fillStyle = 'rgba(20,30,20,.25)';
+  c.beginPath(); c.ellipse(x, y + H * .12, W * .5, H * .13, 0, 0, TAU); c.fill();
+  /* 벽 */
+  c.fillStyle = '#c08a52';
+  roundRect(c, x - W * .34, y - H * .30, W * .68, H * .42, 4); c.fill();
+  c.strokeStyle = 'rgba(90,60,26,.6)'; c.lineWidth = 2; c.stroke();
+  /* 판자 */
+  c.strokeStyle = 'rgba(120,80,36,.4)'; c.lineWidth = 1.5;
+  for (let k = 1; k < 5; k++) {
+    c.beginPath(); c.moveTo(x - W * .34 + W * .68 * k / 5, y - H * .30); c.lineTo(x - W * .34 + W * .68 * k / 5, y + H * .12); c.stroke();
+  }
+  /* 문 */
+  c.fillStyle = '#6b431f';
+  roundRect(c, x - W * .10, y - H * .18, W * .20, H * .30, 3); c.fill();
+  /* 지붕(짚) */
+  for (let layer = 0; layer < 3; layer++) {
+    const w = W * (.86 - layer * .12), hh = H * .22;
+    const ty = y - H * .30 - layer * hh * .8;
+    c.fillStyle = ['#e0b96a', '#d3a758', '#bd8f45'][layer];
+    c.beginPath();
+    c.moveTo(x - w / 2, ty);
+    c.lineTo(x, ty - hh);
+    c.lineTo(x + w / 2, ty);
+    c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(120,80,20,.4)'; c.lineWidth = 1.4; c.stroke();
+  }
+  /* 깃발 장식 */
+  c.strokeStyle = '#8a6231'; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(x + W * .38, y - H * .30); c.lineTo(x + W * .38, y - H * .66); c.stroke();
+  c.fillStyle = '#3fa9e0';
+  c.beginPath(); c.moveTo(x + W * .38, y - H * .66);
+  c.quadraticCurveTo(x + W * .52, y - H * .62, x + W * .38, y - H * .52); c.closePath(); c.fill();
+  void rr;
+  c.restore();
+}
+
+/* 해적선: 갑판 위 배 (부두 옆) */
+function drawShip(c, x, y, seed) {
+  const W = GRID * 3.0, H = GRID * 2.4;
+  c.save();
+  c.fillStyle = 'rgba(10,30,50,.3)';
+  c.beginPath(); c.ellipse(x, y + H * .10, W * .5, H * .14, 0, 0, TAU); c.fill();
+  /* 선체 */
+  const g = c.createLinearGradient(0, y - H * .2, 0, y + H * .16);
+  g.addColorStop(0, '#c98f57'); g.addColorStop(1, '#6f4a24');
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(x - W * .46, y - H * .12);
+  c.quadraticCurveTo(x, y + H * .26, x + W * .46, y - H * .12);
+  c.lineTo(x + W * .40, y - H * .26);
+  c.lineTo(x - W * .40, y - H * .26);
+  c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(60,38,16,.75)'; c.lineWidth = 2.4; c.stroke();
+  /* 갑판 무늬 */
+  c.strokeStyle = 'rgba(90,60,26,.35)'; c.lineWidth = 1.4;
+  for (let k = 0; k < 5; k++) {
+    c.beginPath(); c.moveTo(x - W * .34 + k * W * .17, y - H * .24); c.lineTo(x - W * .34 + k * W * .17, y - H * .04); c.stroke();
+  }
+  /* 마스트 + 돛 */
+  c.strokeStyle = '#5c3a1a'; c.lineWidth = 5;
+  c.beginPath(); c.moveTo(x, y - H * .24); c.lineTo(x, y - H * .92); c.stroke();
+  c.fillStyle = 'rgba(250,246,235,.96)';
+  c.beginPath();
+  c.moveTo(x, y - H * .88);
+  c.quadraticCurveTo(x + W * .30, y - H * .62, x, y - H * .34);
+  c.quadraticCurveTo(x - W * .26, y - H * .60, x, y - H * .88);
+  c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(150,140,120,.7)'; c.lineWidth = 1.6; c.stroke();
+  /* 해골 깃발 */
+  c.fillStyle = '#2b2b33';
+  c.beginPath(); c.moveTo(x, y - H * .96); c.lineTo(x + W * .14, y - H * .90); c.lineTo(x, y - H * .84); c.closePath(); c.fill();
+  c.restore();
+}
+
+function drawLavaPool(c, x, y, seed) {
+  const rr = mulberry32(seed);
+  c.save();
+  const R = GRID * .9;
+  const g = c.createRadialGradient(x, y, 4, x, y, R);
+  g.addColorStop(0, 'rgba(255,240,170,.98)');
+  g.addColorStop(.45, 'rgba(255,150,40,.92)');
+  g.addColorStop(1, 'rgba(120,30,10,.85)');
+  c.fillStyle = g;
+  c.beginPath();
+  for (let i = 0; i < 14; i++) {
+    const a = i / 14 * TAU, rad = R * (.82 + rr() * .24);
+    const px = x + Math.cos(a) * rad, py = y + Math.sin(a) * rad * .68;
+    i ? c.lineTo(px, py) : c.moveTo(px, py);
+  }
+  c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(40,16,10,.55)'; c.lineWidth = 4; c.stroke();
+  c.restore();
+}
+
+function drawObelisk(c, x, y, seed) {
+  c.save();
+  const H = GRID * 1.7, W = GRID * .46;
+  c.fillStyle = 'rgba(20,10,8,.4)';
+  c.beginPath(); c.ellipse(x, y + 6, W * 1.2, 10, 0, 0, TAU); c.fill();
+  const g = c.createLinearGradient(x - W, y, x + W, y);
+  g.addColorStop(0, '#4c3a34'); g.addColorStop(.45, '#6d5348'); g.addColorStop(1, '#2c1f1b');
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(x - W, y); c.lineTo(x - W * .6, y - H); c.lineTo(x + W * .6, y - H); c.lineTo(x + W, y); c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(255,120,40,.55)'; c.lineWidth = 2;
+  for (let k = 0; k < 4; k++) {
+    const yy = y - H * (.2 + k * .18);
+    c.beginPath(); c.moveTo(x - W * .5, yy); c.lineTo(x + W * .5, yy - 4); c.stroke();
+  }
+  c.restore();
+  void seed;
+}
+
+function drawCrystal(c, x, y, seed) {
+  const rr = mulberry32(seed);
+  c.save();
+  for (let k = 0; k < 5; k++) {
+    const bx = x + (rr() - .5) * GRID * 1.2, hh = GRID * (.5 + rr() * .9), ww = GRID * (.12 + rr() * .12);
+    const g = c.createLinearGradient(bx - ww, y, bx + ww, y - hh);
+    g.addColorStop(0, 'rgba(190,235,255,.98)'); g.addColorStop(1, 'rgba(120,180,255,.95)');
+    c.fillStyle = g;
+    c.beginPath(); c.moveTo(bx - ww, y); c.lineTo(bx, y - hh); c.lineTo(bx + ww, y); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.6; c.stroke();
+  }
+  c.restore();
+}
+
+function drawWaterfall(c, x, y, seed) {
+  c.save();
+  const W = GRID * .9, H = GRID * 1.5;
+  c.fillStyle = 'rgba(140,225,255,.85)';
+  c.beginPath();
+  c.moveTo(x - W * .5, y - H);
+  c.lineTo(x + W * .5, y - H);
+  c.lineTo(x + W * .34, y + H * .1);
+  c.quadraticCurveTo(x, y + H * .3, x - W * .34, y + H * .1);
+  c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 2.4;
+  for (let k = 0; k < 4; k++) {
+    c.beginPath(); c.moveTo(x - W * .3 + k * W * .2, y - H + 8); c.lineTo(x - W * .24 + k * W * .2, y + H * .05); c.stroke();
+  }
+  c.fillStyle = 'rgba(255,255,255,.6)';
+  c.beginPath(); c.ellipse(x, y + H * .22, W * .5, H * .09, 0, 0, TAU); c.fill();
+  c.restore();
+  void seed;
+}
+
+function drawSnowman(c, x, y) {
+  c.save();
+  c.fillStyle = 'rgba(60,110,150,.25)';
+  c.beginPath(); c.ellipse(x, y + 4, GRID * .3, GRID * .09, 0, 0, TAU); c.fill();
+  const parts = [[0, -.10, .22], [0, -.34, .16], [0, -.52, .12]];
+  parts.forEach(([dx, dy, r]) => {
+    c.fillStyle = '#fbfeff';
+    c.beginPath(); c.arc(x + dx * GRID, y + dy * GRID, r * GRID, 0, TAU); c.fill();
+    c.strokeStyle = 'rgba(150,190,215,.7)'; c.lineWidth = 1.6; c.stroke();
+  });
+  c.fillStyle = '#2b3a44';
+  c.beginPath(); c.arc(x - GRID * .05, y - GRID * .54, 2, 0, TAU); c.fill();
+  c.beginPath(); c.arc(x + GRID * .05, y - GRID * .54, 2, 0, TAU); c.fill();
+  c.fillStyle = '#ff8f3a';
+  c.beginPath(); c.moveTo(x, y - GRID * .50); c.lineTo(x + GRID * .1, y - GRID * .48); c.lineTo(x, y - GRID * .46); c.closePath(); c.fill();
+  c.fillStyle = '#e0503f';
+  c.fillRect(x - GRID * .13, y - GRID * .62, GRID * .26, GRID * .05);
+  c.restore();
+}
+
+/* =========================================================
+   6. 소품 스프라이트 · 배치
+   ========================================================= */
+function makePropSprite(kind, map) {
+  const S = 2;
+  const size = 128;
+  const cv = document.createElement('canvas');
+  cv.width = size * S; cv.height = size * S;
+  const c = cv.getContext('2d');
+  c.scale(S, S);
+  c.translate(size / 2, size * .82);
+  const P = { kind: kind, map: map };
+  paintProp(c, P, 0);
+  return cv;
+}
+
+function propSprite(kind, map) {
+  PROP_CACHE[map.id + ':' + kind] = PROP_CACHE[map.id + ':' + kind] || makePropSprite(kind, map);
+  return PROP_CACHE[map.id + ':' + kind];
+}
+const PROP_CACHE = {};
+
+/* 소품 하나 (원점 = 발치) */
+function paintProp(c, P, sway) {
+  const kind = P.kind;
+  if (kind === 'palm') {
+    const h = 88;
+    c.fillStyle = 'rgba(20,30,20,.16)';
+    c.beginPath(); c.ellipse(2, 2, 16, 6, 0, 0, TAU); c.fill();
+    /* 줄기 */
+    const tx = 9 + sway * 9, ty = -h;
+    c.strokeStyle = '#a2743d'; c.lineWidth = 10; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(0, -2); c.quadraticCurveTo(2 + sway * 5, -h * .55, tx, ty); c.stroke();
+    c.strokeStyle = 'rgba(90,60,26,.55)'; c.lineWidth = 2;
+    for (let k = 1; k < 6; k++) {
+      const tt = k / 6;
+      const px = lerp(0, tx, tt * tt), py = -h * tt;
+      c.beginPath(); c.moveTo(px - 4, py); c.lineTo(px + 4, py - 2); c.stroke();
+    }
+    /* 잎 7장 */
+    for (let k = 0; k < 7; k++) {
+      const a = -Math.PI / 2 + (k - 3) * .40 + sway * .06;
+      const len = 44 + (k % 2) * 8;
+      const ex = tx + Math.cos(a) * len, ey = ty + Math.sin(a) * len * .75 + 16;
+      c.strokeStyle = k % 2 ? '#2f9a52' : '#46c46e';
+      c.lineWidth = 11; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(tx, ty);
+      c.quadraticCurveTo(tx + Math.cos(a) * len * .6, ty + Math.sin(a) * len * .3 - 12, ex, ey);
+      c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,.30)'; c.lineWidth = 3;
+      c.beginPath(); c.moveTo(tx, ty);
+      c.quadraticCurveTo(tx + Math.cos(a) * len * .55, ty + Math.sin(a) * len * .28 - 12, ex * .94, ey - 3);
+      c.stroke();
+    }
+    /* 코코넛 */
+    c.fillStyle = '#7a4a18';
+    c.beginPath(); c.arc(tx - 5, ty + 6, 4.4, 0, TAU); c.fill();
+    c.beginPath(); c.arc(tx + 5, ty + 8, 4, 0, TAU); c.fill();
+  } else if (kind === 'tree') {
+    c.fillStyle = 'rgba(20,30,20,.16)';
+    c.beginPath(); c.ellipse(0, 2, 20, 7, 0, 0, TAU); c.fill();
+    c.fillStyle = '#7a5330';
+    c.beginPath();
+    c.moveTo(-5, 0); c.lineTo(-3, -40); c.lineTo(3, -40); c.lineTo(5, 0); c.closePath(); c.fill();
+    const blobs = [[0, -58, 30], [-20, -46, 20], [20, -46, 20], [0, -80, 22], [-11, -66, 17], [12, -68, 16]];
+    blobs.forEach(([dx, dy, r], i) => {
+      c.fillStyle = i % 2 ? '#3f9e4d' : '#5ec25f';
+      c.beginPath(); c.arc(dx + sway * 2, dy, r, 0, TAU); c.fill();
+    });
+    c.fillStyle = 'rgba(150,235,140,.55)';
+    c.beginPath(); c.arc(-8 + sway * 2, -76, 12, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.22)';
+    c.beginPath(); c.arc(-4 + sway * 2, -72, 7, 0, TAU); c.fill();
+  } else if (kind === 'pine') {
+    c.fillStyle = 'rgba(30,50,70,.18)';
+    c.beginPath(); c.ellipse(0, 2, 18, 6, 0, 0, TAU); c.fill();
+    c.fillStyle = '#6b4a28'; c.fillRect(-4, -26, 8, 26);
+    for (let k = 0; k < 4; k++) {
+      const w = 40 - k * 8, y = -26 - k * 17;
+      c.fillStyle = k % 2 ? '#2f7f52' : '#3a9160';
+      c.beginPath(); c.moveTo(-w / 2, y); c.lineTo(0, y - 34); c.lineTo(w / 2, y); c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(20,60,40,.35)'; c.lineWidth = 1.6; c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.65)';
+      c.beginPath(); c.moveTo(-w * .3, y - 4); c.lineTo(0, y - 26); c.lineTo(w * .32, y - 6);
+      c.quadraticCurveTo(0, y - 12, -w * .3, y - 4); c.fill();
+    }
+  } else if (kind === 'bush') {
+    c.fillStyle = '#5bbb57';
+    c.beginPath(); c.arc(-10, -12, 14, 0, TAU); c.arc(10, -12, 14, 0, TAU); c.arc(0, -20, 15, 0, TAU); c.fill();
+    c.fillStyle = '#7ad06e';
+    c.beginPath(); c.arc(-6, -22, 7, 0, TAU); c.fill();
+  } else if (kind === 'flower') {
+    c.strokeStyle = '#4f9f42'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(0, 0); c.lineTo(0, -12); c.stroke();
+    c.fillStyle = P.color || '#ff8fb0';
+    for (let i = 0; i < 5; i++) {
+      const a = i / 5 * TAU;
+      c.beginPath(); c.arc(Math.cos(a) * 5, -12 + Math.sin(a) * 5, 3.4, 0, TAU); c.fill();
+    }
+    c.fillStyle = '#fff3b0'; c.beginPath(); c.arc(0, -12, 2.4, 0, TAU); c.fill();
+  } else if (kind === 'rock') {
+    c.fillStyle = 'rgba(20,24,30,.24)';
+    c.beginPath(); c.ellipse(1, 2, 24, 8, 0, 0, TAU); c.fill();
+    const g = c.createLinearGradient(-20, -28, 18, 6);
+    g.addColorStop(0, P.rockA || '#c3bdaf'); g.addColorStop(.55, P.rockB || '#8d8779'); g.addColorStop(1, '#5f5a50');
+    c.fillStyle = g;
+    c.beginPath();
+    c.moveTo(-22, 0); c.lineTo(-16, -16); c.lineTo(-6, -25); c.lineTo(8, -26);
+    c.lineTo(19, -14); c.lineTo(17, 1); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(36,40,46,.5)'; c.lineWidth = 2; c.stroke();
+    /* 결정면 */
+    c.fillStyle = 'rgba(255,255,255,.26)';
+    c.beginPath(); c.moveTo(-6, -25); c.lineTo(8, -26); c.lineTo(4, -11); c.lineTo(-7, -10); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(30,34,40,.16)';
+    c.beginPath(); c.moveTo(4, -11); c.lineTo(19, -14); c.lineTo(17, 1); c.lineTo(4, 0); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(40,44,50,.30)'; c.lineWidth = 1.4;
+    c.beginPath(); c.moveTo(-7, -10); c.lineTo(4, 0); c.stroke();
+  } else if (kind === 'barrel') {
+    c.fillStyle = '#a3703c';
+    roundRect(c, -11, -26, 22, 26, 5); c.fill();
+    c.strokeStyle = '#6b451c'; c.lineWidth = 2.4;
+    roundRect(c, -11, -26, 22, 26, 5); c.stroke();
+    c.strokeStyle = '#5a3a16'; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(-11, -18); c.lineTo(11, -18); c.moveTo(-11, -8); c.lineTo(11, -8); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(-7, -24, 4, 22);
+  } else if (kind === 'crate') {
+    c.fillStyle = '#c89658';
+    roundRect(c, -12, -24, 24, 24, 3); c.fill();
+    c.strokeStyle = '#7a5222'; c.lineWidth = 2.2;
+    roundRect(c, -12, -24, 24, 24, 3); c.stroke();
+    c.beginPath(); c.moveTo(-12, -24); c.lineTo(12, 0); c.moveTo(12, -24); c.lineTo(-12, 0); c.stroke();
+  } else if (kind === 'torch') {
+    c.fillStyle = '#6b4a28'; c.fillRect(-3, -30, 6, 30);
+    c.fillStyle = '#3a2a18';
+    roundRect(c, -7, -36, 14, 9, 3); c.fill();
+    const flick = 1 + Math.sin(sway * 9) * .12;
+    c.fillStyle = 'rgba(255,150,40,.95)';
+    c.beginPath(); c.ellipse(0, -46, 6 * flick, 11 * flick, 0, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(255,240,150,.98)';
+    c.beginPath(); c.ellipse(0, -44, 3 * flick, 6 * flick, 0, 0, TAU); c.fill();
+  } else if (kind === 'flag') {
+    c.strokeStyle = '#8a6231'; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(0, 0); c.lineTo(0, -50); c.stroke();
+    c.fillStyle = P.color || '#ff5d6c';
+    c.beginPath();
+    c.moveTo(0, -50);
+    c.quadraticCurveTo(14 + sway * 5, -46, 22 + sway * 6, -40);
+    c.quadraticCurveTo(12 + Math.abs(sway) * 4, -34, 0, -32);
+    c.closePath(); c.fill();
+  } else if (kind === 'chest') {
+    c.fillStyle = '#7a4a18';
+    roundRect(c, -13, -18, 26, 18, 3); c.fill();
+    c.fillStyle = '#a86a28';
+    roundRect(c, -13, -26, 26, 12, 5); c.fill();
+    c.strokeStyle = '#4c2c0c'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = '#ffd166'; c.fillRect(-3, -18, 6, 8);
+  } else if (kind === 'icicle') {
+    c.fillStyle = 'rgba(200,240,255,.95)';
+    for (let k = 0; k < 3; k++) {
+      const dx = -8 + k * 8, hh = 16 + k * 8;
+      c.beginPath(); c.moveTo(dx - 4, 0); c.lineTo(dx, -hh); c.lineTo(dx + 4, 0); c.closePath(); c.fill();
+    }
+    c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.2;
+    c.beginPath(); c.moveTo(0, 0); c.lineTo(0, -24); c.stroke();
+  } else if (kind === 'snowpile') {
+    c.fillStyle = 'rgba(255,255,255,.96)';
+    c.beginPath(); c.ellipse(0, -4, 22, 12, 0, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(200,228,244,.7)';
+    c.beginPath(); c.ellipse(4, 0, 16, 7, 0, 0, TAU); c.fill();
+  } else if (kind === 'cactus') {
+    c.fillStyle = '#3f9a5a';
+    roundRect(c, -6, -44, 12, 44, 6); c.fill();
+    roundRect(c, -18, -30, 12, 9, 4); c.fill();
+    roundRect(c, -18, -30, 6, 20, 3); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1.4;
+    c.beginPath(); c.moveTo(0, -40); c.lineTo(0, -6); c.stroke();
+  } else if (kind === 'lily') {
+    c.fillStyle = '#4fae57';
+    c.beginPath(); c.ellipse(0, 0, 16, 10, 0, 0, TAU); c.fill();
+    c.fillStyle = '#8ed8ff';
+    c.beginPath(); c.ellipse(0, 0, 10, 6, 0, 0, TAU); c.fill();
+  } else if (kind === 'pebble') {
+    c.fillStyle = 'rgba(120,116,104,.85)';
+    c.beginPath(); c.ellipse(0, -3, 7, 4.4, 0, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.45)';
+    c.beginPath(); c.ellipse(-1.5, -4.6, 3.4, 1.8, 0, 0, TAU); c.fill();
+  } else if (kind === 'shell') {
+    c.fillStyle = '#ffe7d2';
+    c.beginPath(); c.arc(0, -3, 6, Math.PI, TAU); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(200,150,120,.75)'; c.lineWidth = 1.2;
+    for (let k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(0, -3); c.lineTo(k * 2.6, -8.4); c.stroke(); }
+  } else if (kind === 'tuft') {
+    c.strokeStyle = '#4f9e42'; c.lineWidth = 2.2;
+    for (let k = -2; k <= 2; k++) {
+      c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(k * 2, -6, k * 4.2, -11 - Math.abs(k) * -1.6); c.stroke();
+    }
+  } else if (kind === 'cratelet') {
+    c.fillStyle = '#b07a44'; roundRect(c, -6, -9, 12, 9, 2); c.fill();
+    c.strokeStyle = '#7a5222'; c.lineWidth = 1.4; c.stroke();
+  } else if (kind === 'emberrock') {
+    c.fillStyle = 'rgba(40,26,22,.9)';
+    c.beginPath(); c.ellipse(0, -3, 7, 4.6, 0, 0, TAU); c.fill();
+    c.strokeStyle = 'rgba(255,130,40,.75)'; c.lineWidth = 1.4; c.stroke();
+  } else if (kind === 'flowerbox') {
+    c.fillStyle = '#b07a44'; roundRect(c, -14, -12, 28, 12, 3); c.fill();
+    c.strokeStyle = '#7a5222'; c.lineWidth = 1.6; c.stroke();
+    ['#ff8fb0', '#ffd94a', '#c68cff'].forEach((col, i) => {
+      c.fillStyle = col;
+      c.beginPath(); c.arc(-8 + i * 8, -14, 4.4, 0, TAU); c.fill();
+    });
+  }
+}
+
+/* 섬 테두리를 따라 소품 배치 */
+function collectProps(map, seed) {
+  const rr = mulberry32(seed + 321);
+  const out = [];
+  const islands = map.plan.islands;
+  const used = {};
+  const push = (k, x, y, s, extra) => {
+    const key = Math.round(x / 14) + ':' + Math.round(y / 14);
+    if (used[key]) return;
+    used[key] = 1;
+    out.push(Object.assign({ k: k, x: x, y: y, s: s, ph: rr() * TAU, lay: 'top' }, extra || {}));
+  };
+  islands.forEach((is, idx) => {
+    const kind = is.k;
+    /* 섬 가장자리 셀 찾기 */
+    const edge = [];
+    for (let dr = 0; dr < is.h; dr++) {
+      for (let dc = 0; dc < is.w; dc++) {
+        if (!insideIsland(is, dc, dr)) continue;
+        const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        for (let q = 0; q < nb.length; q++) {
+          const nc = is.c + dc + nb[q][0], nr = is.r + dr + nb[q][1];
+          const inside = nc >= is.c && nr >= is.r && nc < is.c + is.w && nr < is.r + is.h && insideIsland(is, nc - is.c, nr - is.r);
+          if (inside) continue;
+          if (tileAtCell(nc, nr)) continue;
+          edge.push({ c: nc, r: nr, dx: nb[q][0], dy: nb[q][1] });
+        }
+      }
+    }
+    const pool = kind === 'sand' ? ['palm', 'palm', 'rock', 'flowerbox', 'barrel', 'crate', 'flag']
+      : kind === 'deck' ? ['barrel', 'crate', 'torch', 'flag', 'chest']
+        : kind === 'stone' ? ['torch', 'flag', 'crate', 'flowerbox', 'rock']
+          : kind === 'ice' ? ['icicle', 'snowpile', 'rock', 'flag']
+            : kind === 'snow' ? ['pine', 'snowpile', 'rock', 'icicle', 'pine']
+              : kind === 'basalt' ? ['rock', 'torch', 'flag', 'crate', 'obeliskless']
+                : ['tree', 'palm', 'bush', 'flower', 'rock', 'flowerbox'];
+    edge.forEach(e => {
+      if (rr() > .62) return;
+      const jx = (rr() - .5) * GRID * .18, jy = (rr() - .5) * GRID * .18;
+      const x = cellX(e.c) + e.dx * GRID * .34 + jx;
+      const y = cellY(e.r) + e.dy * GRID * .34 + jy;
+      let k = pool[Math.floor(rr() * pool.length)];
+      if (k === 'obeliskless') k = 'rock';
+      if (k === 'flower') k = 'flowerbox';
+      const extra = { color: ['#ff8fb0', '#ffd94a', '#ff9f43', '#c68cff', '#7fd8ff'][Math.floor(rr() * 5)] };
+      push(k, x, y, .82 + rr() * .34, extra);
+    });
+
+    /* 발판 사이 빈틈에 작은 지면 장식 (발판 아래 레이어) */
+    for (let dr = 0; dr < is.h; dr++) {
+      for (let dc = 0; dc < is.w; dc++) {
+        if (!insideIsland(is, dc, dr)) continue;
+        if (rr() > (kind === 'deck' ? .18 : .5)) continue;
+        const sx = cellX(is.c + dc) + (rr() - .5) * GRID * .52;
+        const sy = cellY(is.r + dr) + (rr() - .5) * GRID * .52;
+        const smalls = kind === 'sand' ? ['shell', 'pebble', 'flower']
+          : kind === 'deck' ? ['pebble', 'cratelet']
+            : kind === 'stone' ? ['pebble', 'flower']
+              : kind === 'ice' || kind === 'snow' ? ['snowpile', 'pebble']
+                : kind === 'basalt' ? ['pebble', 'emberrock']
+                  : ['tuft', 'flower', 'pebble'];
+        const sk = smalls[Math.floor(rr() * smalls.length)];
+        out.push({
+          k: sk, x: sx, y: sy, s: .42 + rr() * .3, ph: rr() * TAU, lay: 'ground',
+          color: ['#ff8fb0', '#ffd94a', '#ff9f43', '#c68cff', '#fff3b0'][Math.floor(rr() * 5)]
+        });
+      }
+    }
+    void idx;
+  });
+
+  /* 물 위 바위 · 부표 · 작은 배 */
+  const W = MAP_W, H = MAP_H;
+  for (let k = 0; k < 90; k++) {
+    const x = 80 + rr() * (W - 160), y = 80 + rr() * (H - 160);
+    const cc = Math.round((x - MAP_MARGIN - GRID / 2) / GRID);
+    const rrr = Math.round((y - MAP_MARGIN - GRID / 2) / GRID);
+    if (map.grid[rrr] && map.grid[rrr][cc] === '#') continue;
+    if (map.kind === 'volcano') push('rock', x, y, .7 + rr() * .5, { rockA: '#4a3630', rockB: '#241816' });
+    else if (map.kind === 'ice') push('icicle', x, y, .8 + rr() * .5);
+    else if (rr() < .55) push('rock', x, y, .7 + rr() * .45);
+    else push('lily', x, y, .8 + rr() * .4);
+  }
+  out.sort((a, b) => a.y - b.y);
+  return out;
+}
+
+/* 움직이는 요소: 연기 · 불티 · 물보라 */
+function collectEmitters(map, seed, props) {
+  const out = [];
+  (map.landmarkPos || []).forEach((lm, i) => {
+    const x = cellX(lm.c), y = cellY(lm.r);
+    if (lm.k === 'volcano') out.push({ k: 'smoke', x: x, y: y - GRID * 1.7, s: 1.5, ph: i });
+    if (lm.k === 'hut') out.push({ k: 'smoke', x: x + GRID * .2, y: y - GRID * .95, s: .6, ph: i * 1.7 });
+    if (lm.k === 'waterfall') out.push({ k: 'spray', x: x, y: y + GRID * .35, s: 1, ph: i });
+    if (lm.k === 'lavaPool') out.push({ k: 'ember', x: x, y: y - 6, s: 1, ph: i });
+    if (lm.k === 'crystal') out.push({ k: 'spark', x: x, y: y - GRID * .4, s: 1, ph: i });
+  });
+  /* 횃불 위치도 불티를 뿜는다 */
+  (props || []).forEach(p => {
+    if (p.k === 'torch') out.push({ k: 'flame', x: p.x, y: p.y - 44 * p.s, s: p.s, ph: p.ph });
+  });
+  void seed;
+  return out;
+}
+
+/* 물결 반짝임 위치 (바다 위) */
+function collectWaves(map, seed) {
+  const rr = mulberry32(seed + 654);
+  const out = [];
+  const W = MAP_W, H = MAP_H;
+  for (let k = 0; k < 260 && out.length < 190; k++) {
+    const x = 40 + rr() * (W - 80), y = 40 + rr() * (H - 80);
+    const cc = Math.round((x - MAP_MARGIN - GRID / 2) / GRID);
+    const rrr = Math.round((y - MAP_MARGIN - GRID / 2) / GRID);
+    if (map.grid[rrr] && map.grid[rrr][cc] === '#') continue;
+    out.push({ x: x, y: y, ph: rr() * TAU, r: 14 + rr() * 22, sp: .6 + rr() * .8 });
+  }
+  return out;
+}
+
+/* 눈송이 (얼음 맵 전용) */
+function collectFlakes(map, seed) {
+  if (map.kind !== 'ice') return [];
+  const rr = mulberry32(seed + 987);
+  const out = [];
+  for (let k = 0; k < 220; k++) {
+    out.push({ x: rr() * MAP_W, y: rr() * MAP_H, ph: rr() * TAU, sp: 26 + rr() * 40, r: 1.4 + rr() * 2.6 });
+  }
+  return out;
+}
+
+/* =========================================================
+   7. 매 프레임 움직이는 요소
+   ========================================================= */
+function drawWorldAnim(c, t, x0, y0, x1, y1) {
+  const map = BOARD.map;
+  if (!map) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  /* 물가 잔물결 */
+  const shore = BOARD.shore || [];
+  for (let i = 0; i < shore.length; i++) {
+    const s0 = shore[i];
+    if (s0.x < x0 - 40 || s0.x > x1 + 40 || s0.y < y0 - 40 || s0.y > y1 + 40) continue;
+    const k = Math.sin(t / 760 + s0.ph);
+    if (k < .1) continue;
+    c.save();
+    c.translate(s0.x, s0.y);
+    c.rotate(s0.a);
+    c.strokeStyle = 'rgba(255,255,255,' + (.26 * (k - .1)) + ')';
+    c.lineWidth = 2.6;
+    c.beginPath();
+    c.arc(6 + k * 8, 0, 12 + k * 6, -1.15, 1.15);
+    c.stroke();
+    c.restore();
+  }
+
+  /* 물결 반짝임 */
+  (BOARD.waves || []).forEach(w => {
+    if (w.x < x0 - 60 || w.x > x1 + 60 || w.y < y0 - 60 || w.y > y1 + 60) return;
+    const k = Math.sin(t / 900 * w.sp + w.ph);
+    if (map.kind === 'volcano') {
+      if (k < .2) return;
+      c.strokeStyle = 'rgba(255,' + Math.round(120 + 60 * k) + ',40,' + (.25 * k) + ')';
+      c.lineWidth = 3;
+      c.beginPath(); c.arc(w.x, w.y, w.r * .6 * (1 + k * .3), Math.PI * 1.15, Math.PI * 1.85); c.stroke();
+    } else if (map.kind === 'ice') {
+      if (k < .3) return;
+      c.strokeStyle = 'rgba(255,255,255,' + (.30 * (k - .3)) + ')';
+      c.lineWidth = 2.4;
+      c.beginPath(); c.moveTo(w.x - w.r * .6, w.y); c.lineTo(w.x + w.r * .6, w.y - 3); c.stroke();
+    } else {
+      if (k < .15) return;
+      c.strokeStyle = 'rgba(255,255,255,' + (.22 * (k - .15)) + ')';
+      c.lineWidth = 2.6;
+      c.beginPath();
+      c.moveTo(w.x - w.r * .7, w.y);
+      c.quadraticCurveTo(w.x, w.y - 5 * k, w.x + w.r * .7, w.y);
+      c.stroke();
+    }
+  });
+
+  /* 연기 · 불티 · 물보라 */
+  (BOARD.emit || []).forEach(e => {
+    if (e.x < x0 - 120 || e.x > x1 + 120 || e.y < y0 - 220 || e.y > y1 + 120) return;
+    if (e.k === 'smoke') {
+      for (let i = 0; i < 3; i++) {
+        const k = ((t / 2600 + i / 3 + e.ph) % 1);
+        const rad = (10 + k * 34) * e.s;
+        c.fillStyle = 'rgba(200,200,210,' + (.20 * (1 - k) * e.s) + ')';
+        c.beginPath();
+        c.arc(e.x + Math.sin(k * 5 + e.ph) * 22 * e.s, e.y - k * 110 * e.s, rad, 0, TAU);
+        c.fill();
+      }
+    } else if (e.k === 'ember' || e.k === 'flame') {
+      for (let i = 0; i < 2; i++) {
+        const k = ((t / 1400 + i * .5 + e.ph) % 1);
+        c.fillStyle = 'rgba(255,170,60,' + (.8 * (1 - k)) + ')';
+        c.beginPath();
+        c.arc(e.x + Math.sin(k * 6 + e.ph) * 7 * e.s, e.y - k * 40 * e.s, (2.4 - k * 1.6) * e.s * 2, 0, TAU);
+        c.fill();
+      }
+      const g = c.createRadialGradient(e.x, e.y, 1, e.x, e.y, 22 * e.s);
+      g.addColorStop(0, 'rgba(255,200,120,.30)');
+      g.addColorStop(1, 'rgba(255,150,60,0)');
+      c.fillStyle = g;
+      c.beginPath(); c.arc(e.x, e.y, 22 * e.s, 0, TAU); c.fill();
+    } else if (e.k === 'spray') {
+      for (let i = 0; i < 3; i++) {
+        const k = ((t / 1100 + i / 3 + e.ph) % 1);
+        c.fillStyle = 'rgba(255,255,255,' + (.45 * (1 - k)) + ')';
+        c.beginPath();
+        c.arc(e.x + (i - 1) * 14 + Math.sin(k * 8) * 6, e.y - k * 26 - 4, (3 - k * 2) * dpr * .5, 0, TAU);
+        c.fill();
+      }
+    } else if (e.k === 'spark') {
+      for (let i = 0; i < 3; i++) {
+        const k = ((t / 1800 + i / 3 + e.ph) % 1);
+        c.fillStyle = 'rgba(220,245,255,' + (.7 * (1 - k)) + ')';
+        c.beginPath();
+        c.arc(e.x + Math.cos(i * 2 + e.ph) * 20, e.y - k * 34, 2.2 * (1 - k) + .6, 0, TAU);
+        c.fill();
+      }
+    }
+  });
+
+  /* 눈송이 */
+  (BOARD.flakes || []).forEach(f => {
+    const y = (f.y + t * .001 * f.sp * 6) % MAP_H;
+    const x = f.x + Math.sin(t / 1800 + f.ph) * 18;
+    if (x < x0 - 10 || x > x1 + 10 || y < y0 - 10 || y > y1 + 10) return;
+    c.fillStyle = 'rgba(255,255,255,.75)';
+    c.beginPath(); c.arc(x, y, f.r, 0, TAU); c.fill();
+  });
+}
+
+/* 소품 그리기 (뷰컬링 + 살랑임) */
+function drawProps(c, t, x0, y0, x1, y1, layer) {
+  const list = BOARD.props || [];
+  const map = BOARD.map;
+  const want = layer || 'top';
+  for (let i = 0; i < list.length; i++) {
+    const p = list[i];
+    const lay = p.lay || 'top';
+    if (want === 'ground' ? lay !== 'ground' : lay === 'ground') continue;
+    if (p.x < x0 - 140 || p.x > x1 + 140 || p.y < y0 - 220 || p.y > y1 + 140) continue;
+    if (p.big) {
+      c.save();
+      c.translate(p.x, p.y);
+      if (p.k === '@ship') c.rotate(Math.sin(t / 2600 + p.ph) * .02);
+      paintBigLandmark(c, p.k.slice(1), 0, 0, 1234 + Math.round(p.x));
+      c.restore();
+      continue;
+    }
+    const key = p.k;
+    const sp = propSprite(key, map);
+    const sway = Math.sin(t / 1400 + p.ph) * .5;
+    const size = 128 * (p.s || 1) * 1.45;
+    if (p.k === 'flower' || p.k === 'flag' || p.k === 'torch') {
+      c.save();
+      c.translate(p.x, p.y);
+      c.scale(size / 128, size / 128);
+      paintProp(c, { kind: p.k, color: p.color, map: map }, sway);
+      c.restore();
+    } else {
+      c.drawImage(sp, p.x - size / 2, p.y - size * .82, size, size);
+    }
+  }
+}
+
+/* 물가 위치(파도 애니메이션용) */
+function collectShore(map) {
+  const out = [];
+  const rows = map.grid;
+  for (let r = 0; r < rows.length; r++) {
+    for (let c = 0; c < rows[r].length; c++) {
+      if (rows[r][c] !== '#') continue;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dc, dr]) => {
+        const nr = r + dr, nc = c + dc;
+        if (rows[nr] === undefined) return;
+        if (rows[nr][nc] === '#') return;
+        out.push({ x: cellX(c) + dc * GRID * .56, y: cellY(r) + dr * GRID * .56, a: Math.atan2(dr, dc), ph: (c * 7 + r * 13) % 100 / 100 * TAU });
+      });
+    }
+  }
+  return out;
 }
 /* =========================================================
    피클 파티 — 게임 진행 (턴, 주사위, 그리드 이동, 타일, 별)
@@ -3045,20 +4687,63 @@ async function minigamePhase() {
   await startRound();
 }
 
+/* 라운드마다 개인전 · 2대2 · 1대3 이 골고루 나오도록 모드 순서를 미리 짠다 */
+function buildModePlan(rounds) {
+  const cycle = ['ffa', '2v2', 'ffa', '1v3'];
+  const out = [];
+  for (let i = 0; i < Math.max(4, rounds); i++) out.push(cycle[i % cycle.length]);
+  return out;
+}
+
 function pickMinigame() {
   if (G.forcedMg) { const f = MINIGAMES.find(m => m.key === G.forcedMg); G.forcedMg = null; if (f) return f; }
-  if (!G.bag || !G.bag.length) {
-    G.bag = shuffle(MINIGAMES.filter(m => m.key !== G.lastMg).map(m => m.key));
+  if (!G.mgModePlan) G.mgModePlan = buildModePlan(G.rounds);
+  const want = G.mgModePlan[(G.round - 1) % G.mgModePlan.length] || 'ffa';
+  const modeOf = m => m.team || 'ffa';
+  G.bags = G.bags || {};
+  const pickFrom = mode => {
+    const pool = MINIGAMES.filter(m => modeOf(m) === mode);
+    if (!G.bags[mode] || !G.bags[mode].length) {
+      G.bags[mode] = shuffle(pool.filter(m => m.key !== G.lastMg).map(m => m.key));
+      if (!G.bags[mode].length) G.bags[mode] = shuffle(pool.map(m => m.key));
+    }
+    return MINI_BY_KEY[G.bags[mode].pop()];
+  };
+  let m = pickFrom(want);
+  if (!m) m = pickFrom('ffa');
+  if (m.key === G.lastMg) {
+    const alt = pickFrom(modeOf(m));
+    if (alt && alt.key !== m.key) m = alt;
   }
-  let key = G.bag.pop();
-  if (key === G.lastMg && G.bag.length) { const alt = G.bag.pop(); G.bag.push(key); key = alt; }
-  const m = MINI_BY_KEY[key];
   G.lastMg = m.key;
+  G.lastMgMode = modeOf(m);
   G.mgHistory.push(m.key);
   return m;
 }
 
-async function awardMinigame(ranks) {
+async function awardMinigame(ranks, m, def) {
+  /* 팀전: 이긴 팀 전원 +10, 진 팀 전원 +2 (무승부 +6) */
+  if (m && m.teamResult) {
+    const win = m.teamResult.win;
+    const out = [];
+    ['blue', 'red'].forEach(key => {
+      const ids = (m.teams && m.teams[key]) || [];
+      const isWin = win === key;
+      const coins = win === 'draw' ? 6 : (isWin ? 10 : 2);
+      ids.forEach(i => {
+        const p = G.players[i];
+        p.coins += coins;
+        p.mgRank += (win === 'draw' ? 2 : (isWin ? 1 : 3));
+        if (isWin) p.mgWins++;
+        out.push({
+          i: i, rank: win === 'draw' ? 1 : (isWin ? 1 : 2), coins: coins,
+          value: isWin ? '승리' : (win === 'draw' ? '무승부' : '패배')
+        });
+      });
+    });
+    updateHud();
+    return out;
+  }
   const sorted = ranks.slice().sort((a, b) => b.sortVal - a.sortVal);
   const reward = [10, 6, 3, 1];
   const out = [];
@@ -3084,6 +4769,37 @@ async function awardMinigame(ranks) {
 
 const MG = { def: null, m: null, raf: null, running: false, demo: false, w: 0, h: 0, dpr: 1, padVals: [] };
 
+/* ---------- 팀전 (2대2 · 1대3) ---------- */
+const TEAM_COL = { blue: '#4a86ff', blue2: '#1c3ea8', red: '#ff5364', red2: '#a8142c' };
+const TEAM_NAME = { blue: '파랑팀', red: '빨강팀' };
+
+function teamOfIdx(m, i) { return (m && m.teamOf && m.teamOf[i]) ? m.teamOf[i] : null; }
+function teamColOf(m, i) {
+  const t = teamOfIdx(m, i);
+  if (t) return t === 'blue' ? TEAM_COL.blue : TEAM_COL.red;
+  return CHARS[m.players[i].ci].c;
+}
+function teamSum(m, key, fn) {
+  return (m.teams && m.teams[key] ? m.teams[key] : []).reduce((s, i) => s + fn(i), 0);
+}
+function assignTeams(players) {
+  const idx = players.map((p, i) => i);
+  return { blue: idx.filter(i => i % 2 === 0), red: idx.filter(i => i % 2 === 1) };
+}
+function assignTeams1v3(players) {
+  const idx = players.map((p, i) => i);
+  const solo = idx[Math.floor(Math.random() * idx.length)];
+  return { blue: [solo], red: idx.filter(i => i !== solo) };
+}
+function makeTeams(mode, players) {
+  const t = mode === '1v3' ? assignTeams1v3(players) : assignTeams(players);
+  t.teamOf = {};
+  t.blue.forEach(i => { t.teamOf[i] = 'blue'; });
+  t.red.forEach(i => { t.teamOf[i] = 'red'; });
+  t.mode = mode;
+  return t;
+}
+
 function laneRects(w, h, n) {
   const pad = 5, gap = 4;
   const lw = (w - pad * 2 - gap * (n - 1)) / n;
@@ -3106,10 +4822,11 @@ function paintLanes(c, m, w, h, alpha) {
     g.addColorStop(1, 'rgba(0,0,0,' + (.16 * (alpha === undefined ? 1 : alpha)) + ')');
     c.fillStyle = g;
     roundRect(c, r.x, r.y, r.w, r.h, 12); c.fill();
-    c.strokeStyle = CHARS[p.ci].c + '55';
-    c.lineWidth = 2; c.stroke();
+    const col = teamColOf(m, i);
+    c.strokeStyle = col + '88';
+    c.lineWidth = teamOfIdx(m, i) ? 3 : 2; c.stroke();
     // top colour bar
-    c.fillStyle = CHARS[p.ci].c + 'cc';
+    c.fillStyle = col + 'cc';
     roundRect(c, r.x + 5, r.y + 5, r.w - 10, 5, 3); c.fill();
   });
   return rs;
@@ -3123,7 +4840,7 @@ function bigText(c, text, x, y, size, color, align) {
 }
 
 /* ---------- pad handling ---------- */
-function buildPads(n) {
+function buildPads(n, teamOf) {
   const pads = $('#pads');
   pads.innerHTML = '';
   pads.className = n === 2 ? 'n2' : '';
@@ -3133,9 +4850,12 @@ function buildPads(n) {
     const ch = CHARS[p.ci];
     const el = document.createElement('button');
     el.className = 'pad';
-    el.style.setProperty('--c1', ch.c);
-    el.style.setProperty('--c2', ch.d);
-    el.innerHTML = '<span class="pn">' + p.name + '</span><span class="pk">' + 'QPZM'[i] + '</span><span class="pv"></span>';
+    const tm = teamOf ? teamOf[i] : null;
+    el.style.setProperty('--c1', tm ? (tm === 'blue' ? TEAM_COL.blue : TEAM_COL.red) : ch.c);
+    el.style.setProperty('--c2', tm ? (tm === 'blue' ? TEAM_COL.blue2 : TEAM_COL.red2) : ch.d);
+    if (tm) el.classList.add('t-' + tm);
+    el.innerHTML = '<span class="pn">' + (tm ? '<i class="tdot"></i>' : '') + p.name + '</span>' +
+      '<span class="pk">' + 'QPZM'[i] + '</span><span class="pv"></span>';
     el.addEventListener('pointerdown', e => { e.preventDefault(); padTap(i, el); }, { passive: false });
     el.dataset.i = i;
     pads.appendChild(el);
@@ -3187,15 +4907,19 @@ function resizeStage() {
 /* ---------- minigame runner ---------- */
 async function playMinigame(def) {
   MG.def = def; MG.running = false; MG.demo = false;
+  const teams = def.team ? makeTeams(def.team, G.players) : null;
+  if (teams) G.mgTeams = teams;
   setScreen('mini');
   $('#miniTitle').textContent = def.title;
   $('#miniSub').textContent = def.sub;
-  buildPads(G.players.length);
+  buildPads(G.players.length, teams && teams.teamOf);
   resetPads();
-  await showMiniReady(def);
+  await showMiniReady(def, teams);
   const m = {
     players: G.players, n: G.players.length, t: 0, done: false,
-    vals: {}, dead: {}, bot: {}, ranks: [], seed: Math.random() * 1e6
+    vals: {}, dead: {}, bot: {}, ranks: [], seed: Math.random() * 1e6,
+    teams: teams ? { blue: teams.blue.slice(), red: teams.red.slice() } : null,
+    teamOf: teams ? Object.assign({}, teams.teamOf) : null
   };
   def.init(m);
   MG.m = m;
@@ -3221,9 +4945,9 @@ async function playMinigame(def) {
   MG.running = false;
   cancelAnimationFrame(MG.raf);
   m.done = true;
-  if (!m.ranks.length) def.finish(m);
-  const rows = await awardMinigame(m.ranks);
-  await showMiniResult(rows, def);
+  if (!m.ranks.length && !m.teamResult) def.finish(m);
+  const rows = await awardMinigame(m.ranks, m, def);
+  await showMiniResult(rows, def, m);
   setScreen('board');
   await wait(200);
 }
@@ -3248,20 +4972,44 @@ function resizeStageIfNeeded() {
 /* ---------- 예시 데모(라이브 프리뷰) + READY! 게이트 ---------- */
 function makeDemo(def) {
   const dem = {
-    players: [0, 1, 2, 3].map(i => ({ i, ci: i, name: 'P' + (i + 1), bot: true })),
+    players: [0, 1, 2, 3].map(i => ({ i, ci: i, name: CHARS[i].n, bot: true })),
     n: 4, t: 0, done: false, vals: {}, dead: {}, bot: {}, ranks: [], seed: Math.random() * 1e6, demo: true
   };
+  if (def.team) {
+    const t = def.team === '1v3'
+      ? { blue: [0], red: [1, 2, 3] }
+      : { blue: [0, 1], red: [2, 3] };
+    dem.teams = t;
+    dem.teamOf = {};
+    t.blue.forEach(i => { dem.teamOf[i] = 'blue'; });
+    t.red.forEach(i => { dem.teamOf[i] = 'red'; });
+  }
   def.init(dem);
   return dem;
 }
 
-async function showMiniReady(def) {
+function teamCardHTML(teams, mode) {
+  if (!teams) return '';
+  const row = key => {
+    const ids = teams[key];
+    const av = ids.map(i => avatarSVG(G.players[i].ci, 26)).join('');
+    const nm = ids.map(i => G.players[i].name).join(' · ');
+    const label = key === 'blue' ? (mode === '1v3' ? '혼자 팀' : '파랑팀') : (mode === '1v3' ? '3명 팀' : '빨강팀');
+    return '<div class="mtm t-' + key + '"><div class="mt-l">' + label +
+      '<small>' + ids.length + '명</small></div><div class="mt-a">' + av + '</div>' +
+      '<div class="mt-n">' + nm + '</div></div>';
+  };
+  return '<div class="mo-teams">' + row('blue') + '<div class="mo-vs">VS</div>' + row('red') + '</div>';
+}
+
+async function showMiniReady(def, teams) {
   const ov = $('#miniOverlay');
   ov.className = 'mini-overlay on';
   ov.innerHTML =
     '<div class="mo-card">' +
-    '<div class="mo-title">' + def.title + '</div>' +
+    '<div class="mo-title">' + def.title + (def.team ? ' <em class="mo-mode">' + (def.team === '1v3' ? '1 대 3' : '2 대 2') + '</em>' : '') + '</div>' +
     '<div class="mo-rule">' + def.rule + '</div>' +
+    teamCardHTML(teams, def.team) +
     '<div class="mo-demohead"><span class="mo-tag">예시 영상 · AI 시범 플레이</span><span class="mo-live">LIVE</span></div>' +
     '<div class="mo-demo"><canvas id="cvDemo"></canvas></div>' +
     '<button class="mo-ready" id="btnReady">READY!</button>' +
@@ -3331,15 +5079,24 @@ async function showMiniReady(def) {
   ov.className = 'mini-overlay';
 }
 
-async function showMiniResult(rows, def) {
+async function showMiniResult(rows, def, m) {
   const ov = $('#miniOverlay');
   ov.className = 'mini-overlay on';
-  rows.sort((a, b) => a.rank - b.rank);
-  let html = '<div class="mo-title">결과</div><div class="mo-ranks">';
+  rows.sort((a, b) => a.rank - b.rank || b.coins - a.coins);
+  const tr = m && m.teamResult;
+  let html = '<div class="mo-title">' + (tr ? (tr.win === 'draw' ? '무승부!' : TEAM_NAME[tr.win] + ' 승리!') : '결과') + '</div>';
+  if (tr) {
+    html += '<div class="mo-teamres"><span class="t-blue">' + (tr.blueLabel || '') + '</span>' +
+      '<span class="mo-dash">—</span><span class="t-red">' + (tr.redLabel || '') + '</span></div>';
+  }
+  html += '<div class="mo-ranks">';
   rows.forEach(r => {
     const p = G.players[r.i];
-    html += '<div class="mrank"><div class="rp">' + r.rank + '위</div>' + avatarSVG(p.ci, 21) +
-      '<div class="rnm">' + p.name + '</div><div class="rv">' + (r.value || '') + '</div>' +
+    const tm = m && m.teamOf ? m.teamOf[r.i] : null;
+    html += '<div class="mrank' + (tm ? ' t-' + tm : '') + '">' +
+      '<div class="rp">' + (r.rank === 1 ? '승' : '') + '</div>' + avatarSVG(p.ci, 21) +
+      '<div class="rnm">' + p.name + (tm ? '<small>' + (tm === 'blue' ? '파랑' : '빨강') + '</small>' : '') + '</div>' +
+      '<div class="rv">' + (r.value || '') + '</div>' +
       '<div class="rc">+' + r.coins + '</div></div>';
   });
   html += '</div>';
@@ -4199,8 +5956,627 @@ const MINIGAMES = [
         bigText(c, m.score[i] + '점', r.x + r.w / 2, cy + 46, Math.min(17, r.w * .19), '#fff');
       });
     }
+  },
+
+  /* =========================================================
+     팀전 1. 팀 줄다리기 (2 대 2)
+     ========================================================= */
+  {
+    key: 'tug', team: '2v2', title: '팀 줄다리기', sub: '2 대 2 · 마주 잡고 당겨라!',
+    rule: '우리 팀 패드를 연타해 줄을 당기세요.<br>9초 뒤 줄이 우리 쪽에 있으면 승리!',
+    dur: 9,
+    init(m) {
+      m.pull = 0; m.acc = {}; m.rate = {}; m.moves = {}; m.pop = [];
+      m.players.forEach((p, i) => {
+        m.acc[i] = Math.random(); m.moves[i] = 0;
+        m.rate[i] = (2.6 + Math.random() * 1.5) * aiF().speed;
+      });
+    },
+    botTick(m, dt) {
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.done) return;
+        m.acc[i] += dt * m.rate[i];
+        while (m.acc[i] >= 1) { m.acc[i] -= 1; this.push(m, i); }
+      });
+    },
+    push(m, i) {
+      if (m.done) return;
+      const d = teamOfIdx(m, i) === 'blue' ? 1 : -1;
+      m.pull = clamp(m.pull + d * .017, -1.15, 1.15);
+      m.moves[i]++;
+      m.pop.push({ blue: d > 0, t: 0 });
+      if (m.pop.length > 26) m.pop.shift();
+      setPad(i, m.moves[i] + '번');
+      sfx('tick');
+    },
+    tap(m, i) { this.push(m, i); },
+    update(m, dt) {
+      m.pull *= (1 - dt * .07);
+      m.pop.forEach(p => { p.t += dt; });
+      m.pop = m.pop.filter(p => p.t < .45);
+    },
+    finish(m) {
+      if (m.done) return;
+      m.done = true;
+      const win = Math.abs(m.pull) < .02 ? 'draw' : (m.pull > 0 ? 'blue' : 'red');
+      const b = teamSum(m, 'blue', i => m.moves[i]);
+      const r = teamSum(m, 'red', i => m.moves[i]);
+      m.teamResult = { win, blueLabel: '파랑 ' + b + '회', redLabel: '빨강 ' + r + '회' };
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#22335e'); g.addColorStop(1, '#0e1630');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.fillStyle = 'rgba(255,255,255,.05)';
+      c.fillRect(0, h * .66, w, h * .34);
+      const y = h * .60;
+      const cx = w / 2 + m.pull * w * .30;
+      /* 줄 */
+      c.strokeStyle = '#b98f57'; c.lineWidth = Math.max(4, w * .012); c.lineCap = 'round';
+      c.beginPath(); c.moveTo(10, y); c.quadraticCurveTo(w / 2, y + (cx - w / 2) * .10, w - 10, y); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = Math.max(1.5, w * .004);
+      c.stroke();
+      /* 중심선 */
+      c.setLineDash([7, 7]); c.strokeStyle = 'rgba(255,255,255,.45)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(w / 2, h * .20); c.lineTo(w / 2, h * .94); c.stroke(); c.setLineDash([]);
+      /* 매듭 */
+      c.fillStyle = '#ffe066'; c.beginPath(); c.arc(cx, y, Math.max(8, w * .022), 0, TAU); c.fill();
+      c.strokeStyle = '#a8792a'; c.lineWidth = 3; c.stroke();
+      /* 팀 캐릭터 */
+      ['blue', 'red'].forEach(key => {
+        const dir = key === 'blue' ? -1 : 1;
+        const ids = (m.teams && m.teams[key]) || [];
+        ids.forEach((i, k) => {
+          const p = m.players[i];
+          const bx = cx + dir * (Math.max(52, w * .13) + k * Math.max(38, w * .10));
+          drawChar(c, bx, y + 8, Math.min(74, w * .17), p.ci, {
+            tilt: dir * (.16 + Math.abs(m.pull) * .05), time: t, mood: 'happy'
+          });
+        });
+        bigText(c, key === 'blue' ? '파랑팀' : '빨강팀',
+          key === 'blue' ? w * .13 : w * .87, h * .13, Math.min(15, w * .042),
+          key === 'blue' ? '#9dc0ff' : '#ffb3ba');
+      });
+      /* 박수/힘 효과 */
+      m.pop.forEach(pp => {
+        const k = pp.t / .45;
+        c.globalAlpha = .8 * (1 - k);
+        c.fillStyle = pp.blue ? '#9dc0ff' : '#ffb3ba';
+        const px = pp.blue ? w * .22 : w * .78;
+        c.beginPath(); c.arc(px + (Math.random() - .5) * 20, h * .72 - k * 26, 3 + k * 4, 0, TAU); c.fill();
+        c.globalAlpha = 1;
+      });
+      /* 팀별 연타 수 */
+      const bTaps = teamSum(m, 'blue', i => m.moves[i]);
+      const rTaps = teamSum(m, 'red', i => m.moves[i]);
+      bigText(c, bTaps + '회', w * .20, h * .30, Math.min(26, w * .07), '#9dc0ff');
+      bigText(c, rTaps + '회', w * .80, h * .30, Math.min(26, w * .07), '#ffb3ba');
+      /* 당김 게이지 */
+      const bw = w * .72, bx = (w - bw) / 2, by = h * .88;
+      c.fillStyle = 'rgba(255,255,255,.12)';
+      roundRect(c, bx, by, bw, 9, 5); c.fill();
+      const k = clamp(.5 + m.pull * .5, 0, 1);
+      c.fillStyle = k > .5 ? TEAM_COL.blue : TEAM_COL.red;
+      const mid = bx + bw / 2;
+      const px2 = Math.min(mid, bx + bw * k);
+      roundRect(c, px2, by, Math.abs(bx + bw * k - mid), 9, 4); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.7)';
+      c.fillRect(mid - 1, by - 3, 2, 15);
+    }
+  },
+
+  /* =========================================================
+     팀전 2. 팀 이어달리기 (2 대 2)
+     ========================================================= */
+  {
+    key: 'relay', team: '2v2', title: '팀 이어달리기', sub: '2 대 2 · 두 사람 거리 합으로 승부!',
+    rule: '내 패드를 눌러 80m를 달리세요.<br>우리 팀 두 사람의 합이 더 길면 승리!',
+    dur: 8,
+    init(m) {
+      m.dist = {}; m.acc = {}; m.rate = {};
+      m.players.forEach((p, i) => {
+        m.dist[i] = 0; m.acc[i] = Math.random();
+        m.rate[i] = (2.9 + Math.random() * 1.6) * aiF().speed;
+      });
+    },
+    botTick(m, dt) {
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.done) return;
+        m.acc[i] += dt * m.rate[i];
+        while (m.acc[i] >= 1) { m.acc[i] -= 1; this.add(m, i); }
+      });
+    },
+    add(m, i) {
+      if (m.done || m.dist[i] >= 80) return;
+      m.dist[i] = Math.min(80, m.dist[i] + 3.4 + Math.random() * 1.8);
+      setPad(i, Math.round(m.dist[i]) + 'm');
+    },
+    tap(m, i) { if (m.dist[i] < 80) { this.add(m, i); sfx('tick'); } },
+    update(m) {
+      if (m.players.every((p, i) => m.dist[i] >= 80)) this.finish(m);
+    },
+    finish(m) {
+      if (m.done) return;
+      m.done = true;
+      const b = teamSum(m, 'blue', i => m.dist[i]);
+      const r = teamSum(m, 'red', i => m.dist[i]);
+      const win = Math.abs(b - r) < 1 ? 'draw' : (b > r ? 'blue' : 'red');
+      m.teamResult = { win, blueLabel: '파랑 ' + Math.round(b) + 'm', redLabel: '빨강 ' + Math.round(r) + 'm' };
+    },
+    draw(m, c, w, h, t) {
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const p = m.players[i];
+        const top = r.y + 34, bot = r.y + r.h - 46;
+        c.fillStyle = 'rgba(255,255,255,.12)';
+        roundRect(c, r.x + r.w * .40, top, r.w * .20, bot - top, 7); c.fill();
+        const prog = clamp(m.dist[i] / 80, 0, 1);
+        const y = bot - (bot - top) * prog;
+        const gg = c.createLinearGradient(0, bot, 0, top);
+        gg.addColorStop(0, teamColOf(m, i)); gg.addColorStop(1, '#ffffff');
+        c.fillStyle = gg;
+        roundRect(c, r.x + r.w * .40, y, r.w * .20, bot - y, 7); c.fill();
+        /* 결승선 */
+        c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 2;
+        c.setLineDash([5, 4]);
+        c.beginPath(); c.moveTo(r.x + 8, top); c.lineTo(r.x + r.w - 8, top); c.stroke();
+        c.setLineDash([]);
+        drawChar(c, r.x + r.w * .5, y + 14, Math.min(34, r.w * .26), p.ci, { time: t, mood: 'happy' });
+        bigText(c, Math.round(m.dist[i]) + 'm', r.x + r.w / 2, bot + 13, Math.min(13, r.w * .16), '#fff');
+        if (m.dist[i] >= 80) bigText(c, '완주!', r.x + r.w / 2, r.y + r.h * .42, Math.min(16, r.w * .19), '#ffe066');
+      });
+      /* 팀 합계 */
+      const b = teamSum(m, 'blue', i => m.dist[i]);
+      const r2 = teamSum(m, 'red', i => m.dist[i]);
+      bigText(c, '파랑 합계 ' + Math.round(b) + 'm', w * .26, h - 12, Math.min(13, w * .034), '#9dc0ff');
+      bigText(c, '빨강 합계 ' + Math.round(r2) + 'm', w * .74, h - 12, Math.min(13, w * .034), '#ffb3ba');
+    }
+  },
+
+  /* =========================================================
+     팀전 3. 팀 슛 대결 (2 대 2)
+     ========================================================= */
+  {
+    key: 'hoop', team: '2v2', title: '팀 슛 대결', sub: '2 대 2 · 골대 위에서 눌러라!',
+    rule: '공이 골대 안에 들어오면 터치!<br>팀 합계 골이 많으면 승리.',
+    dur: 9,
+    init(m) {
+      m.ball = {}; m.dir = {}; m.score = {}; m.cool = {}; m.sp = {}; m.flash = {};
+      m.players.forEach((p, i) => {
+        m.ball[i] = Math.random(); m.dir[i] = Math.random() < .5 ? 1 : -1;
+        m.score[i] = 0; m.cool[i] = 0; m.sp[i] = .40 + Math.random() * .26; m.flash[i] = 0;
+      });
+    },
+    botTick(m, dt) {
+      const F = aiF();
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.cool[i] > 0) return;
+        if (Math.abs(m.ball[i] - .5) < .115 && Math.random() < dt * 16 * F.acc) this.shoot(m, i);
+      });
+    },
+    shoot(m, i) {
+      if (m.done || m.cool[i] > 0) return;
+      m.cool[i] = .17;
+      if (Math.abs(m.ball[i] - .5) < .14) {
+        m.score[i]++; m.flash[i] = .3; sfx('coin');
+      } else { m.flash[i] = -.2; sfx('tick'); }
+      setPad(i, m.score[i] + '골');
+    },
+    tap(m, i) { this.shoot(m, i); },
+    update(m, dt) {
+      m.players.forEach((p, i) => {
+        m.cool[i] = Math.max(0, m.cool[i] - dt);
+        m.ball[i] += m.dir[i] * m.sp[i] * dt;
+        if (m.ball[i] > 1) { m.ball[i] = 2 - m.ball[i]; m.dir[i] = -1; }
+        if (m.ball[i] < 0) { m.ball[i] = -m.ball[i]; m.dir[i] = 1; }
+        m.flash[i] = m.flash[i] > 0 ? Math.max(0, m.flash[i] - dt) : Math.min(0, m.flash[i] + dt);
+      });
+    },
+    finish(m) {
+      if (m.done) return;
+      m.done = true;
+      const b = teamSum(m, 'blue', i => m.score[i]);
+      const r = teamSum(m, 'red', i => m.score[i]);
+      const win = b === r ? 'draw' : (b > r ? 'blue' : 'red');
+      m.teamResult = { win, blueLabel: '파랑 ' + b + '골', redLabel: '빨강 ' + r + '골' };
+    },
+    draw(m, c, w, h, t) {
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const p = m.players[i];
+        const top = r.y + 46, bot = r.y + r.h - 46;
+        const cx = r.x + r.w * .5;
+        const tw = Math.min(30, r.w * .22);
+        /* 세로 코트 */
+        c.fillStyle = 'rgba(255,255,255,.08)';
+        roundRect(c, cx - tw / 2 - 6, top, tw + 12, bot - top, 12); c.fill();
+        /* 골대 (가운데 띠) */
+        const bandH = 34;
+        c.fillStyle = 'rgba(255,240,150,' + (m.flash[i] > 0 ? .6 : .24) + ')';
+        roundRect(c, r.x + r.w * .16, (top + bot) / 2 - bandH / 2, r.w * .68, bandH, 9); c.fill();
+        c.strokeStyle = '#ffe066'; c.lineWidth = 2.5;
+        roundRect(c, r.x + r.w * .16, (top + bot) / 2 - bandH / 2, r.w * .68, bandH, 9); c.stroke();
+        c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1.4;
+        c.setLineDash([4, 4]);
+        c.beginPath(); c.moveTo(r.x + r.w * .16, (top + bot) / 2); c.lineTo(r.x + r.w * .84, (top + bot) / 2); c.stroke();
+        c.setLineDash([]);
+        /* 골대 링 */
+        c.strokeStyle = '#ff9f43'; c.lineWidth = 3;
+        c.beginPath(); c.arc(cx, (top + bot) / 2, tw * .62, 0, TAU); c.stroke();
+        /* 공 (위아래) */
+        const by = bot - (bot - top) * clamp(m.ball[i], 0, 1);
+        c.fillStyle = '#ffd166';
+        c.beginPath(); c.arc(cx, by, Math.min(12, tw * .5), 0, TAU); c.fill();
+        c.strokeStyle = '#b85f10'; c.lineWidth = 2; c.stroke();
+        /* 플레이어 */
+        drawChar(c, cx, bot + 26, Math.min(30, r.w * .22), p.ci, { time: t });
+        bigText(c, m.score[i] + '골', r.x + r.w / 2, r.y + 24, Math.min(15, r.w * .19), '#fff');
+      });
+      const b = teamSum(m, 'blue', i => m.score[i]);
+      const r2 = teamSum(m, 'red', i => m.score[i]);
+      bigText(c, '파랑 ' + b, w * .26, h - 12, Math.min(13, w * .034), '#9dc0ff');
+      bigText(c, '빨강 ' + r2, w * .74, h - 12, Math.min(13, w * .034), '#ffb3ba');
+    }
+  },
+
+  /* =========================================================
+     팀전 4. 보스 대결 (1 대 3)
+     ========================================================= */
+  {
+    key: 'boss', team: '1v3', title: '보스 대결', sub: '1 대 3 · 혼자서 거인 보스!',
+    rule: '보스(혼자)는 방패를 두르고, 3명은 공격!<br>보스 체력을 0으로 만들면 3명 팀 승리.',
+    dur: 9,
+    init(m) {
+      m.hp = 90; m.max = 90; m.shield = 0; m.acc = {}; m.rate = {}; m.pops = []; m.swing = 0;
+      m.players.forEach((p, i) => {
+        m.acc[i] = Math.random();
+        m.rate[i] = (2.4 + Math.random() * 1.3) * aiF().speed;
+      });
+    },
+    botTick(m, dt) {
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.done) return;
+        m.acc[i] += dt * m.rate[i];
+        while (m.acc[i] >= 1) {
+          m.acc[i] -= 1;
+          if (teamOfIdx(m, i) === 'blue') this.guard(m, i); else this.attack(m, i);
+        }
+      });
+    },
+    guard(m, i) {
+      if (m.done) return;
+      m.shield = Math.min(50, m.shield + 3.5);
+      m.swing = .18;
+      setPad(i, '방패 ' + Math.round(m.shield));
+      sfx('tick');
+    },
+    attack(m, i) {
+      if (m.done) return;
+      let dmg = 2.2;
+      const use = Math.min(m.shield, dmg);
+      m.shield -= use; dmg -= use;
+      m.hp = Math.max(0, m.hp - dmg);
+      if (dmg > .4) m.pops.push({ t: 0, dmg: Math.round(dmg * 10) / 10, k: m.pops.length % 5 });
+      if (m.pops.length > 18) m.pops.shift();
+      setPad(i, '');
+      sfx(dmg > 0 ? 'pop' : 'tick');
+      if (m.hp <= 0) this.finish(m);
+    },
+    tap(m, i) { if (teamOfIdx(m, i) === 'blue') this.guard(m, i); else this.attack(m, i); },
+    update(m, dt) {
+      m.swing = Math.max(0, m.swing - dt);
+      m.pops.forEach(p => { p.t += dt; });
+      m.pops = m.pops.filter(p => p.t < .6);
+    },
+    finish(m) {
+      if (m.done) return;
+      m.done = true;
+      const win = m.hp <= 0 ? 'red' : 'blue';
+      m.teamResult = {
+        win,
+        blueLabel: '보스 체력 ' + Math.ceil(m.hp),
+        redLabel: '3명 공격 ' + (win === 'red' ? '성공' : '실패')
+      };
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#2b1a3e'); g.addColorStop(1, '#140d24');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      /* 체력 바 */
+      const bw = w * .78, bx = (w - bw) / 2, by = 15;
+      c.fillStyle = 'rgba(255,255,255,.14)';
+      roundRect(c, bx, by, bw, 13, 6); c.fill();
+      const hpK = clamp(m.hp / m.max, 0, 1);
+      const hg = c.createLinearGradient(bx, 0, bx + bw, 0);
+      hg.addColorStop(0, '#ff5d6c'); hg.addColorStop(1, '#ffb03a');
+      c.fillStyle = hg;
+      roundRect(c, bx, by, bw * hpK, 13, 6); c.fill();
+      bigText(c, '보스 ' + Math.ceil(m.hp) + ' / ' + m.max, w / 2, by + 7, Math.min(11, w * .028), '#fff');
+      /* 보스 */
+      const solo = (m.teams && m.teams.blue && m.teams.blue[0] !== undefined) ? m.teams.blue[0] : 0;
+      const bs = m.players[solo] || m.players[0];
+      const bx2 = w * .34, by2 = h * .62;
+      c.save();
+      c.translate(bx2, by2);
+      const kick = m.swing > 0 ? 1.06 : 1;
+      c.scale(kick, kick);
+      drawChar(c, 0, 0, Math.min(150, w * .34), bs.ci, { time: t, mood: 'happy' });
+      c.restore();
+      /* 방패 */
+      if (m.shield > 0) {
+        c.strokeStyle = 'rgba(120,190,255,' + (.28 + Math.min(.5, m.shield / 60)) + ')';
+        c.lineWidth = Math.max(4, w * .012);
+        c.beginPath(); c.arc(bx2, by2 - Math.min(150, w * .34) * .40, Math.min(96, w * .22), 0, TAU); c.stroke();
+      }
+      /* 공격 3명 */
+      const rs = (m.teams && m.teams.red) || [];
+      rs.forEach((i, k) => {
+        const p = m.players[i];
+        const px = w * .74 + (k % 2 ? 26 : -26);
+        const py = h * .30 + k * Math.min(92, h * .16) + Math.abs(Math.sin(t * 4 + k)) * 6;
+        drawChar(c, px, py, Math.min(48, w * .11), p.ci, { time: t });
+        /* 날아가는 타격 */
+        const fk = ((t * 1.7 + k * .33) % 1);
+        c.fillStyle = 'rgba(255,220,120,' + (.7 * (1 - fk)) + ')';
+        c.beginPath();
+        c.arc(px + (bx2 - px) * fk, py - 20 + (by2 - 20 - py) * fk, 5 * (1 - fk) + 2, 0, TAU);
+        c.fill();
+      });
+      m.pops.forEach(pp => {
+        const k = pp.t / .6;
+        c.globalAlpha = 1 - k;
+        bigText(c, '-' + pp.dmg, bx2 + 60 + k * 30 + (pp.k || 0) * 14, by2 - 40 - k * 70 - (pp.k || 0) * 18,
+          Math.min(19, w * .046), '#ffd166');
+        c.globalAlpha = 1;
+      });
+      bigText(c, '보스', bx2, h * .93, Math.min(13, w * .033), '#9dc0ff');
+      bigText(c, '도전자 3명', w * .76, h * .93, Math.min(13, w * .033), '#ffb3ba');
+    }
+  },
+
+  /* =========================================================
+     팀전 5. 보물 지키기 (1 대 3)
+     ========================================================= */
+  {
+    key: 'heist', team: '1v3', title: '보물 지키기', sub: '1 대 3 · 상자를 사수하라!',
+    rule: '수호자(혼자)는 상자를 지키고 3명은 털어갑니다.<br>9초 뒤 막대가 수호자 쪽이면 혼자 팀 승리!',
+    dur: 9,
+    init(m) {
+      m.bar = 50; m.acc = {}; m.rate = {}; m.pops = [];
+      m.players.forEach((p, i) => {
+        m.acc[i] = Math.random();
+        m.rate[i] = (2.5 + Math.random() * 1.2) * aiF().speed;
+      });
+    },
+    botTick(m, dt) {
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.done) return;
+        m.acc[i] += dt * m.rate[i];
+        while (m.acc[i] >= 1) {
+          m.acc[i] -= 1;
+          if (teamOfIdx(m, i) === 'blue') this.guard(m, i); else this.steal(m, i);
+        }
+      });
+    },
+    guard(m, i) {
+      if (m.done) return;
+      m.bar = Math.min(100, m.bar + 2.7);
+      setPad(i, Math.round(m.bar) + '%');
+      sfx('tick');
+      if (m.pops.length < 20) m.pops.push({ t: 0, blue: true });
+    },
+    steal(m, i) {
+      if (m.done) return;
+      m.bar = Math.max(0, m.bar - .88);
+      setPad(i, Math.round(100 - m.bar) + '%');
+      sfx('tick');
+      if (m.pops.length < 20) m.pops.push({ t: 0, blue: false });
+    },
+    tap(m, i) { if (teamOfIdx(m, i) === 'blue') this.guard(m, i); else this.steal(m, i); },
+    update(m, dt) {
+      m.pops.forEach(p => { p.t += dt; });
+      m.pops = m.pops.filter(p => p.t < .5);
+    },
+    finish(m) {
+      if (m.done) return;
+      m.done = true;
+      const win = m.bar > 50 ? 'blue' : (m.bar < 50 ? 'red' : 'draw');
+      m.teamResult = {
+        win,
+        blueLabel: '지킴 ' + Math.round(m.bar) + '%',
+        redLabel: '털기 ' + Math.round(100 - m.bar) + '%'
+      };
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#33232a'); g.addColorStop(1, '#16101a');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      /* 중앙 상자 */
+      const cxx = w / 2, cyy = h * .50;
+      const shake = Math.sin(t * 9) * (m.bar < 25 ? 3 : 0);
+      c.save();
+      c.translate(cxx + shake, cyy);
+      const S = Math.min(64, w * .16);
+      c.fillStyle = '#6b431f';
+      roundRect(c, -S, -S * .55, S * 2, S * 1.1, 8); c.fill();
+      c.fillStyle = '#a86a28';
+      roundRect(c, -S, -S * .95, S * 2, S * .5, 8); c.fill();
+      c.strokeStyle = '#3f2710'; c.lineWidth = 3;
+      roundRect(c, -S, -S * .95, S * 2, S * 1.5, 8); c.stroke();
+      c.fillStyle = '#ffd166';
+      roundRect(c, -S * .16, -S * .5, S * .32, S * .5, 4); c.fill();
+      c.restore();
+      /* 수호자(왼쪽) vs 도둑 3명(오른쪽) */
+      const solo = (m.teams && m.teams.blue && m.teams.blue[0] !== undefined) ? m.teams.blue[0] : 0;
+      const gs = m.players[solo] || m.players[0];
+      drawChar(c, w * .20, h * .66, Math.min(72, w * .17), gs.ci, { time: t, mood: 'happy', tilt: -.1 });
+      const rs = (m.teams && m.teams.red) || [];
+      rs.forEach((i, k) => {
+        const p = m.players[i];
+        const px = w * .76 + Math.sin(t * 3 + k) * 4;
+        const py = h * .48 + k * Math.min(40, h * .12);
+        drawChar(c, px, py, Math.min(44, w * .10), p.ci, { time: t });
+        /* 뻗는 손 */
+        const k2 = ((t * 1.6 + k * .3) % 1);
+        c.strokeStyle = 'rgba(255,190,120,' + (.6 * (1 - k2)) + ')'; c.lineWidth = 3;
+        c.beginPath();
+        c.moveTo(px - 14, py - 12);
+        c.lineTo(px - 14 - (px - cxx) * .45 * k2, py - 12 + (cyy - py) * .3 * k2);
+        c.stroke();
+      });
+      /* 막대 */
+      const bw = w * .8, bx = (w - bw) / 2, by = h * .90;
+      c.fillStyle = 'rgba(255,255,255,.14)';
+      roundRect(c, bx, by, bw, 14, 7); c.fill();
+      const kk = clamp(m.bar / 100, 0, 1);
+      c.fillStyle = TEAM_COL.blue;
+      roundRect(c, bx, by, Math.max(2, bw * kk), 14, 7); c.fill();
+      c.fillStyle = TEAM_COL.red;
+      roundRect(c, bx + bw * kk, by, Math.max(2, bw * (1 - kk)), 14, 7); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.85)';
+      c.fillRect(bx + bw / 2 - 1, by - 4, 2, 22);
+      bigText(c, '지킴 ' + Math.round(m.bar) + '%', bx + bw * .18, by - 12, Math.min(11, w * .028), '#9dc0ff');
+      bigText(c, '털기 ' + Math.round(100 - m.bar) + '%', bx + bw * .82, by - 12, Math.min(11, w * .028), '#ffb3ba');
+      bigText(c, m.bar >= 50 ? '지켜내는 중!' : '털리는 중…', w / 2, h * .12, Math.min(17, w * .045),
+        m.bar >= 50 ? '#9dc0ff' : '#ffb3ba');
+      bigText(c, '수호자', w * .20, h * .40, Math.min(12, w * .03), '#9dc0ff');
+      bigText(c, '도둑 3명', w * .78, h * .34, Math.min(12, w * .03), '#ffb3ba');
+      m.pops.forEach(pp => {
+        c.globalAlpha = 1 - pp.t / .5;
+        c.fillStyle = pp.blue ? '#9dc0ff' : '#ffb3ba';
+        c.beginPath();
+        c.arc(cxx + (pp.blue ? -1 : 1) * (40 + pp.t * 120), cyy - 20 - pp.t * 40, 3, 0, TAU);
+        c.fill();
+        c.globalAlpha = 1;
+      });
+    }
+  },
+
+  /* =========================================================
+     팀전 6. 도망자 사냥 (1 대 3)
+     ========================================================= */
+  {
+    key: 'hunter', team: '1v3', title: '도망자 사냥', sub: '1 대 3 · 그물로 모두를 묶어라!',
+    rule: '도망자 3명은 각자 100m를 달아납니다.<br>사냥꾼(혼자)의 그물은 모두를 붙잡아요.<br>한 명이라도 결승선을 넘으면 3명 팀 승리!',
+    dur: 10,
+    init(m) {
+      m.prog = {}; m.acc = {}; m.rate = {}; m.stun = {}; m.net = -1; m.escaped = -1;
+      m.players.forEach((p, i) => {
+        m.prog[i] = 0; m.acc[i] = Math.random(); m.stun[i] = 0;
+        m.rate[i] = (2.4 + Math.random() * 1.1) * aiF().speed;
+      });
+    },
+    botTick(m, dt) {
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.done) return;
+        m.acc[i] += dt * m.rate[i];
+        while (m.acc[i] >= 1) {
+          m.acc[i] -= 1;
+          if (teamOfIdx(m, i) === 'blue') this.throwNet(m, i); else this.run(m, i);
+        }
+      });
+    },
+    run(m, i) {
+      if (m.done || m.stun[i] > 0) return;
+      m.prog[i] = Math.min(100, m.prog[i] + 8.6 + Math.random() * 2.4);
+      setPad(i, Math.round(m.prog[i]) + 'm');
+      if (m.prog[i] >= 100 && m.escaped < 0) {
+        m.escaped = i;
+        sfx('whistle');
+        this.finish(m);
+      }
+    },
+    throwNet(m, i) {
+      if (m.done) return;
+      m.net = 0;
+      (m.teams && m.teams.red ? m.teams.red : []).forEach(j => {
+        m.prog[j] = Math.max(0, m.prog[j] - 2.7);
+        m.stun[j] = Math.max(m.stun[j], .13);
+        setPad(j, Math.round(m.prog[j]) + 'm');
+      });
+      setPad(i, '그물!');
+      sfx('pop');
+    },
+    tap(m, i) {
+      if (m.done) return;
+      if (teamOfIdx(m, i) === 'blue') this.throwNet(m, i); else this.run(m, i);
+    },
+    update(m, dt) {
+      m.players.forEach((p, i) => { if (m.stun[i] > 0) m.stun[i] -= dt; });
+      if (m.net >= 0) { m.net += dt; if (m.net > .55) m.net = -1; }
+    },
+    finish(m) {
+      if (m.done) return;
+      m.done = true;
+      const win = m.escaped >= 0 ? 'red' : 'blue';
+      const best = Math.max.apply(null, m.players.map((p, i) => (m.teamOf[i] === 'red' ? m.prog[i] : 0)));
+      m.teamResult = {
+        win,
+        blueLabel: win === 'blue' ? '그물 성공' : '놓침',
+        redLabel: '최고 ' + Math.round(best) + 'm'
+      };
+    },
+    draw(m, c, w, h, t) {
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const p = m.players[i];
+        const isHunt = teamOfIdx(m, i) === 'blue';
+        const top = r.y + 34, bot = r.y + r.h - 30;
+        if (isHunt) {
+          /* 사냥꾼 칸: 그물 던지는 자리 */
+          drawChar(c, r.x + r.w * .5, r.y + r.h * .62, Math.min(56, r.w * .26), p.ci, { time: t, mood: m.net >= 0 ? 'happy' : 'normal' });
+          const k = m.net >= 0 ? m.net / .55 : 0;
+          c.strokeStyle = 'rgba(255,255,255,' + (.6 * (1 - k)) + ')';
+          c.lineWidth = 2;
+          for (let q = -2; q <= 2; q++) {
+            c.beginPath();
+            c.moveTo(r.x + r.w * .5, r.y + r.h * .55);
+            c.lineTo(r.x + r.w * .5 + q * r.w * .08, r.y + r.h * .2 - k * 30);
+            c.stroke();
+          }
+          bigText(c, '사냥꾼', r.x + r.w / 2, r.y + 20, Math.min(13, r.w * .16), '#9dc0ff');
+        } else {
+          c.fillStyle = 'rgba(255,255,255,.12)';
+          roundRect(c, r.x + r.w * .42, top, r.w * .16, bot - top, 7); c.fill();
+          const prog = clamp(m.prog[i] / 100, 0, 1);
+          const y = bot - (bot - top) * prog;
+          const gg = c.createLinearGradient(0, bot, 0, top);
+          gg.addColorStop(0, TEAM_COL.red); gg.addColorStop(1, '#ffd8a8');
+          c.fillStyle = gg;
+          roundRect(c, r.x + r.w * .42, y, r.w * .16, bot - y, 7); c.fill();
+          const st = m.stun[i] > 0;
+          drawChar(c, r.x + r.w * .5, y + 13, Math.min(28, r.w * .21), p.ci, { time: t, mood: st ? 'shock' : 'happy' });
+          bigText(c, Math.round(m.prog[i]) + 'm', r.x + r.w / 2, bot + 12, Math.min(12, r.w * .15), st ? '#ff9b9b' : '#fff');
+          if (st) { c.strokeStyle = 'rgba(140,200,255,.8)'; c.lineWidth = 3; roundRect(c, r.x + 3, r.y + 3, r.w - 6, r.h - 6, 12); c.stroke(); }
+        }
+      });
+      if (m.net >= 0) {
+        /* 사냥꾼 자리에서 퍼져 나가는 그물 */
+        const k = m.net / .55;
+        let hx = w * .5, hy = h * .6;
+        (m.teams && m.teams.blue ? m.teams.blue : []).forEach(i => {
+          const r = rs[i];
+          if (r) { hx = r.x + r.w * .5; hy = r.y + r.h * .58; }
+        });
+        const R = (w * .25) + (w * .9) * k;
+        c.save();
+        c.globalAlpha = .55 * (1 - k);
+        c.strokeStyle = '#e6efff'; c.lineWidth = 1.6;
+        c.beginPath(); c.arc(hx, hy, R, 0, TAU); c.stroke();
+        for (let q = 0; q < 10; q++) {
+          const a = q / 10 * TAU;
+          c.beginPath(); c.moveTo(hx, hy);
+          c.lineTo(hx + Math.cos(a) * R, hy + Math.sin(a) * R); c.stroke();
+          const a2 = a + .31;
+          c.beginPath();
+          c.arc(hx, hy, R * .6, a, a2); c.stroke();
+        }
+        c.restore();
+      }
+    }
   }
 ];
+
 
 const MINI_BY_KEY = {};
 MINIGAMES.forEach(m => { MINI_BY_KEY[m.key] = m; });
@@ -4208,7 +6584,7 @@ MINIGAMES.forEach(m => { MINI_BY_KEY[m.key] = m; });
    피클 파티 — UI, screens, roulette, results, test API
    ========================================================= */
 
-const CFG = { count: 4, rounds: 4, mapId: 'meadow', diff: 'normal', bots: [false, true, true, true] };
+const CFG = { count: 4, rounds: 10, mapId: 'meadow', diff: 'normal', bots: [false, true, true, true] };
 G.autoReady = false;
 
 /* ---------- screen switching ---------- */
@@ -4235,7 +6611,7 @@ function buildStart() {
   });
   const segR = $('#segRounds');
   segR.innerHTML = '';
-  [4, 8, 12].forEach(n => {
+  [6, 10, 16].forEach(n => {
     const b = document.createElement('button');
     b.textContent = n + '라운드';
     b.className = CFG.rounds === n ? 'on' : '';
@@ -4292,35 +6668,55 @@ function buildStart() {
 }
 
 function drawMapThumb(cv, map) {
-  const S = 2, W = 54, H = 50;
+  const S = 3, W = 54, H = 50;
   cv.width = W * S; cv.height = H * S;
   const c = cv.getContext('2d');
   c.scale(S, S);
-  const g = c.createLinearGradient(0, 0, 0, H);
+  const g = c.createLinearGradient(0, 0, W * .4, H);
   g.addColorStop(0, map.bg[0]); g.addColorStop(1, map.bg[1]);
   c.fillStyle = g; c.fillRect(0, 0, W, H);
-  const rows = map.grid, R = rows.length;
-  let C = 0; rows.forEach(r => { C = Math.max(C, r.length); });
-  const pad = 4;
-  const sc = Math.min((W - pad * 2) / C, (H - pad * 2) / R);
-  const ox = (W - C * sc) / 2, oy = (H - R * sc) / 2;
-  for (let r = 0; r < R; r++) {
-    for (let cc = 0; cc < rows[r].length; cc++) {
-      if (rows[r][cc] !== '#') continue;
-      c.fillStyle = map.tint[0];
-      c.fillRect(ox + cc * sc + .2, oy + r * sc + .2, sc - .4, sc - .4);
-    }
-  }
+  const cols = map.cols, rows = map.rows;
+  const pad = 3;
+  const sc = Math.min((W - pad * 2) / cols, (H - pad * 2) / rows);
+  const ox = (W - cols * sc) / 2, oy = (H - rows * sc) / 2;
+  const COL = {
+    grass: '#6fc25f', sand: '#e8d49a', deck: '#b98a55', stone: '#cfc7b2',
+    basalt: '#6b5750', ice: '#cfe9f7', snow: '#eef8ff'
+  };
+  /* 다리 */
+  (map.plan.bridges || []).forEach(b => {
+    c.strokeStyle = b.k === 'stone' ? 'rgba(180,172,155,.95)'
+      : b.k === 'ice' ? 'rgba(200,235,250,.95)' : 'rgba(186,140,86,.95)';
+    c.lineWidth = Math.max(1, sc * 1.1); c.lineCap = 'round'; c.lineJoin = 'round';
+    c.beginPath();
+    b.pts.forEach((p, k) => {
+      const x = ox + p[0] * sc + sc / 2, y = oy + p[1] * sc + sc / 2;
+      k ? c.lineTo(x, y) : c.moveTo(x, y);
+    });
+    c.stroke();
+  });
+  /* 섬 */
+  (map.plan.islands || []).forEach(is => {
+    const x = ox + (is.c + (is.w - 1) / 2) * sc + sc / 2;
+    const y = oy + (is.r + (is.h - 1) / 2) * sc + sc / 2;
+    c.fillStyle = COL[is.k] || '#6fc25f';
+    c.beginPath();
+    c.ellipse(x, y, (is.w * sc) / 2, (is.h * sc) / 2, 0, 0, TAU);
+    c.fill();
+    if (is.shape === 'rect') { c.fillRect(x - (is.w * sc) / 2, y - (is.h * sc) / 2, is.w * sc, is.h * sc); }
+  });
+  /* 시작 · 별 */
   const st = map.start;
   if (st) {
     c.fillStyle = '#2b8a3a';
-    c.beginPath(); c.arc(ox + st[0] * sc + sc / 2, oy + st[1] * sc + sc / 2, sc * .55, 0, TAU); c.fill();
+    c.beginPath(); c.arc(ox + st[0] * sc + sc / 2, oy + st[1] * sc + sc / 2, Math.max(1.4, sc), 0, TAU); c.fill();
   }
   const sp = map.starStart;
   if (sp) {
-    c.fillStyle = '#fff';
-    drawStarShape(c, ox + sp[0] * sc + sc / 2, oy + sp[1] * sc + sc / 2, sc * .9, .45); c.fill();
-    c.strokeStyle = '#c98a00'; c.lineWidth = .8; c.stroke();
+    c.fillStyle = '#ffdf5c';
+    c.strokeStyle = '#a8792a'; c.lineWidth = .7;
+    drawStarShape(c, ox + sp[0] * sc + sc / 2, oy + sp[1] * sc + sc / 2, Math.max(2, sc * 1.7), .45);
+    c.fill(); c.stroke();
   }
 }
 
@@ -4567,9 +6963,10 @@ async function runRoulette(mg) {
   box.classList.add('on');
   name.textContent = '';
   const items = [];
-  for (let loop = 0; loop < 5; loop++) MINIGAMES.forEach(m => items.push(m));
-  strip.innerHTML = items.map(m => '<div class="rl-item"><span class="rl-dot"></span>' + m.title + '</div>').join('');
-  const target = 12 * 3 + MINIGAMES.indexOf(mg);
+  for (let loop = 0; loop < 3; loop++) MINIGAMES.forEach(m => items.push(m));
+  const modeTag = m => (m.team === '1v3' ? ' <em class="rl-tag">1:3</em>' : m.team === '2v2' ? ' <em class="rl-tag">2:2</em>' : '');
+  strip.innerHTML = items.map(m => '<div class="rl-item"><span class="rl-dot"></span>' + m.title + modeTag(m) + '</div>').join('');
+  const target = MINIGAMES.length * 2 + MINIGAMES.indexOf(mg);
   const IH = 56;
   const finalY = -(target * IH - (112 / 2 - IH / 2));
   const dur = 1900, t0 = performance.now();
@@ -4588,7 +6985,7 @@ async function runRoulette(mg) {
     }
     requestAnimationFrame(step);
   });
-  name.textContent = mg.title;
+  name.textContent = mg.title + (mg.team === '1v3' ? ' · 1 대 3' : mg.team === '2v2' ? ' · 2 대 2' : '');
   sfx('win');
   await wait(950);
   box.classList.remove('on');
@@ -4662,6 +7059,10 @@ function drawBoard(t, dt) {
   if (CAM.mode === 'full') {
     CAM.tx = MAP_W / 2; CAM.ty = MAP_H / 2;
     CAM.ts = Math.min(w / (MAP_W + 80), h / (MAP_H + 80)) * .99;
+  } else if (CAM.mode === 'measure') {
+    /* 길 측정: 자유롭게 둘러보기 (드래그·핀치가 직접 움직인다) */
+    CAM.tx = CAM.x; CAM.ty = CAM.y;
+    CAM.ts = MEASURE.s;
   } else if (fxOn) {
     const k = clamp((fxn - fx.t0) / fx.dur, 0, 1);
     const ramp = fx.hold ? clamp(k / .2, 0, 1)
@@ -4679,7 +7080,7 @@ function drawBoard(t, dt) {
   CAM.x = lerp(CAM.x, CAM.tx, k);
   CAM.y = lerp(CAM.y, CAM.ty, k);
   CAM.s = lerp(CAM.s, CAM.ts, k);
-  if (!manual) clampCam();
+  clampCam();
 
   const vw = w / CAM.s, vh = h / CAM.s;
   c.save();
@@ -4696,14 +7097,27 @@ function drawBoard(t, dt) {
   c.scale(CAM.s, CAM.s);
   c.translate(-CAM.x, -CAM.y);
 
+  /* 맵 바깥(화면 밖 여백)은 바다색으로 채운다 */
+  const outer = BOARD.map && BOARD.map.kind === 'volcano' ? '#1b0d0c'
+    : BOARD.map && BOARD.map.kind === 'ice' ? '#5d92b8' : '#2b6f9e';
+  c.fillStyle = outer;
+  c.fillRect(CAM.x - vw, CAM.y - vh, vw * 2, vh * 2);
+
   if (BOARD.decor) c.drawImage(BOARD.decor.cv, 0, 0, MAP_W, MAP_H);
 
   const x0 = CAM.x - vw / 2, x1 = CAM.x + vw / 2, y0 = CAM.y - vh / 2, y1 = CAM.y + vh / 2;
 
-  drawBoardPlate(c, x0, y0, x1, y1);
+  drawWorldAnim(c, t, x0, y0, x1, y1);      /* 물결·연기·불티 */
   drawZoneLabels(c);
-  drawTiles(c, t, x0, y0, x1, y1);
+  drawProps(c, t, x0, y0, x1, y1, 'ground'); /* 발판 사이 작은 장식 */
+  drawTiles(c, t, x0, y0, x1, y1);          /* 광장 둥근 발판 + 다리 발판 */
+  drawProps(c, t, x0, y0, x1, y1, 'top');   /* 나무·오두막·배 … */
+  drawWalls(c, x0, y0, x1, y1);
+  drawLandmarks(c, t, x0, y0, x1, y1);
+  drawSpecialHighlights(c, t, x0, y0, x1, y1);
+  drawActiveRing(c, t);
   drawMoveHints(c, t);
+  drawMeasureOverlay(c, t);
   drawStarToken(c, t);
   drawPlayerTokens(c, t, w);
   drawDiceBlock(c, t);
@@ -4718,27 +7132,6 @@ function drawBoard(t, dt) {
   }
 }
 
-/* 길의 받침(돌길 홈) — 판 사이를 또렷하게 나눠 얇은 길처럼 보이게 */
-function drawBoardPlate(c, x0, y0, x1, y1) {
-  const map = BOARD.map;
-  const S = GRID * .96, R = S * .24;
-  c.save();
-  for (let i = 0; i < BOARD.n; i++) {
-    const p = BOARD.tiles[i];
-    if (p.x < x0 - S || p.x > x1 + S || p.y < y0 - S || p.y > y1 + S) continue;
-    c.fillStyle = 'rgba(14,16,26,.22)';
-    roundRect(c, p.x - S / 2 + 1, p.y - S / 2 + 5, S, S, R); c.fill();
-  }
-  for (let i = 0; i < BOARD.n; i++) {
-    const p = BOARD.tiles[i];
-    if (p.x < x0 - S || p.x > x1 + S || p.y < y0 - S || p.y > y1 + S) continue;
-    c.fillStyle = map.plate2;
-    roundRect(c, p.x - S / 2, p.y - S / 2, S, S, R); c.fill();
-    c.strokeStyle = 'rgba(255,255,255,.16)'; c.lineWidth = 2;
-    roundRect(c, p.x - S / 2 + 2, p.y - S / 2 + 2, S - 4, S - 4, R - 1); c.stroke();
-  }
-  c.restore();
-}
 
 function drawZoneLabels(c) {
   BOARD.map.zones.forEach((z, zi) => {
@@ -4759,28 +7152,32 @@ function drawZoneLabels(c) {
 }
 
 function drawTiles(c, t, x0, y0, x1, y1) {
-  const S = GRID * .86;
-  for (let i = 0; i < BOARD.n; i++) {
-    const p = BOARD.tiles[i];
-    if (p.x < x0 - S || p.x > x1 + S || p.y < y0 - S || p.y > y1 + S) continue;
-    const type = BOARD.types[i];
-    const sp = BOARD.sprites[type] || BOARD.sprites.coin;
-    c.drawImage(sp, p.x - S / 2, p.y - S / 2, S, S);
+  /* 다리·부두 발판 먼저(아래), 그다음 광장 둥근 발판 */
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = 0; i < BOARD.n; i++) {
+      const p = BOARD.tiles[i];
+      const bridge = p.k === 'bridge';
+      if ((pass === 0) !== bridge) continue;
+      if (p.x < x0 - GRID || p.x > x1 + GRID || p.y < y0 - GRID || p.y > y1 + GRID) continue;
+      const type = BOARD.types[i];
+      const key = bridge ? type : type + '@pad';
+      const sp = BOARD.sprites[key] || BOARD.sprites[type] || BOARD.sprites.coin;
+      const S = GRID * (bridge ? .72 : .68);
+      c.drawImage(sp, p.x - S / 2, p.y - S / 2, S, S);
+    }
   }
-  drawWalls(c, x0, y0, x1, y1);
-  drawLandmarks(c, t, x0, y0, x1, y1);
-  drawSpecialHighlights(c, t, x0, y0, x1, y1);
-  /* 현재 칸 표시 */
+}
+
+/* 지금 차례인 칸 표시 (발판 위 맥동 링) */
+function drawActiveRing(c, t) {
   const act = G.players[G.active];
-  if (act) {
-    const p = tilePos(act.pos);
-    c.save();
-    c.strokeStyle = 'rgba(255,220,90,' + (.55 + .35 * Math.sin(t / 220)) + ')';
-    c.lineWidth = 7;
-    roundRect(c, p.x - GRID * .47, p.y - GRID * .47, GRID * .94, GRID * .94, GRID * .26);
-    c.stroke();
-    c.restore();
-  }
+  if (!act) return;
+  const p = tilePos(act.pos);
+  c.save();
+  c.strokeStyle = 'rgba(255,220,90,' + (.45 + .35 * Math.sin(t / 220)) + ')';
+  c.lineWidth = 6;
+  c.beginPath(); c.arc(p.x, p.y, GRID * .44, 0, TAU); c.stroke();
+  c.restore();
 }
 
 /* 장애물 블록 (바위·성벽·용암 기둥·빙벽) — 통행 불가 */
@@ -4855,8 +7252,8 @@ function drawGimmickBeacon(c, p, i, t) {
   c.save();
   /* 빛무리 */
   const g = c.createRadialGradient(p.x, p.y, GRID * .18, p.x, p.y, GRID * (1.05 + pulse * .12));
-  g.addColorStop(0, 'rgba(255,235,140,.75)');
-  g.addColorStop(.45, 'rgba(255,190,60,.35)');
+  g.addColorStop(0, 'rgba(255,235,140,.55)');
+  g.addColorStop(.45, 'rgba(255,190,60,.22)');
   g.addColorStop(1, 'rgba(255,170,40,0)');
   c.fillStyle = g;
   c.beginPath(); c.arc(p.x, p.y, GRID * (1.05 + pulse * .12), 0, TAU); c.fill();
@@ -5364,6 +7761,168 @@ function startConfetti() {
 }
 function stopConfetti() { if (resRaf) { cancelAnimationFrame(resRaf); resRaf = null; } }
 
+/* ---------- 길 측정: 현재 플레이어 → 발판/별/상점 최단 칸수 ---------- */
+const MEASURE = { on: false, target: -1, path: null, base: -1, s: .2 };
+
+function measureBase() {
+  const p = G.players[G.active] || G.players[0];
+  return p ? p.pos : BOARD.start;
+}
+
+function toggleMeasure(on) {
+  const want = on === undefined ? !MEASURE.on : !!on;
+  const btn = $('#btnMeasure');
+  if (want === MEASURE.on) { updateMeasureUI(); return want; }
+  MEASURE.on = want;
+  if (want) {
+    CAM.mode = 'measure';
+    CAM.manual = now();
+    const vs = viewSize();
+    const fitAll = Math.min(vs.w / (MAP_W + 140), vs.h / (MAP_H + 140));
+    MEASURE.s = clamp(Math.max(Math.min(vs.w / (MAP_W * .40), vs.h / (MAP_H * .55)), fitAll * 1.15),
+      Math.max(.07, fitAll), 1.0);
+    MEASURE.target = -1; MEASURE.path = null; MEASURE.base = measureBase();
+    const bp = tilePos(MEASURE.base);
+    CAM.x = bp.x; CAM.y = bp.y;
+    CAM.s = Math.max(MEASURE.s, CAM.s * .55);
+    if (btn) { btn.classList.add('on'); btn.innerHTML = '✕ 닫기'; }
+    sfx('click');
+    showToast('길 측정 켜짐', '발판을 누르면 몇 칸인지 알려줘요', 1500);
+  } else {
+    CAM.mode = 'follow'; CAM.manual = 0; CAM.zoom = 1;
+    MEASURE.target = -1; MEASURE.path = null;
+    if (btn) { btn.classList.remove('on'); btn.innerHTML = '📏 길 측정'; }
+    sfx('click');
+  }
+  updateMeasureUI();
+  return want;
+}
+
+function measureAt(i) {
+  if (!MEASURE.on) return false;
+  if (i < 0) return false;
+  const base = MEASURE.base;
+  if (i === base) { MEASURE.target = -1; MEASURE.path = null; updateMeasureUI(); return false; }
+  const path = bfsPath(base, i);
+  if (!path) { showToast('갈 수 없는 칸', '길이 끊겨 있어요', 1000); return false; }
+  MEASURE.target = i; MEASURE.path = path;
+  const ty = BOARD.types[i];
+  const extra = i === G.starIndex ? ' · ★' : (ty === 'shop' ? ' · 상점' : ty === 'gimmick' ? ' · 기믹' : '');
+  updateMeasureUI(path.length + '칸' + extra);
+  haptic(10);
+  return true;
+}
+
+function updateMeasureUI(msg) {
+  const bar = $('#measureBar');
+  const btn = $('#btnMeasure');
+  if (bar) {
+    if (!MEASURE.on) { bar.classList.remove('on'); }
+    else {
+      bar.classList.add('on');
+      const t = $('#measureTip');
+      if (t) t.textContent = msg || '발판을 눌러 최단 칸수를 확인 · 끌어서 이동 · 두 손가락 확대';
+    }
+  }
+  if (btn) {
+    btn.classList.toggle('on', MEASURE.on);
+    btn.innerHTML = MEASURE.on ? '✕ 닫기' : '📏 길 측정';
+  }
+}
+
+function drawMeasureOverlay(c, t) {
+  if (!MEASURE.on) return;
+  const U = 1 / Math.max(.10, CAM.s);
+  const base = tilePos(MEASURE.base);
+  const pulse = .5 + .5 * Math.sin(t / 260);
+
+  /* 출발 칸 */
+  c.save();
+  c.strokeStyle = 'rgba(120,225,255,' + (.75 + .2 * pulse) + ')';
+  c.lineWidth = 5 * U;
+  c.beginPath(); c.arc(base.x, base.y, GRID * (.42 + .04 * pulse), 0, TAU); c.stroke();
+  c.fillStyle = 'rgba(10,30,50,.82)';
+  const lb = '출발';
+  c.font = '900 ' + (12 * U) + 'px -apple-system,"Apple SD Gothic Neo",sans-serif';
+  const bw = c.measureText(lb).width + 16 * U;
+  roundRect(c, base.x - bw / 2, base.y - GRID * .72 - 10 * U, bw, 20 * U, 7 * U); c.fill();
+  c.fillStyle = '#9fe8ff'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(lb, base.x, base.y - GRID * .72);
+  c.restore();
+
+  /* 별 · 상점 · 기믹 자동 거리 배지 */
+  const { dist } = bfsFrom(MEASURE.base);
+  const auto = [];
+  if (G.starIndex >= 0) auto.push({ i: G.starIndex, col: '#ffd166', ic: '★' });
+  for (let i = 0; i < BOARD.n; i++) {
+    if (BOARD.types[i] === 'shop') auto.push({ i: i, col: '#ffb06a', ic: '상점' });
+    else if (BOARD.types[i] === 'gimmick') auto.push({ i: i, col: '#ffe066', ic: '기믹' });
+  }
+  auto.forEach(a => {
+    if (a.i === MEASURE.base) return;
+    const p = tilePos(a.i);
+    const d = dist[a.i];
+    if (d < 0) return;
+    c.save();
+    c.globalAlpha = .92;
+    c.font = '900 ' + (11 * U) + 'px -apple-system,"Apple SD Gothic Neo",sans-serif';
+    const label = a.ic + ' ' + d + '칸';
+    const w2 = c.measureText(label).width + 14 * U;
+    c.fillStyle = 'rgba(16,24,40,.86)';
+    roundRect(c, p.x - w2 / 2, p.y - GRID * .58 - 16 * U, w2, 18 * U, 6 * U); c.fill();
+    c.strokeStyle = a.col; c.lineWidth = 1.4 * U; c.stroke();
+    c.fillStyle = a.col; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(label, p.x, p.y - GRID * .58 - 7 * U);
+    c.restore();
+  });
+
+  /* 측정 경로 */
+  const pr = MEASURE.path;
+  if (!pr || !pr.length) return;
+  const pts = [MEASURE.base].concat(pr);
+  c.save();
+  c.lineCap = 'round';
+  c.setLineDash([9 * U, 9 * U]);
+  c.strokeStyle = 'rgba(12,24,42,.55)'; c.lineWidth = 10 * U;
+  c.beginPath();
+  pts.forEach((i, k) => { const q = tilePos(i); k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y); });
+  c.stroke();
+  c.strokeStyle = '#7ff0ff'; c.lineWidth = 5 * U;
+  c.stroke();
+  c.setLineDash([]);
+  /* 발걸음 번호 */
+  pr.forEach((i, k) => {
+    const q = tilePos(i);
+    const last = k === pr.length - 1;
+    c.beginPath(); c.arc(q.x, q.y, (last ? 13 : 10) * U, 0, TAU);
+    c.fillStyle = last ? '#ffd166' : 'rgba(255,255,255,.94)';
+    c.fill();
+    c.strokeStyle = 'rgba(20,40,60,.55)'; c.lineWidth = 1.6 * U; c.stroke();
+    c.fillStyle = last ? '#3a2400' : '#1b3048';
+    c.font = '900 ' + ((last ? 13 : 11) * U) + 'px -apple-system,"Apple SD Gothic Neo",sans-serif';
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(String(k + 1), q.x, q.y + .5 * U);
+  });
+  /* 도착 배지 */
+  const tq = tilePos(MEASURE.target);
+  c.strokeStyle = 'rgba(255,214,74,.95)'; c.lineWidth = 5 * U;
+  c.beginPath(); c.arc(tq.x, tq.y, GRID * (.44 + .03 * pulse), 0, TAU); c.stroke();
+  const ty = BOARD.types[MEASURE.target];
+  const extra = MEASURE.target === G.starIndex ? ' · ★' : (ty === 'shop' ? ' · 상점' : ty === 'gimmick' ? ' · 기믹' : '');
+  const label = pr.length + '칸' + extra;
+  c.font = '900 ' + (15 * U) + 'px -apple-system,"Apple SD Gothic Neo",sans-serif';
+  const bw2 = c.measureText(label).width + 22 * U;
+  const bh2 = 26 * U;
+  const by = tq.y - GRID * .86;
+  c.fillStyle = 'rgba(20,32,54,.95)';
+  roundRect(c, tq.x - bw2 / 2, by - bh2 / 2, bw2, bh2, 9 * U); c.fill();
+  c.strokeStyle = '#ffd166'; c.lineWidth = 1.8 * U; c.stroke();
+  c.fillStyle = '#ffe066';
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(label, tq.x, by + 1 * U);
+  c.restore();
+}
+
 /* ---------- board pointer: 탭 이동 / 드래그 패닝 / 핀치 줌 ---------- */
 function bindBoardPointer() {
   const cv = $('#cvBoard');
@@ -5389,7 +7948,11 @@ function bindBoardPointer() {
     if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
     if (pts.size >= 2) {
       const d = pinchDist();
-      if (pinchD > 0 && d > 0) CAM.zoom = clamp(CAM.zoom * (d / pinchD), .55, 2.2);
+      if (pinchD > 0 && d > 0) {
+        const f = d / pinchD;
+        if (MEASURE.on) MEASURE.s = clamp(MEASURE.s * f, .05, 2.0);
+        else CAM.zoom = clamp(CAM.zoom * f, .55, 2.2);
+      }
       pinchD = d; CAM.manual = now(); moved = true;
       return;
     }
@@ -5407,8 +7970,11 @@ function bindBoardPointer() {
       const wp = screenToWorld(e.clientX, e.clientY);
       const i = tileAtWorld(wp.x, wp.y);
       if (i >= 0) {
-        const res = tapTile(i);
-        if (res === 'step' || res === 'preview') haptic(10);
+        if (MEASURE.on) { measureAt(i); }
+        else {
+          const res = tapTile(i);
+          if (res === 'step' || res === 'preview') haptic(10);
+        }
       }
     }
     if (pts.size === 0) { moved = false; }
@@ -5418,7 +7984,9 @@ function bindBoardPointer() {
   cv.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pinchD = 0; moved = false; });
   cv.addEventListener('wheel', e => {
     e.preventDefault();
-    CAM.zoom = clamp(CAM.zoom * (e.deltaY > 0 ? .92 : 1.08), .55, 2.2);
+    const f = e.deltaY > 0 ? .92 : 1.08;
+    if (MEASURE.on) MEASURE.s = clamp(MEASURE.s * f, .05, 2.0);
+    else CAM.zoom = clamp(CAM.zoom * f, .55, 2.2);
     CAM.manual = now();
   }, { passive: false });
 }
@@ -5462,11 +8030,14 @@ function bindInput() {
     doTurn(p);
   });
   $('#btnMap').addEventListener('click', () => {
+    if (MEASURE.on) toggleMeasure(false);
     CAM.mode = CAM.mode === 'full' ? 'follow' : 'full';
     CAM.manual = 0; CAM.zoom = 1;
     $('#btnMap').classList.toggle('on', CAM.mode === 'full');
     sfx('click');
   });
+  const btnMeasure = $('#btnMeasure');
+  if (btnMeasure) btnMeasure.addEventListener('click', () => { AU.unlock(); toggleMeasure(); haptic(10); });
   const goBtn = $('#btnGo'), stayBtn = $('#btnStay');
   if (goBtn) goBtn.addEventListener('click', () => { if (confirmMove()) { sfx('click'); haptic(12); } });
   if (stayBtn) stayBtn.addEventListener('click', () => { cancelMove(); sfx('click'); });
@@ -5480,7 +8051,8 @@ function bindInput() {
   document.addEventListener('keydown', e => {
     if (e.repeat) return;
     const k = e.key.toLowerCase();
-    if (k === 'escape') { cancelMove(); return; }
+    if (k === 'escape') { if (MEASURE.on) { toggleMeasure(false); return; } cancelMove(); return; }
+    if (k === 'l') { toggleMeasure(); return; }
     if (k === 'q') padTap(0);
     else if (k === 'p') padTap(1);
     else if (k === 'z') padTap(2);
@@ -5509,6 +8081,7 @@ function boot() {
   bindInput();
   $('#btnMap').innerHTML = mapIcon();
   $('#btnMute').innerHTML = speakerIcon(true);
+  updateMeasureUI();
   document.addEventListener('pointerdown', () => AU.unlock(), { once: true });
   drawDiceFace();
   setInterval(drawDiceFace, 120);
@@ -5602,6 +8175,19 @@ window.__pickleParty = {
   forceDice(n) { G.forceDice = n; return true; },
   mute(v) { AU.setMuted(v); return AU.muted; },
   mapView(on) { CAM.mode = on ? 'full' : 'follow'; CAM.manual = 0; $('#btnMap').classList.toggle('on', CAM.mode === 'full'); },
+  measure(on) { return toggleMeasure(on); },
+  measureTap(i) { return measureAt(i); },
+  measureInfo() {
+    const base = MEASURE.base;
+    return {
+      on: MEASURE.on, base: base, basePlayer: G.active, target: MEASURE.target,
+      dist: MEASURE.path ? MEASURE.path.length : -1,
+      path: MEASURE.path ? MEASURE.path.slice() : null,
+      camMode: CAM.mode, scale: CAM.s,
+      barText: $('#measureTip') ? $('#measureTip').textContent : '',
+      starDist: MEASURE.on && base >= 0 ? bfsFrom(base).dist[G.starIndex] : -1
+    };
+  },
   audioState() { return { ctx: !!AU.ctx, state: AU.ctx ? AU.ctx.state : null, muted: AU.muted, track: AU.track }; },
   cam() {
     const cv = $('#cvBoard'), r = cv.getBoundingClientRect();
