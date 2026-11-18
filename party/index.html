@@ -841,17 +841,19 @@ function haptic(ms) {
   try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) { }
 }
 /* =========================================================
-   피클 파티 — 한 줄 트랙 맵 (5차 개편)
+   피클 파티 — 한 줄 트랙 맵 (6차 개편: 복합 교차 트랙)
    ---------------------------------------------------------
-   · 격자 자유 이동을 없애고, 섬과 섬을 잇는 '한 줄 곡선 트랙'만 남긴다.
-   · 트랙은 스플라인으로 휘어지고, 발판은 일정 간격으로 박힌다.
-   · 갈림길(분기)에서만 다음 발판을 고른다 — 나머지는 자동으로 한 칸씩.
-   · 물을 건너는 구간은 다리 발판, 땅 위 구간은 섬(둥근 발판)이 된다.
+   · 격자 자유 이동 없음. 한 줄 트랙을 앞으로 한 칸씩.
+   · 트랙은 '사슬(chain)'로 조립한다 — 곡선 · 직선 · 각진 다리 ·
+     S자 스위치백 · 루프 · 8자 교차를 섞어 어지럽게.
+   · 트랙이 스스로를 가로지르면 위로 지나는 쪽이 '고가 다리'가 된다.
+   · 갈림길은 지름길/우회로를 촘촘히 박아, 위험한 구간을 피해 갈 수 있게.
    ========================================================= */
 
-const GRID = 134;           // 발판 간격 기준(월드 px)
+const GRID = 112;           // 발판 간격 기준(월드 px)
 const MAP_MARGIN = 220;     // 맵 가장자리 여백
-const TSTEP = 1.62;         // 발판 사이 간격(칸)
+const TSTEP = 1.95;         // 발판 사이 간격(칸)
+const FINE = .16;           // 사슬 세밀 샘플 간격(칸)
 
 /* =========================================================
    1. 곡선 도우미
@@ -884,19 +886,18 @@ function polyLength(poly, closed) {
   return L;
 }
 
-/* 폴리라인을 일정 간격으로 다시 뽑는다 */
+/* 폴리라인을 일정 간격으로 다시 뽑는다 (원본 인덱스도 함께) */
 function resamplePoly(poly, step, closed) {
   const L = polyLength(poly, closed);
-  if (L <= 0) return [poly[0].slice()];
+  if (L <= 0) return { pts: [poly[0].slice()], fi: [0] };
   const n = Math.max(closed ? 6 : 2, Math.round(L / step));
   const st = closed ? L / n : L / (n - 1 || 1);
-  const out = [];
+  const out = [], fi = [];
   let si = 0, acc = 0;
-  let px = poly[0][0], py = poly[0][1];
   const total = poly.length - 1 + (closed ? 1 : 0);
   const at = i => (closed && i === poly.length - 1 ? poly[0] : poly[i]);
   for (let k = 0; k < n; k++) {
-    const target = k * st;
+    const target = closed ? k * st : k * st;
     while (si < total - 1) {
       const a = at(si), b = at(si + 1);
       const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
@@ -907,14 +908,165 @@ function resamplePoly(poly, step, closed) {
     const d = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
     const t = clamp((target - acc) / d, 0, 1);
     out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
-    px = a[0]; py = a[1];
+    fi.push(si);
   }
-  void px; void py;
-  return out;
+  return { pts: out, fi: fi };
 }
 
 /* =========================================================
-   2. 섬 폴리곤 — 트랙 줄기를 따라 두툼하게 만든 띠(둥근 끝)
+   2. 사슬(chain) — 트랙 조립기
+   ---------------------------------------------------------
+   좌표는 '칸' 단위. x 오른쪽, y 아래. 각도 0 = 동쪽, +90 = 남쪽.
+   ========================================================= */
+function newChain(x, y, headDeg) {
+  return { x: x, y: y, a: (headDeg || 0) * Math.PI / 180, pts: [[x, y]], seg: [0], len: 0, lens: [0], anchors: {} };
+}
+function chPush(ch, x, y, s) {
+  const p = ch.pts[ch.pts.length - 1];
+  const d = Math.hypot(x - p[0], y - p[1]);
+  if (d < 1e-5) return;
+  ch.pts.push([x, y]); ch.seg.push(s); ch.len += d; ch.lens.push(ch.len);
+}
+
+/* 곧은 길 */
+function segLine(ch, sg, si) {
+  const n = Math.max(1, Math.ceil(sg.len / FINE));
+  const d = sg.len / n;
+  for (let i = 0; i < n; i++) {
+    ch.x += Math.cos(ch.a) * d; ch.y += Math.sin(ch.a) * d;
+    chPush(ch, ch.x, ch.y, si);
+  }
+}
+
+/* 둥근 호 (각진 꺾임은 r 을 아주 작게) */
+function segArc(ch, sg, si) {
+  const ang = (sg.deg || 0) * Math.PI / 180;
+  const R = Math.abs(sg.r);
+  if (Math.abs(ang) < 1e-4) return;
+  if (R < .05) { ch.a += ang; return; }
+  const sgn = Math.sign(ang);
+  const cx = ch.x + Math.cos(ch.a + Math.PI / 2) * R * sgn;
+  const cy = ch.y + Math.sin(ch.a + Math.PI / 2) * R * sgn;
+  const phi0 = Math.atan2(ch.y - cy, ch.x - cx);
+  const n = Math.max(2, Math.ceil(Math.abs(ang) * R / FINE));
+  for (let i = 1; i <= n; i++) {
+    const phi = phi0 + sgn * Math.abs(ang) * (i / n);
+    ch.x = cx + Math.cos(phi) * R;
+    ch.y = cy + Math.sin(phi) * R;
+    chPush(ch, ch.x, ch.y, si);
+  }
+  ch.a += ang;
+}
+
+/* 출렁이는 해안선 (사인 곡선) */
+function segWave(ch, sg, si) {
+  const a0 = ch.a, x0 = ch.x, y0 = ch.y;
+  const len = sg.len, amp = sg.amp === undefined ? .8 : sg.amp, wv = sg.waves || 1;
+  const n = Math.max(2, Math.ceil(len / FINE));
+  let lx = x0, ly = y0;
+  for (let i = 1; i <= n; i++) {
+    const s = len * i / n;
+    const lat = amp * Math.sin(TAU * wv * s / len);
+    lx = x0 + Math.cos(a0) * s - Math.sin(a0) * lat;
+    ly = y0 + Math.sin(a0) * s + Math.cos(a0) * lat;
+    chPush(ch, lx, ly, si);
+  }
+  ch.x = lx; ch.y = ly; ch.a = a0;
+}
+
+/* S자 스위치백 — 앞으로 갔다가 180도 접어 되돌아오는 지그재그 */
+function segSerp(ch, sg, si) {
+  const teeth = sg.teeth || 2, len = sg.len, w = sg.width === undefined ? 2.2 : sg.width;
+  for (let t = 0; t < teeth; t++) {
+    segLine(ch, { len: len }, si);
+    segArc(ch, { r: w * .5, deg: 180 }, si);
+    segLine(ch, { len: len * .92 }, si);
+    segArc(ch, { r: w * .5, deg: 180 }, si);
+  }
+}
+
+/** 루프 — 한 바퀴 돌면서 조금 안쪽으로 말려 들어간다 (입구/출구가 교차) */
+function segLoop(ch, sg, si) {
+  const deg = sg.deg === undefined ? 360 : sg.deg;
+  const total = deg * Math.PI / 180;
+  const r0 = sg.r;
+  const RR1 = sg.r1 === undefined ? sg.r + (sg.dr || 0) : sg.r1;
+  const n = Math.max(10, Math.ceil(Math.abs(total) * sg.r / FINE));
+  const da = total / n;
+  let sx = 0, sy = 0;
+  for (let i = 0; i < n; i++) {
+    const u = (i + .5) / n;
+    const R = r0 + (RR1 - r0) * u;
+    ch.x += Math.cos(ch.a + da * .5) * R * Math.abs(da);
+    ch.y += Math.sin(ch.a + da * .5) * R * Math.abs(da);
+    ch.a += da;
+    chPush(ch, ch.x, ch.y, si);
+    sx += ch.x; sy += ch.y;
+  }
+  if (sg.name) ch.anchors[sg.name] = [sx / n, sy / n];
+}
+
+/* 지정한 점을 향해 곧게 (각진 구간 · 직선 다리) */
+function segStraight(ch, sg, si) {
+  const tx = sg.p[0], ty = sg.p[1];
+  const d = Math.hypot(tx - ch.x, ty - ch.y);
+  if (d < .05) return;
+  ch.a = Math.atan2(ty - ch.y, tx - ch.x);
+  segLine(ch, { len: d }, si);
+}
+
+/* 지정한 점으로 부드럽게 (해안 · 완만한 길) */
+function segTo(ch, sg, si) {
+  const tx = sg.p[0], ty = sg.p[1];
+  const d = Math.hypot(tx - ch.x, ty - ch.y);
+  if (d < .05) return;
+  const eh = sg.h !== undefined ? sg.h : Math.atan2(ty - ch.y, tx - ch.x) * 180 / Math.PI;
+  chSplineTo(ch, tx, ty, eh, 0, sg.k1 || .34, sg.k2 || .32, sg.bow || 0, si);
+  if (sg.name) ch.anchors[sg.name] = [tx, ty];
+}
+
+/* 지정한 점들을 지나는 부드러운 길 (마무리 · 연결용) */
+function segSpline(ch, sg, si) {
+  const pts = [[ch.x, ch.y]].concat(sg.pts);
+  const poly = crSpline(pts, false, 14);
+  for (let i = 1; i < poly.length; i++) chPush(ch, poly[i][0], poly[i][1], si);
+  const n = poly.length;
+  ch.a = Math.atan2(poly[n - 1][1] - poly[n - 2][1], poly[n - 1][0] - poly[n - 2][0]);
+}
+
+/* 목표점으로 정확히 붙는 마무리 곡선 (베지어) */
+function chSplineTo(ch, tx, ty, endHeadDeg, n, k1, k2, bow, si) {
+  const p0 = [ch.x, ch.y], p3 = [tx, ty];
+  const L = Math.hypot(tx - ch.x, ty - ch.y);
+  if (L < .05) return;
+  const eh = (endHeadDeg === undefined || endHeadDeg === null) ? ch.a : endHeadDeg * Math.PI / 180;
+  const nx = -(ty - ch.y) / L, ny = (tx - ch.x) / L;
+  const b = bow || 0;
+  const c1 = [p0[0] + Math.cos(ch.a) * L * (k1 || .34) + nx * b, p0[1] + Math.sin(ch.a) * L * (k1 || .34) + ny * b];
+  const c2 = [p3[0] - Math.cos(eh) * L * (k2 || .30) + nx * b, p3[1] - Math.sin(eh) * L * (k2 || .30) + ny * b];
+  const m = Math.max(8, n || Math.ceil(L / FINE));
+  for (let i = 1; i <= m; i++) {
+    const t = i / m, u = 1 - t;
+    const x = u * u * u * p0[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * p3[0];
+    const y = u * u * u * p0[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * p3[1];
+    chPush(ch, x, y, si === undefined ? -1 : si);
+  }
+  ch.x = tx; ch.y = ty; ch.a = eh;
+}
+
+function applySeg(ch, sg, si) {
+  if (sg.k === 'line') segLine(ch, sg, si);
+  else if (sg.k === 'arc') segArc(ch, sg, si);
+  else if (sg.k === 'wave') segWave(ch, sg, si);
+  else if (sg.k === 'serp') segSerp(ch, sg, si);
+  else if (sg.k === 'loop') segLoop(ch, sg, si);
+  else if (sg.k === 'spline') segSpline(ch, sg, si);
+  else if (sg.k === 's') segStraight(ch, sg, si);
+  else if (sg.k === 'to' || sg.k === undefined) segTo(ch, sg, si);
+}
+
+/* =========================================================
+   3. 섬 폴리곤 — 트랙 줄기를 따라 두툼하게 만든 띠(둥근 끝)
    ========================================================= */
 function strokeOutline(pts, halfW, seed) {
   const rr = mulberry32(seed);
@@ -936,14 +1088,12 @@ function strokeOutline(pts, halfW, seed) {
     const L = Math.hypot(dx, dy) || 1;
     dx /= L; dy /= L;
     const nx = -dy, ny = dx;
-    /* 폭을 조금씩 흔들어 자연스럽게 */
     const wj = halfW * (.90 + rr() * .22);
     left.push([p[0] + nx * wj, p[1] + ny * wj]);
     right.push([p[0] - nx * wj, p[1] - ny * wj]);
   }
   const out = [];
   for (let i = 0; i < left.length; i++) out.push(left[i]);
-  /* 끝 둥글게 */
   const cap = (ctr, from, to) => {
     const a0 = Math.atan2(from[1] - ctr[1], from[0] - ctr[0]);
     let a1 = Math.atan2(to[1] - ctr[1], to[0] - ctr[0]);
@@ -976,198 +1126,548 @@ function insidePoly(x, y, poly) {
   return c;
 }
 
-function distToPoly(x, y, poly) {
-  let best = 1e9;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const ax = poly[j][0], ay = poly[j][1], bx = poly[i][0], by = poly[i][1];
-    const dx = bx - ax, dy = by - ay;
-    const L2 = dx * dx + dy * dy || 1;
-    const t = clamp(((x - ax) * dx + (y - ay) * dy) / L2, 0, 1);
-    const px = ax + dx * t, py = ay + dy * t;
-    best = Math.min(best, Math.hypot(x - px, y - py));
-  }
-  return best;
-}
-
 /* =========================================================
-   3. 맵 설계도 (좌표는 칸 단위, y는 아래로)
+   4. 맵 설계도
+   ---------------------------------------------------------
+   segs: 트랙 사슬. g=땅(섬), d=다리 갑판.
+   forks: 갈림길. at=본선 비율, skip=본선 몇 칸을 건너뛰는지.
+          mode 'short' = 지름길 / 'long' = 안전한 우회로.
    ========================================================= */
 const MAP_TRACK_SPECS = {
-  /* ---------- 초원 유적: 중앙 유적섬을 감싸 도는 초록 트랙 ---------- */
+  /* =========================================================
+     초원 유적 — 8줄 지그재그 대회로 (해안 · 숲 · 신전 루프 · 고가 다리)
+     ========================================================= */
   meadow: {
-    cols: 30, rows: 22,
-    ring: [
-      [4.8, 13.4], [5.2, 16.6], [7.4, 18.8], [10.4, 19.6],
-      [12.6, 17.8], [15.2, 17.6], [17.6, 19.3], [20.6, 18.6],
-      [22.2, 15.8], [22.4, 12.6], [21.2, 9.9], [19.0, 8.4],
-      [16.4, 9.1], [13.8, 7.8], [11.2, 7.2], [8.6, 7.4], [6.2, 9.4], [4.9, 11.5]
+    cols: 62, rows: 44,
+    start: [8.6, 40.2], head: 0,
+    segs: [
+      /* 1행 — 남쪽 해안, 동쪽으로 */
+      { k: 'to', p: [13.5, 40.9], g: 'sand', w: 3.0 },
+      { k: 'to', p: [19.0, 39.8], g: 'sand', w: 2.9 },
+      { k: 'to', p: [25.5, 40.7], g: 'grass', w: 3.1 },
+      { k: 'to', p: [31.5, 39.9], g: 'grass', w: 3.2 },
+      { k: 'to', p: [37.5, 40.6], g: 'grass', w: 3.0 },
+      { k: 'to', p: [43.5, 39.9], g: 'sand', w: 2.9 },
+      { k: 'to', p: [48.5, 40.5], g: 'sand', w: 3.0 },
+      { k: 'to', p: [51.0, 40.2], g: 'grass', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'wood', w: 2.4 },
+      /* 2행 — 곧은 돌다리 세 구간 */
+      { k: 's', p: [45.0, 35.9], d: 'stone', w: 2.3 },
+      { k: 's', p: [39.5, 35.2], d: 'stone', w: 2.3 },
+      { k: 's', p: [34.0, 36.0], d: 'stone', w: 2.3 },
+      { k: 'to', p: [28.0, 35.4], g: 'grass', w: 3.1 },
+      { k: 'to', p: [22.0, 36.0], g: 'grass', w: 3.0 },
+      { k: 'to', p: [16.0, 35.3], g: 'grass', w: 3.2 },
+      { k: 'to', p: [11.0, 35.9], g: 'sand', w: 2.9 },
+      { k: 'to', p: [8.6, 35.5], g: 'sand', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 3행 — 출렁이는 숲길 */
+      { k: 'to', p: [14.0, 31.5], g: 'grass', w: 3.2 },
+      { k: 'wave', len: 9.0, amp: 1.1, waves: 2, g: 'grass', w: 3.0 },
+      { k: 'to', p: [30.0, 30.7], g: 'grass', w: 3.1 },
+      { k: 'to', p: [37.0, 31.4], g: 'sand', w: 2.9 },
+      { k: 'to', p: [44.0, 30.8], g: 'grass', w: 3.0 },
+      { k: 'to', p: [51.0, 31.2], g: 'grass', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'wood', w: 2.4 },
+      /* 4행 — 신전을 감아 도는 루프 */
+      { k: 'to', p: [45.0, 27.0], g: 'grass', w: 3.0 },
+      { k: 'to', p: [39.0, 26.3], g: 'grass', w: 3.2 },
+      { k: 'to', p: [35.2, 26.8], g: 'stone', w: 3.0 },
+      { k: 'loop', r: 2.9, dr: 1.7, deg: 352, g: 'stone', w: 2.9, name: 'temple' },
+      { k: 'to', p: [24.0, 26.6], g: 'grass', w: 3.0 },
+      { k: 'to', p: [17.0, 27.2], g: 'grass', w: 3.1 },
+      { k: 'to', p: [11.0, 26.5], g: 'sand', w: 2.9 },
+      { k: 'to', p: [8.6, 26.8], g: 'sand', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 5행 — 각진 나무다리 부교 */
+      { k: 'to', p: [15.0, 22.5], g: 'grass', w: 3.2 },
+      { k: 's', p: [21.0, 21.9], d: 'wood', w: 2.4 },
+      { k: 's', p: [26.0, 22.6], d: 'wood', w: 2.4 },
+      { k: 's', p: [31.0, 21.9], d: 'wood', w: 2.4 },
+      { k: 'to', p: [37.0, 22.4], g: 'grass', w: 3.0 },
+      { k: 'to', p: [44.0, 21.8], g: 'grass', w: 3.1 },
+      { k: 'to', p: [51.0, 22.2], g: 'grass', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'wood', w: 2.4 },
+      /* 6행 — 돌다리가 섞인 완만한 길 */
+      { k: 'to', p: [45.0, 18.0], g: 'grass', w: 3.1 },
+      { k: 'to', p: [39.0, 17.3], g: 'grass', w: 3.0 },
+      { k: 'wave', len: 10.0, amp: 1.0, waves: 2, d: 'stone', w: 2.4 },
+      { k: 'to', p: [22.0, 17.8], g: 'grass', w: 3.1 },
+      { k: 'to', p: [15.0, 17.1], g: 'grass', w: 3.0 },
+      { k: 'to', p: [9.5, 17.6], g: 'sand', w: 2.9 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 7행 — 동쪽으로 */
+      { k: 'to', p: [15.0, 13.5], g: 'grass', w: 3.2 },
+      { k: 'to', p: [22.0, 12.8], g: 'grass', w: 3.1 },
+      { k: 'to', p: [29.0, 13.4], g: 'sand', w: 2.9 },
+      { k: 'to', p: [36.0, 12.7], g: 'grass', w: 3.0 },
+      { k: 'to', p: [43.0, 13.3], g: 'grass', w: 3.1 },
+      { k: 'to', p: [51.0, 12.9], g: 'grass', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'wood', w: 2.4 },
+      /* 8행 — 돌다리 → 해변 */
+      { k: 'to', p: [45.0, 9.0], g: 'grass', w: 3.0 },
+      { k: 's', p: [39.0, 8.4], d: 'stone', w: 2.3 },
+      { k: 's', p: [33.0, 9.0], d: 'stone', w: 2.3 },
+      { k: 'to', p: [26.0, 8.5], g: 'sand', w: 2.9 },
+      { k: 'to', p: [19.0, 9.1], g: 'grass', w: 3.1 },
+      { k: 'to', p: [13.0, 8.4], g: 'grass', w: 3.0 },
+      { k: 'to', p: [9.4, 8.8], g: 'sand', w: 3.0 },
+      /* 서쪽 바깥 외길을 타고 남쪽으로 되돌아온다 */
+      { k: 'to', p: [4.6, 11.0], d: 'wood', w: 2.4 },
+      { k: 'to', p: [2.7, 14.5], d: 'wood', w: 2.4 },
+      { k: 'to', p: [2.5, 20.0], d: 'stone', w: 2.3 },
+      { k: 'to', p: [2.7, 25.5], d: 'stone', w: 2.3 },
+      { k: 'to', p: [2.5, 31.0], d: 'wood', w: 2.4 },
+      { k: 'to', p: [4.2, 37.0], d: 'wood', w: 2.4 }
     ],
-    shortcuts: [
-      /* 남쪽 만을 가로지르는 나무다리 지름길 (분기 → 합류) */
-      { a: [9.0, 19.4], b: [18.6, 19.1], bow: 1.35, k: 'wood' },
-      /* 북쪽 숲을 가로지르는 돌다리 지름길 */
-      { a: [20.4, 8.8], b: [12.6, 7.5], bow: .95, k: 'stone' }
-    ],
-    spans: [
-      { t0: .00, t1: .18, k: 'sand', w: 2.9 },
-      { t0: .20, t1: .38, k: 'grass', w: 3.9 },
-      { t0: .40, t1: .56, k: 'grass', w: 3.4 },
-      { t0: .58, t1: .70, k: 'deck', w: 2.7 },
-      { t0: .72, t1: .86, k: 'grass', w: 3.6 },
-      { t0: .88, t1: 1.0, k: 'stone', w: 2.9 }
+    close: { k1: .34, k2: .34, bow: -.5 },
+    forks: [
+      { at: .09, skip: 26, theme: 'risk', d: 'wood' },
+      { at: .28, skip: 24, theme: 'safe', g: 'grass' },
+      { at: .46, skip: 30, theme: 'risk', d: 'stone' },
+      { at: .64, skip: 24, theme: 'safe', d: 'stone' },
+      { at: .82, skip: 28, theme: 'risk', d: 'wood' }
     ],
     islets: [
-      { c: 24.2, r: 3.0, w: 4, h: 3, k: 'sand', shape: 'blob' },
-      { c: 2.2, r: 6.4, w: 3, h: 2, k: 'grass', shape: 'blob' },
-      { c: 24.0, r: 18.0, w: 4, h: 3, k: 'grass', shape: 'blob' }
+      { cell: [11.5, 40.3], w: 6, h: 4, k: 'sand' },
+      { cell: [25.0, 41.0], w: 5, h: 4, k: 'grass' },
+      { cell: [53.0, 30.5], w: 5, h: 4, k: 'grass' },
+      { cell: [55.0, 8.0], w: 4, h: 4, k: 'grass' },
+      { cell: [50.0, 20.0], w: 3, h: 3, k: 'sand' }
     ],
-    big: { c: 10, r: 8, w: 8, h: 7, k: 'grass', shape: 'blob' },
-    landmarks: [{ k: 'temple', at: 'big', dx: 3.5, dy: 1.5 }, { k: 'hut', island: 1, rand: true }, { k: 'waterfall', island: 2, rand: true }],
-    startFrac: .0,
-    starFrac: .46,
-    shopFrac: [.28, .80],
-    allyFrac: [.12, .64],
-    fateFrac: [.22, .52, .90],
-    gimmickFrac: .36
+    landmarks: [
+      { k: 'temple', anchor: 'temple', s: 1.7 },
+      { k: 'hut', cell: [11.5, 40.2], s: 1.1 },
+      { k: 'waterfall', cell: [53.0, 30.4], s: 1 },
+      { k: 'ship', cell: [24.0, 39.4], s: 1.2 }
+    ],
+    starFrac: .16,
+    shopFrac: [.15, .42, .70, .92],
+    allyFrac: [.09, .30, .52, .74, .95],
+    fateFrac: [.18, .37, .58, .77, .96],
+    gimmickFrac: .24
   },
 
-  /* ---------- 용암 성곽: 화산 허리를 감아 오르는 트랙 ---------- */
+  /* =========================================================
+     용암 성곽 — 성벽 회랑 · 분화구 루프 · 8자 고가 교차
+     ========================================================= */
   volcano: {
-    cols: 30, rows: 22,
-    ring: [
-      [5.6, 13.8], [6.0, 17.0], [8.4, 19.2], [11.6, 20.0],
-      [13.8, 18.2], [16.4, 18.0], [18.8, 19.6], [21.6, 18.4],
-      [22.8, 15.4], [22.9, 12.2], [21.6, 9.6], [19.2, 8.2],
-      [16.6, 9.0], [14.0, 7.6], [11.4, 7.0], [8.8, 7.2], [6.4, 9.2], [5.1, 11.4]
+    cols: 62, rows: 44,
+    start: [8.0, 39.6], head: -4,
+    segs: [
+      /* 1행 */
+      { k: 'to', p: [14.0, 40.3], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [20.0, 39.2], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [26.0, 40.1], g: 'scorch', w: 3.1 },
+      { k: 'to', p: [32.0, 39.3], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [38.0, 40.2], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [44.0, 39.4], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [50.8, 40.0], g: 'scorch', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 2행 — 성벽 위 직선 돌다리 */
+      { k: 's', p: [44.5, 35.7], d: 'stone', w: 2.3 },
+      { k: 's', p: [38.5, 35.0], d: 'stone', w: 2.3 },
+      { k: 's', p: [32.5, 35.8], d: 'stone', w: 2.3 },
+      { k: 'to', p: [26.0, 35.2], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [19.5, 35.9], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [13.0, 35.1], g: 'scorch', w: 3.1 },
+      { k: 'to', p: [8.6, 35.6], g: 'scorch', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 3행 */
+      { k: 'to', p: [15.0, 31.3], g: 'scorch', w: 3.1 },
+      { k: 'wave', len: 8.5, amp: 1.0, waves: 2, g: 'scorch', w: 3.0 },
+      { k: 'to', p: [30.0, 30.6], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [38.0, 31.3], g: 'scorch', w: 3.1 },
+      { k: 'to', p: [45.0, 30.7], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [50.8, 31.1], g: 'scorch', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 4행 — 분화구를 감는 루프 */
+      { k: 'to', p: [45.0, 26.9], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [39.0, 26.2], g: 'scorch', w: 3.1 },
+      { k: 'to', p: [35.0, 26.7], g: 'scorch', w: 2.9 },
+      { k: 'loop', r: 3.0, dr: 1.8, deg: 348, g: 'stone', w: 2.9, name: 'crater' },
+      { k: 'to', p: [24.0, 26.5], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [17.0, 27.1], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [11.0, 26.4], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [8.6, 26.7], g: 'scorch', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 5행 — 각진 현무암 다리 */
+      { k: 'to', p: [15.0, 22.4], g: 'scorch', w: 3.1 },
+      { k: 's', p: [21.0, 21.8], d: 'stone', w: 2.4 },
+      { k: 's', p: [26.0, 22.5], d: 'stone', w: 2.4 },
+      { k: 's', p: [31.0, 21.8], d: 'stone', w: 2.4 },
+      { k: 'to', p: [37.0, 22.3], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [44.0, 21.7], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [50.8, 22.1], g: 'scorch', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 6행 — 8자 교차로 */
+      { k: 'to', p: [45.0, 17.9], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [39.0, 17.2], g: 'scorch', w: 3.0 },
+      { k: 'loop', r: 2.5, r1: 2.5, deg: -300, d: 'stone', w: 2.4, name: 'cross8' },
+      { k: 'loop', r: 2.5, r1: 2.5, deg: -300, d: 'stone', w: 2.4 },
+      { k: 'to', p: [25.0, 17.7], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [17.0, 17.0], g: 'scorch', w: 3.1 },
+      { k: 'to', p: [10.5, 17.5], g: 'scorch', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 7행 */
+      { k: 'to', p: [15.0, 13.4], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [22.0, 12.7], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [29.0, 13.3], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [36.0, 12.6], g: 'scorch', w: 3.1 },
+      { k: 'to', p: [43.0, 13.2], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [50.8, 12.8], g: 'scorch', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'stone', w: 2.4 },
+      /* 8행 */
+      { k: 'to', p: [45.0, 8.9], g: 'scorch', w: 3.0 },
+      { k: 's', p: [39.0, 8.3], d: 'stone', w: 2.3 },
+      { k: 's', p: [33.0, 8.9], d: 'stone', w: 2.3 },
+      { k: 'to', p: [26.0, 8.4], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [19.0, 9.0], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [13.0, 8.3], g: 'scorch', w: 3.0 },
+      { k: 'to', p: [9.2, 8.7], g: 'scorch', w: 3.0 },
+      /* 서쪽 외길 */
+      { k: 'to', p: [4.4, 11.0], d: 'stone', w: 2.4 },
+      { k: 'to', p: [2.5, 14.5], d: 'stone', w: 2.3 },
+      { k: 'to', p: [2.3, 20.0], d: 'stone', w: 2.3 },
+      { k: 'to', p: [2.5, 25.5], d: 'stone', w: 2.3 },
+      { k: 'to', p: [2.3, 31.0], d: 'stone', w: 2.3 },
+      { k: 'to', p: [4.0, 37.0], d: 'stone', w: 2.4 }
     ],
-    shortcuts: [
-      { a: [10.0, 19.8], b: [19.6, 19.2], bow: 1.35, k: 'stone' },
-      { a: [21.0, 8.9], b: [12.9, 7.3], bow: .95, k: 'stone' }
-    ],
-    spans: [
-      { t0: .00, t1: .16, k: 'basalt', w: 3.0 },
-      { t0: .18, t1: .40, k: 'basalt', w: 3.9 },
-      { t0: .42, t1: .58, k: 'basalt', w: 3.3 },
-      { t0: .60, t1: .72, k: 'basalt', w: 2.7 },
-      { t0: .74, t1: .88, k: 'basalt', w: 3.6 },
-      { t0: .90, t1: 1.0, k: 'basalt', w: 2.9 }
+    close: { k1: .34, k2: .34, bow: .6 },
+    forks: [
+      { at: .08, skip: 26, theme: 'risk', d: 'stone' },
+      { at: .27, skip: 24, theme: 'safe', g: 'scorch' },
+      { at: .45, skip: 30, theme: 'risk', d: 'stone' },
+      { at: .63, skip: 24, theme: 'safe', d: 'stone' },
+      { at: .81, skip: 28, theme: 'risk', d: 'stone' }
     ],
     islets: [
-      { c: 23.8, r: 3.4, w: 4, h: 3, k: 'basalt', shape: 'blob' },
-      { c: 2.4, r: 7.0, w: 3, h: 2, k: 'basalt', shape: 'blob' },
-      { c: 24.0, r: 17.6, w: 3, h: 3, k: 'basalt', shape: 'blob' }
+      { cell: [11.0, 39.6], w: 6, h: 4, k: 'basalt' },
+      { cell: [25.0, 40.4], w: 5, h: 4, k: 'ash' },
+      { cell: [53.0, 29.5], w: 5, h: 4, k: 'ash' },
+      { cell: [55.0, 7.0], w: 4, h: 4, k: 'basalt' },
+      { cell: [50.0, 19.0], w: 3, h: 3, k: 'basalt' }
     ],
-    big: { c: 10, r: 7, w: 8, h: 8, k: 'ash', shape: 'blob' },
-    landmarks: [{ k: 'volcano', at: 'big', s: 1.25 }, { k: 'lavaPool', island: 3, rand: true }, { k: 'obelisk', island: 1, rand: true }],
-    startFrac: .0,
-    starFrac: .48,
-    shopFrac: [.30, .82],
-    allyFrac: [.14, .66],
-    fateFrac: [.24, .54, .92],
-    gimmickFrac: .38
+    landmarks: [
+      { k: 'volcano', anchor: 'crater', s: 1.7 },
+      { k: 'lavaPool', cell: [11.0, 39.5], s: 1.1 },
+      { k: 'obelisk', cell: [53.0, 29.4], s: 1 },
+      { k: 'ship', cell: [25.0, 38.8], s: 1.2 }
+    ],
+    starFrac: .16,
+    shopFrac: [.14, .41, .69, .92],
+    allyFrac: [.08, .29, .51, .73, .95],
+    fateFrac: [.17, .36, .57, .76, .96],
+    gimmickFrac: .23
   },
 
-  /* ---------- 얼음 빙하: 유빙을 잇는 얼음 트랙 ---------- */
+  /* =========================================================
+     얼음 빙하 — 유빙 직선 · 빙판 회랑 · 빙산 루프 · 크레바스 교차
+     ========================================================= */
   ice: {
-    cols: 30, rows: 22,
-    ring: [
-      [5.2, 12.8], [4.9, 16.2], [7.2, 18.6], [10.4, 19.4],
-      [12.8, 17.6], [15.4, 17.4], [17.8, 19.1], [20.8, 18.2],
-      [22.6, 15.2], [23.0, 12.0], [21.8, 9.4], [19.4, 8.0],
-      [16.8, 8.8], [14.2, 7.4], [11.6, 6.8], [9.0, 7.0], [6.6, 9.0], [5.1, 11.2]
+    cols: 62, rows: 44,
+    start: [8.8, 40.6], head: 3,
+    segs: [
+      /* 1행 */
+      { k: 'to', p: [14.0, 41.2], g: 'snow', w: 3.0 },
+      { k: 'to', p: [20.0, 40.2], g: 'ice', w: 2.9 },
+      { k: 'to', p: [26.0, 41.0], g: 'snow', w: 3.1 },
+      { k: 'to', p: [32.0, 40.2], g: 'ice', w: 3.0 },
+      { k: 'to', p: [38.0, 41.0], g: 'snow', w: 3.0 },
+      { k: 'to', p: [44.0, 40.2], g: 'snow', w: 3.0 },
+      { k: 'to', p: [51.0, 40.8], g: 'ice', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'ice', w: 2.4 },
+      /* 2행 — 곧은 빙판 다리 */
+      { k: 's', p: [45.0, 36.3], d: 'ice', w: 2.3 },
+      { k: 's', p: [39.0, 35.6], d: 'ice', w: 2.3 },
+      { k: 's', p: [33.0, 36.4], d: 'ice', w: 2.3 },
+      { k: 'to', p: [26.5, 35.8], g: 'snow', w: 3.1 },
+      { k: 'to', p: [20.0, 36.5], g: 'ice', w: 3.0 },
+      { k: 'to', p: [13.5, 35.7], g: 'snow', w: 3.1 },
+      { k: 'to', p: [9.4, 36.2], g: 'snow', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'ice', w: 2.4 },
+      /* 3행 */
+      { k: 'to', p: [15.0, 31.9], g: 'snow', w: 3.1 },
+      { k: 'wave', len: 9.0, amp: 1.0, waves: 2, g: 'ice', w: 3.0 },
+      { k: 'to', p: [30.0, 31.2], g: 'snow', w: 3.0 },
+      { k: 'to', p: [38.0, 31.9], g: 'snow', w: 3.1 },
+      { k: 'to', p: [45.0, 31.3], g: 'ice', w: 3.0 },
+      { k: 'to', p: [51.0, 31.7], g: 'snow', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'ice', w: 2.4 },
+      /* 4행 — 빙산을 감는 루프 */
+      { k: 'to', p: [45.0, 27.5], g: 'ice', w: 3.0 },
+      { k: 'to', p: [39.0, 26.8], g: 'snow', w: 3.1 },
+      { k: 'to', p: [35.0, 27.3], g: 'ice', w: 2.9 },
+      { k: 'loop', r: 2.9, dr: 1.7, deg: 353, g: 'ice', w: 2.9, name: 'iceberg' },
+      { k: 'to', p: [24.0, 27.1], g: 'snow', w: 3.0 },
+      { k: 'to', p: [17.0, 27.7], g: 'snow', w: 3.0 },
+      { k: 'to', p: [11.0, 27.0], g: 'ice', w: 3.0 },
+      { k: 'to', p: [9.4, 27.3], g: 'snow', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'ice', w: 2.4 },
+      /* 5행 — 각진 크레바스 다리 */
+      { k: 'to', p: [15.0, 23.0], g: 'snow', w: 3.1 },
+      { k: 's', p: [21.0, 22.4], d: 'ice', w: 2.4 },
+      { k: 's', p: [26.0, 23.1], d: 'ice', w: 2.4 },
+      { k: 's', p: [31.0, 22.4], d: 'ice', w: 2.4 },
+      { k: 'to', p: [37.0, 22.9], g: 'snow', w: 3.0 },
+      { k: 'to', p: [44.0, 22.3], g: 'ice', w: 3.0 },
+      { k: 'to', p: [51.0, 22.7], g: 'snow', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'ice', w: 2.4 },
+      /* 6행 — 나선 8자 교차 */
+      { k: 'to', p: [45.0, 18.5], g: 'ice', w: 3.0 },
+      { k: 'to', p: [39.0, 17.8], g: 'snow', w: 3.0 },
+      { k: 'loop', r: 2.5, r1: 2.5, deg: -300, d: 'ice', w: 2.4, name: 'cravasse' },
+      { k: 'loop', r: 2.5, r1: 2.5, deg: 300, d: 'ice', w: 2.4 },
+      { k: 'to', p: [25.0, 18.3], g: 'snow', w: 3.0 },
+      { k: 'to', p: [17.0, 17.6], g: 'ice', w: 3.1 },
+      { k: 'to', p: [10.8, 18.1], g: 'snow', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'ice', w: 2.4 },
+      /* 7행 */
+      { k: 'to', p: [15.0, 14.0], g: 'ice', w: 3.0 },
+      { k: 'to', p: [22.0, 13.3], g: 'snow', w: 3.0 },
+      { k: 'to', p: [29.0, 13.9], g: 'snow', w: 3.0 },
+      { k: 'to', p: [36.0, 13.2], g: 'ice', w: 3.1 },
+      { k: 'to', p: [43.0, 13.8], g: 'snow', w: 3.0 },
+      { k: 'to', p: [51.0, 13.4], g: 'ice', w: 3.0 },
+      { k: 'arc', r: 2.25, deg: -180, d: 'ice', w: 2.4 },
+      /* 8행 */
+      { k: 'to', p: [45.0, 9.5], g: 'snow', w: 3.0 },
+      { k: 's', p: [39.0, 8.9], d: 'ice', w: 2.3 },
+      { k: 's', p: [33.0, 9.5], d: 'ice', w: 2.3 },
+      { k: 'to', p: [26.0, 9.0], g: 'snow', w: 3.0 },
+      { k: 'to', p: [19.0, 9.6], g: 'ice', w: 3.0 },
+      { k: 'to', p: [13.0, 8.9], g: 'snow', w: 3.0 },
+      { k: 'to', p: [9.6, 9.3], g: 'snow', w: 3.0 },
+      /* 서쪽 외길 */
+      { k: 'to', p: [4.8, 11.5], d: 'ice', w: 2.4 },
+      { k: 'to', p: [2.9, 15.0], d: 'ice', w: 2.3 },
+      { k: 'to', p: [2.7, 20.0], d: 'ice', w: 2.3 },
+      { k: 'to', p: [2.9, 25.5], d: 'ice', w: 2.3 },
+      { k: 'to', p: [2.7, 31.0], d: 'ice', w: 2.3 },
+      { k: 'to', p: [4.4, 37.2], d: 'ice', w: 2.4 }
     ],
-    shortcuts: [
-      { a: [9.8, 19.2], b: [19.4, 18.8], bow: 1.35, k: 'ice' },
-      { a: [21.0, 8.7], b: [13.0, 7.1], bow: .95, k: 'ice' }
-    ],
-    spans: [
-      { t0: .00, t1: .17, k: 'snow', w: 3.0 },
-      { t0: .19, t1: .37, k: 'snow', w: 3.9 },
-      { t0: .39, t1: .55, k: 'ice', w: 3.4 },
-      { t0: .57, t1: .71, k: 'snow', w: 2.7 },
-      { t0: .73, t1: .88, k: 'snow', w: 3.6 },
-      { t0: .90, t1: 1.0, k: 'ice', w: 2.9 }
+    close: { k1: .34, k2: .34, bow: -.4 },
+    forks: [
+      { at: .08, skip: 26, theme: 'risk', d: 'ice' },
+      { at: .27, skip: 24, theme: 'safe', g: 'snow' },
+      { at: .45, skip: 30, theme: 'risk', d: 'ice' },
+      { at: .63, skip: 24, theme: 'safe', d: 'ice' },
+      { at: .81, skip: 28, theme: 'risk', d: 'ice' }
     ],
     islets: [
-      { c: 24.2, r: 3.0, w: 4, h: 3, k: 'snow', shape: 'blob' },
-      { c: 2.0, r: 6.2, w: 3, h: 2, k: 'snow', shape: 'blob' },
-      { c: 24.4, r: 17.6, w: 3, h: 3, k: 'ice', shape: 'blob' }
+      { cell: [11.5, 40.6], w: 6, h: 4, k: 'snow' },
+      { cell: [25.0, 41.2], w: 5, h: 4, k: 'ice' },
+      { cell: [53.0, 30.0], w: 5, h: 4, k: 'snow' },
+      { cell: [55.0, 8.0], w: 4, h: 4, k: 'ice' },
+      { cell: [50.0, 19.5], w: 3, h: 3, k: 'snow' }
     ],
-    big: { c: 10, r: 8, w: 8, h: 7, k: 'ice', shape: 'blob' },
-    landmarks: [{ k: 'iceberg', at: 'big', dx: 3.5, dy: 1.5 }, { k: 'crystal', island: 2, rand: true }, { k: 'snowman', island: 4, rand: true }],
-    startFrac: .0,
-    starFrac: .47,
-    shopFrac: [.29, .81],
-    allyFrac: [.13, .65],
-    fateFrac: [.23, .53, .91],
-    gimmickFrac: .37
+    landmarks: [
+      { k: 'iceberg', anchor: 'iceberg', s: 1.55 },
+      { k: 'snowman', cell: [11.5, 40.5], s: 1.1 },
+      { k: 'crystal', cell: [53.0, 29.9], s: 1 },
+      { k: 'ship', cell: [25.0, 39.7], s: 1.2 }
+    ],
+    starFrac: .16,
+    shopFrac: [.15, .42, .70, .92],
+    allyFrac: [.09, .30, .52, .74, .95],
+    fateFrac: [.18, .37, .58, .77, .96],
+    gimmickFrac: .24
   }
 };
 
 /* =========================================================
-   4. 트랙 생성 — 노드(발판) · 연결(nxt/prv) · 섬 · 다리
+   5. 트랙 생성
    ========================================================= */
-function buildTrackMap(spec) {
-  const toW = p => [MAP_MARGIN + p[0] * GRID, MAP_MARGIN + p[1] * GRID];
-  const step = TSTEP * GRID;
+function toWorld(p) { return [MAP_MARGIN + p[0] * GRID, MAP_MARGIN + p[1] * GRID]; }
+function toCell(p) { return [(p[0] - MAP_MARGIN) / GRID, (p[1] - MAP_MARGIN) / GRID]; }
 
-  const ringPts = resamplePoly(crSpline(spec.ring.map(toW), true, 20), step, true);
-  const M = ringPts.length;
-  const nodes = ringPts.map(p => ({ x: p[0], y: p[1] }));
+function buildTrackMap(spec) {
+  const step = TSTEP;
+  const ch = newChain(spec.start[0], spec.start[1], spec.head || 0);
+  spec.segs.forEach((sg, i) => applySeg(ch, sg, i));
+
+  /* 시작점으로 되돌아와 고리를 닫는다 */
+  const cl = spec.close || {};
+  chSplineTo(ch, spec.start[0], spec.start[1], spec.head || 0, 0, cl.k1, cl.k2, cl.bow || 0);
+  ch.pts[ch.pts.length - 1] = [spec.start[0], spec.start[1]];
+  const closedPts = ch.pts.slice(0, -1);
+
+  const rs = resamplePoly(closedPts, step, true);
+  const M = rs.pts.length;
+  /* 맵 전체를 꽉 채우도록 좌표를 밀어 넣는다 */
+  let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+  rs.pts.forEach(p => { bx0 = Math.min(bx0, p[0]); by0 = Math.min(by0, p[1]); bx1 = Math.max(bx1, p[0]); by1 = Math.max(by1, p[1]); });
+  const SH = [4.5 - bx0, 4.5 - by0];
+  const colsN = Math.ceil(bx1 + SH[0]) + 4.5;
+  const rowsN = Math.ceil(by1 + SH[1]) + 4.5;
+  const P = p => [MAP_MARGIN + (p[0] + SH[0]) * GRID, MAP_MARGIN + (p[1] + SH[1]) * GRID];
+  const nodes = rs.pts.map(p => ({ x: P(p)[0], y: P(p)[1], cx: p[0] + SH[0], cy: p[1] + SH[1], seg: -1 }));
+  /* 각 발판이 어느 사슬 구간(seg)에 속하는지 */
+  for (let i = 0; i < M; i++) {
+    const fi = Math.min(rs.fi[i], closedPts.length - 1);
+    nodes[i].seg = ch.seg[fi] === undefined ? -1 : ch.seg[fi];
+  }
+
   const ringNext = nodes.map((_, i) => [(i + 1) % M]);
   const ringPrev = nodes.map((_, i) => [(i - 1 + M) % M]);
 
-  const nearestRing = (p, lo, hi) => {
-    let best = -1, bd = 1e9;
-    for (let i = 0; i < M; i++) {
-      const d = Math.hypot(nodes[i].x - p[0], nodes[i].y - p[1]);
-      if (d < bd) { bd = d; best = i; }
-    }
-    void lo; void hi;
-    return { i: best, d: bd };
+  /* ---------- 갈림길 ----------
+     본선 위 두 발판 F → R 을 잇는 새 길. 본선보다 짧으면 지름길,
+     길면 위험을 피하는 우회로. */
+  const branches = [];
+  const tryBranch = (F, R, fk, A, B) => {
+    const dx = B[0] - A[0], dy = B[1] - A[1];
+    const L = Math.hypot(dx, dy) || 1;
+    const ux = dx / L, uy = dy / L;
+    const nx = -uy, ny = ux;
+    const dirA = Math.atan2(dy, dx);
+    let best = null;
+    const cands = [];
+    [-1, 1].forEach(sgn => {
+      for (let bul = .10; bul <= .68; bul += .045) {
+        for (let kk = .08; kk <= .52; kk += .11) {
+          cands.push({ bul: bul * sgn, kk: kk, sw: 1 });
+          cands.push({ bul: bul * sgn, kk: kk, sw: -1 });
+        }
+      }
+    });
+    cands.forEach(cd => {
+      const bx = cd.bul * L, by = cd.bul * L;
+      const c1 = [A[0] + ux * L * cd.kk + nx * bx, A[1] + uy * L * cd.kk + ny * by];
+      const c2 = [B[0] - ux * L * cd.kk + nx * bx * cd.sw, B[1] - uy * L * cd.kk + ny * by * cd.sw];
+      const poly = [];
+      const N = Math.max(12, Math.ceil(L * 3));
+      for (let i = 0; i <= N; i++) {
+        const t = i / N, u = 1 - t;
+        poly.push([
+          u * u * u * A[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * B[0],
+          u * u * u * A[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * B[1]
+        ]);
+      }
+      const rr = resamplePoly(poly, step, false);
+      const pts = rr.pts.slice(1, -1);
+      if (pts.length < 2) return;
+      const pads = pts.length;
+      const saved = fk.skip - (pads + 1);
+      /* 테마에 따라 목표로 하는 절약 칸수가 다르다 */
+      const safeTheme = fk.theme === 'safe';
+      if (safeTheme) { if (saved > 2 || saved < -1) return; }
+      else if (saved < 3) return;
+      /* 갈림길로 보이는 각도 */
+      const angA = Math.atan2(poly[3][1] - A[1], poly[3][0] - A[0]);
+      const angB = Math.atan2(B[1] - poly[poly.length - 4][1], B[0] - poly[poly.length - 4][0]);
+      let dA = Math.abs(((angA - dirA + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      dA = Math.PI - dA;
+      let dB = Math.abs(((angB - dirA + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      dB = Math.PI - dB;
+      /* 최소 간격 */
+      let clear = 1e9;
+      let oob = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const q = pts[i];
+        if (q[0] < 1.1 || q[1] < 1.1 || q[0] > colsN - 1.1 || q[1] > rowsN - 1.1) oob++;
+        for (let j = 0; j < M; j++) {
+          const di = (j - F + M) % M, dj = (R - j + M) % M;
+          if (di <= 2 || dj <= 2) continue;
+          const d0 = Math.hypot(q[0] - nodes[j].cx, q[1] - nodes[j].cy);
+          if (d0 < clear) clear = d0;
+        }
+        for (let bi = 0; bi < branches.length; bi++) {
+          const bp = branches[bi].pts;
+          for (let k2 = 0; k2 < bp.length; k2++) {
+            const d0 = Math.hypot(q[0] - bp[k2][0], q[1] - bp[k2][1]);
+            if (d0 < clear) clear = d0;
+          }
+        }
+        for (let k2 = 0; k2 < pts.length; k2++) {
+          if (Math.abs(k2 - i) < 3) continue;
+          const d0 = Math.hypot(q[0] - pts[k2][0], q[1] - pts[k2][1]);
+          if (d0 < clear) clear = d0;
+        }
+      }
+      /* 본선과의 교차 횟수 (고가 다리 연출) */
+      let cross = 0;
+      for (let i = 0; i < pts.length - 1; i++) {
+        for (let j = 0; j < M; j++) {
+          const j2 = (j + 1) % M;
+          if (j === F || j2 === F || j === R || j2 === R) continue;
+          if (segCross(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], nodes[j].cx, nodes[j].cy, nodes[j2].cx, nodes[j2].cy)) cross++;
+        }
+      }
+      let score = 0;
+      score -= Math.abs(saved - (safeTheme ? .5 : 6)) * 2.6;
+      score -= Math.max(0, 1.55 - clear) * 30;
+      score -= cross * 5;
+      score -= oob * 6;
+      score += Math.min(dA, 1.2) * 6 + Math.min(dB, 1.2) * 4;
+      if (!best || score > best.score) best = { score: score, pts: pts, saved: saved, clear: clear, cross: cross };
+    });
+    return best;
   };
 
-  /* ---------- 지름길(갈림길) ----------
-     a·b 는 트랙 위 두 지점(칸 좌표). 실제로는 가장 가까운 발판에 붙는다.
-     bow 만큼 안쪽으로 휘어진 다리가 두 발판을 잇는다 → 하나는 지름길, 하나는 먼 길. */
-  const branches = [];
-  (spec.shortcuts || []).forEach((sc, si) => {
-    const na = nearestRing(toW(sc.a));
-    const nb = nearestRing(toW(sc.b));
-    const F = na.i, R = nb.i;
-    const d = (R - F + M) % M;
-    if (d < 4) return;
-    const A = nodes[F], B = nodes[R];
-    const dx = B.x - A.x, dy = B.y - A.y;
-    const L = Math.hypot(dx, dy) || 1;
-    let nx = -dy / L, ny = dx / L;
-    const cx = MAP_MARGIN + spec.cols * GRID / 2, cy = MAP_MARGIN + spec.rows * GRID / 2;
-    if ((cx - (A.x + B.x) / 2) * nx + (cy - (A.y + B.y) / 2) * ny < 0) { nx = -nx; ny = -ny; }
-    const bow = (sc.bow === undefined ? .85 : sc.bow) * GRID;
-    const c1 = [A.x + dx * .26 + nx * bow, A.y + dy * .26 + ny * bow];
-    const c2 = [A.x + dx * .74 + nx * bow, A.y + dy * .74 + ny * bow];
-    let b = resamplePoly(crSpline([[A.x, A.y], c1, c2, [B.x, B.y]], false, 22), step, false);
-    b = b.filter((pt, k) => k > 0 && k < b.length - 1 &&
-      Math.hypot(pt[0] - A.x, pt[1] - A.y) > step * .62 &&
-      Math.hypot(pt[0] - B.x, pt[1] - B.y) > step * .62);
-    if (b.length < 2) return;
-    if (b.length >= d - 1) return;                 /* 지름길이 아니면 버린다 */
-    const base = nodes.length;
-    b.forEach(pt => nodes.push({ x: pt[0], y: pt[1] }));
-    const idx = [];
-    for (let k = 0; k < b.length; k++) idx.push(base + k);
-    branches.push({ si: si, F: F, R: R, idx: idx, k: sc.k || 'wood', saved: d - idx.length - 1 });
+  (spec.forks || []).forEach((fk, bi) => {
+    const baseF = Math.round((fk.at % 1) * M) % M;
+    const used = i => branches.some(b => Math.abs(b.F - i) < 2 || Math.abs(b.R - i) < 2);
+    const safeTheme = fk.theme === 'safe';
+    const want = safeTheme ? 1 : 11;
+    /* 가장 짧은 지름길/우회로가 나오는 갈림길 쌍을 먼저 찾는다 */
+    const cands = [];
+    for (let dF = -10; dF <= 10; dF += 2) {
+      const F0 = (baseF + dF + M) % M;
+      if (used(F0)) continue;
+      for (let skip = 13; skip <= 30; skip += 1) {
+        const R0 = (F0 + skip) % M;
+        if (R0 === F0 || used(R0)) continue;
+        const chord = Math.hypot(nodes[R0].cx - nodes[F0].cx, nodes[R0].cy - nodes[F0].cy);
+        const est = skip - (Math.round(chord / step * 1.22) + 1);
+        let sc = -Math.abs(est - want) * 2;
+        if (chord < 7) sc -= 6;
+        if (chord > 46) sc -= 3;
+        sc -= Math.abs(dF) * .08;
+        cands.push({ F: F0, R: R0, skip: skip, sc: sc });
+      }
+    }
+    cands.sort((a, b2) => b2.sc - a.sc);
+    let best = null, pick = null;
+    for (let k = 0; k < cands.length && k < 8 && !best; k++) {
+      const c = cands[k];
+      const A = [nodes[c.F].cx, nodes[c.F].cy], B = [nodes[c.R].cx, nodes[c.R].cy];
+      const res = tryBranch(c.F, c.R, Object.assign({}, fk, { skip: c.skip }), A, B);
+      if (res) { best = res; pick = c; }
+    }
+    if (!best) return;
+    branches.push({
+      si: bi, F: pick.F, R: pick.R, idx: [], pts: best.pts, saved: best.saved,
+      k: fk.d || 'wood', g: fk.g || null, mode: fk.mode || 'short', theme: fk.theme || 'risk',
+      w: fk.w || 3.4, elev: !!fk.e
+    });
   });
 
-  const N = nodes.length;
+  /* ---------- 그래프 ---------- */
+  const N0 = M;
+  let nextN = N0;
+  branches.forEach(br => {
+    br.idx = br.pts.map(() => nextN++);
+  });
+  const N = nextN;
   const nxt = new Array(N), prv = new Array(N);
   for (let i = 0; i < N; i++) { nxt[i] = []; prv[i] = []; }
   const link = (a, b) => { if (nxt[a].indexOf(b) < 0) nxt[a].push(b); if (prv[b].indexOf(a) < 0) prv[b].push(a); };
   for (let i = 0; i < M; i++) link(i, (i + 1) % M);
   branches.forEach(br => {
-    link(br.F, br.idx[0]);
+    const first = br.idx[0], last = br.idx[br.idx.length - 1];
+    link(br.F, first);
     for (let k = 0; k < br.idx.length - 1; k++) link(br.idx[k], br.idx[k + 1]);
-    link(br.idx[br.idx.length - 1], br.R);
+    link(last, br.R);
+    br.pts.forEach((p, k) => {
+      const i = br.idx[k];
+      const q = (k < br.pts.length - 1) ? br.pts[k + 1] : [nodes[br.R].cx, nodes[br.R].cy];
+      const q0 = (k > 0) ? br.pts[k - 1] : [nodes[br.F].cx, nodes[br.F].cy];
+      nodes[i] = {
+        x: P(p)[0], y: P(p)[1], cx: p[0], cy: p[1], seg: br.si,
+        ang: Math.atan2(q[1] - q0[1], q[0] - q0[0])
+      };
+    });
   });
   /* 본선 방향이 먼저 오도록 정렬 (분기 UI에서 0 = 본선) */
   for (let i = 0; i < N; i++) {
@@ -1176,42 +1676,81 @@ function buildTrackMap(spec) {
       return (a < M ? 0 : 1) - (b < M ? 0 : 1) || da - db;
     });
   }
-
-  /* 발판 좌표·방향 */
-  nodes.forEach((nd, i) => {
+  /* 발판 방향 */
+  for (let i = 0; i < N; i++) {
+    const nd = nodes[i];
+    if (nd.ang !== undefined) continue;
     const t = nxt[i][0] !== undefined ? nodes[nxt[i][0]] : nodes[prv[i][0]] || nd;
     nd.ang = Math.atan2(t.y - nd.y, t.x - nd.x);
-    nd.i = i;
+  }
+  for (let i = 0; i < N; i++) nodes[i].i = i;
+
+  /* ---------- 땅 · 다리 판정 ---------- */
+  const segOf = idx => {
+    if (idx < M) { const s = nodes[idx].seg; return s >= 0 ? spec.segs[s] : { d: mapBridgeGround(spec.id, idx) }; }
+    const br = branches.find(b => b.idx.indexOf(idx) >= 0);
+    if (!br) return null;
+    return br.g ? { g: br.g, w: br.w } : { d: br.k };
+  };
+  for (let i = 0; i < N; i++) {
+    const sg = segOf(i) || {};
+    if (sg.d) { nodes[i].k = 'bridge'; nodes[i].ground = sg.d; }
+    else { nodes[i].k = 'pad'; nodes[i].ground = sg.g || 'grass'; }
+    nodes[i].w = sg.w || 3.4;
+  }
+  /* 갈림길 발판의 땅 폭은 조금 넓게 (합류 지점이 자연스럽게) */
+  branches.forEach(br => {
+    [br.F, br.R].forEach(i => { nodes[i].w = Math.max(nodes[i].w, 3.8); });
   });
 
-  /* ---------- 땅 구간(섬) 계산 ---------- */
-  const idxOf = i => (i % N + N) % N;
-  const spanRanges = (spec.spans || []).map(s => {
-    let a = Math.round(s.t0 * M) % M, b = Math.round(s.t1 * M) % M;
-    if (b <= a) b = a + 2;
-    return { a: a, b: b, k: s.k, w: s.w };
+  /* ---------- 교차(고가 다리) 판정 ----------
+     트랙이 스스로를 가로지르면 나중에 지나는 쪽이 위로 올라간다. */
+  const links = [];
+  for (let i = 0; i < N; i++) nxt[i].forEach(j => links.push([i, j]));
+  const crossings = [];
+  const order = idx => (idx < M ? idx : 10000 + idx);
+  for (let a = 0; a < links.length; a++) {
+    const [p1, p2] = links[a];
+    for (let b = a + 1; b < links.length; b++) {
+      const [q1, q2] = links[b];
+      if (p1 === q1 || p1 === q2 || p2 === q1 || p2 === q2) continue;
+      const A1 = [nodes[p1].cx, nodes[p1].cy], A2 = [nodes[p2].cx, nodes[p2].cy];
+      const B1 = [nodes[q1].cx, nodes[q1].cy], B2 = [nodes[q2].cx, nodes[q2].cy];
+      const hit = segCrossPt(A1, A2, B1, B2);
+      if (!hit) continue;
+      const up = order(p1) > order(q1) ? [p1, p2] : [q1, q2];
+      const dn = up === [p1, p2] ? [q1, q2] : [p1, p2];
+      crossings.push({ x: hit[0], y: hit[1], up: up.slice(), dn: dn.slice() });
+      nodes[up[0]].over = (nodes[up[0]].over || 0) + 1;
+      nodes[up[1]].over = (nodes[up[1]].over || 0) + 1;
+      nodes[dn[0]].under = 1; nodes[dn[1]].under = 1;
+    }
+  }
+  /* 교차 주변 발판을 고가로 표시 */
+  const elevSet = {};
+  crossings.forEach(cr => {
+    const ui = cr.up[0], uj = cr.up[1];
+    [ui, uj].forEach(k => { elevSet[k] = 2; });
+    const stepIdx = (from, n) => { for (let k = 0; k < n; k++) { const nb = nxt[from] && nxt[from].length ? nxt[from][0] : -1; if (nb < 0) break; from = nb; elevSet[from] = Math.max(elevSet[from] || 0, 1); } };
+    stepIdx(ui, 1); stepIdx(uj, 1);
   });
-  const nodeLand = new Array(N).fill(null);   /* null=물, 아니면 ground 종류 */
-  spanRanges.forEach(s => {
-    for (let i = s.a; i <= s.b; i++) {
-      const j = idxOf(i);
-      nodeLand[j] = s.k;
+  Object.keys(elevSet).forEach(k => { nodes[k | 0].elev = elevSet[k | 0]; });
+  /* 고가 구간은 다리 갑판으로 (땅 위라도 공중으로 지나간다) */
+  Object.keys(elevSet).forEach(k => {
+    const nd = nodes[k | 0];
+    if (nd.elev && nd.k !== 'bridge') {
+      nd.air = true;
+      nd.k = 'bridge';
+      nd.ground = spec.id === 'ice' ? 'ice' : 'stone';
     }
   });
-  /* 다리 발판은 물 위 (지름길은 전부 다리) */
-  const nodeBridge = new Array(N).fill(false);
-  branches.forEach(br => br.idx.forEach(i => { nodeBridge[i] = true; nodeLand[i] = null; }));
 
-  /* ---------- 섬(띠) ---------- */
+  /* ---------- 땅 구간(섬) ---------- */
   const islands = [];
-  spanRanges.forEach((s, si) => {
-    const spine = [];
-    for (let i = s.a; i <= s.b; i++) {
-      const nd = nodes[idxOf(i)];
-      spine.push([nd.x, nd.y]);
-    }
-    if (spine.length < 2) return;
-    /* 양 끝을 살짝 늘려 여유 있는 땅을 만든다 */
+  let run = null;
+  const flushRun = () => {
+    if (!run || run.pts.length < 2) { run = null; return; }
+    const spine = run.pts.map(i => [nodes[i].x, nodes[i].y]);
     const ext = (p, q, d) => {
       const dx = p[0] - q[0], dy = p[1] - q[1];
       const L = Math.hypot(dx, dy) || 1;
@@ -1219,52 +1758,62 @@ function buildTrackMap(spec) {
     };
     spine.unshift(ext(spine[0], spine[1], GRID * .70));
     spine.push(ext(spine[spine.length - 1], spine[spine.length - 2], GRID * .70));
-    const poly = strokeOutline(spine, s.w * GRID * .5, 3000 + si * 977);
+    const poly = strokeOutline(spine, run.w * GRID * .5, 3000 + islands.length * 977);
+    const bbsp = polyBBox(poly);
     islands.push({
-      kind: 'spine', k: s.k, poly: poly, spine: spine,
-      bbox: polyBBox(poly), seed: 700 + si * 131, span: s
+      kind: 'spine', k: run.g, poly: poly, spine: spine, bbox: bbsp,
+      seed: 700 + islands.length * 131, width: run.w
+    });
+    run = null;
+  };
+  for (let i = 0; i < M; i++) {
+    const nd = nodes[i];
+    if (nd.k === 'pad' && !nd.air) {
+      if (!run || run.g !== nd.ground || run.w !== nd.w && false) { flushRun(); run = { g: nd.ground, w: nd.w, pts: [] }; }
+      run.pts.push(i);
+    } else flushRun();
+  }
+  flushRun();
+  /* 갈림길로 이어지는 땅길도 섬으로 */
+  branches.forEach(br => {
+    if (!br.g) return;
+    const pts = [[nodes[br.F].x, nodes[br.F].y]].concat(br.idx.map(i => [nodes[i].x, nodes[i].y]))
+      .concat([[nodes[br.R].x, nodes[br.R].y]]);
+    const poly = strokeOutline(pts, (br.w * .5 + .3) * GRID, 4000 + islands.length * 613);
+    islands.push({
+      kind: 'spine', k: br.g, poly: poly, spine: pts, bbox: polyBBox(poly),
+      seed: 700 + islands.length * 131, width: br.w
     });
   });
 
-  /* 작은 섬(장식) 들 */
+  /* 작은 섬(장식) */
+  /* 작은 섬 좌표는 '월드 칸' 기준 (지형 마스크와 같은 좌표계) */
   const islets = (spec.islets || []).map((is, i) => ({
-    kind: 'classic', c: Math.round(is.c), r: Math.round(is.r), w: is.w, h: is.h,
-    k: is.k, shape: is.shape || 'blob', idx: i
+    kind: 'classic',
+    c: is.cell[0] - (is.w - 1) / 2, r: is.cell[1] - (is.h - 1) / 2,
+    w: is.w, h: is.h, k: is.k, shape: is.shape || 'blob', idx: i
   }));
+  const big = null;
 
-  /* 중앙 랜드마크 섬 */
-  const big = spec.big ? Object.assign({ kind: 'classic' }, spec.big) : null;
-
-  const allIslands = islands.concat(islets).concat(big ? [big] : []);
-
-  /* ---------- 랜드마크 자리 (월드 좌표) ---------- */
-  const classicCenter = is => ({
-    x: MAP_MARGIN + is.c * GRID + (is.w - 1) * GRID / 2 + GRID / 2,
-    y: MAP_MARGIN + is.r * GRID + (is.h - 1) * GRID / 2 + GRID / 2
-  });
-  const landmarkPos = (spec.landmarks || []).map((l, li) => {
-    if (l.at === 'big' && big) {
-      const h = big.holes && big.holes[0];
-      const x = h ? MAP_MARGIN + (big.c + h.dx) * GRID + h.w * GRID / 2 : classicCenter(big).x;
-      const y = h ? MAP_MARGIN + (big.r + h.dy) * GRID + h.h * GRID / 2 + GRID * .30 : classicCenter(big).y - GRID * .55;
-      return { k: l.k, x: x, y: y, s: l.s || 1 };
-    }
-    if (l.islet !== undefined && islets[l.islet]) {
-      const ctr = classicCenter(islets[l.islet]);
-      return { k: l.k, x: ctr.x + (l.dx || 0) * GRID, y: ctr.y + (l.dy || 0) * GRID, s: l.s || 1 };
-    }
-    return null;
+  /* ---------- 랜드마크 자리 ---------- */
+  const landmarkPos = (spec.landmarks || []).map(l => {
+    let c = l.cell, ox = 0, oy = 0;
+    if (l.anchor && ch.anchors[l.anchor]) { c = ch.anchors[l.anchor]; ox = SH[0]; oy = SH[1]; }
+    if (!c) return null;
+    return { k: l.k, x: MAP_MARGIN + (c[0] + ox) * GRID + GRID / 2, y: MAP_MARGIN + (c[1] + oy) * GRID + GRID / 2, s: l.s || 1 };
   }).filter(Boolean);
 
-  /* 땅 판정 */
+  const allIslands = islands.concat(islets);
+
+  /* 땅 판정 (장식용 그리드 마스크) */
   const landAt = (x, y) => {
     for (let i = 0; i < allIslands.length; i++) {
       const is = allIslands[i];
       if (is.kind === 'spine') {
         if (insidePoly(x, y, is.poly)) return is;
       } else {
-        const cx = MAP_MARGIN + is.c * GRID + (is.w - 1) * GRID / 2;
-        const cy = MAP_MARGIN + is.r * GRID + (is.h - 1) * GRID / 2;
+        const cx = MAP_MARGIN + is.c * GRID + (is.w - 1) * GRID / 2 + GRID / 2;
+        const cy = MAP_MARGIN + is.r * GRID + (is.h - 1) * GRID / 2 + GRID / 2;
         const rx = (is.w - 1) * GRID / 2 + GRID * .46;
         const ry = (is.h - 1) * GRID / 2 + GRID * .46;
         if (is.shape === 'rect') {
@@ -1275,18 +1824,26 @@ function buildTrackMap(spec) {
     return null;
   };
 
-  /* 발판이 땅 위인지 물 위인지 */
-  nodes.forEach((nd, i) => {
-    const is = landAt(nd.x, nd.y);
-    nd.k = is ? 'pad' : 'bridge';
-    nd.ground = is ? is.k : mapBridgeGround(spec.id || '', i);
-  });
-
   return {
-    nodes: nodes, nxt: nxt, prv: prv, M: M, branches: branches,
+    nodes: nodes, nxt: nxt, prv: prv, M: M, branches: branches, crossings: crossings,
     islands: allIslands, islets: islets, big: big, landmarkPos: landmarkPos,
-    landAt: landAt, cols: spec.cols, rows: spec.rows
+    landAt: landAt, cols: colsN, rows: rowsN
   };
+}
+
+/* 선분 교차 (교차 여부) */
+function segCross(ax, ay, bx, by, cx, cy, dx, dy) {
+  return !!segCrossPt([ax, ay], [bx, by], [cx, cy], [dx, dy]);
+}
+function segCrossPt(a, b, c, d) {
+  const r1 = b[0] - a[0], r2 = b[1] - a[1];
+  const s1 = d[0] - c[0], s2 = d[1] - c[1];
+  const den = r1 * s2 - r2 * s1;
+  if (Math.abs(den) < 1e-9) return null;
+  const t = ((c[0] - a[0]) * s2 - (c[1] - a[1]) * s1) / den;
+  const u = ((c[0] - a[0]) * r2 - (c[1] - a[1]) * r1) / den;
+  if (t < .02 || t > .98 || u < .02 || u > .98) return null;
+  return [a[0] + r1 * t, a[1] + r2 * t];
 }
 
 function mapBridgeGround(id, i) {
@@ -1296,12 +1853,12 @@ function mapBridgeGround(id, i) {
 }
 
 /* =========================================================
-   5. MAPS — 규칙/연출 메타데이터
+   6. MAPS — 규칙/연출 메타데이터
    ========================================================= */
 const MAPS = [
   {
     id: 'meadow', name: '초원 유적', badge: '기본',
-    desc: '유적섬을 감싸 도는 초록 트랙 · 나무다리와 돌다리 지름길',
+    desc: '해안·나무다리·신전 루프가 꼬인 미로 트랙 · 갈림길 10곳',
     gimmicks: ['고대 워프 게이트', '운명의 버튼', '동료 영입'],
     kind: 'meadow', tint: ['#9be07a'],
     bg: ['#b9e6d8', '#3f8fbf'],
@@ -1321,7 +1878,7 @@ const MAPS = [
   },
   {
     id: 'volcano', name: '용암 성곽', badge: '위험',
-    desc: '화산 허리를 감아 오르는 현무암 트랙 · 돌다리 지름길',
+    desc: '성벽 위 돌다리·용암 스위치백·분화구 루프와 8자 교차',
     gimmicks: ['대분화 용암 밸브', '운명의 버튼', '화산 대폭발'],
     kind: 'volcano', tint: ['#c96a3e'],
     bg: ['#3a1c1e', '#a83a1c'],
@@ -1341,7 +1898,7 @@ const MAPS = [
   },
   {
     id: 'ice', name: '얼음 빙하', badge: '변덕',
-    desc: '유빙을 잇는 얼음 트랙 · 빙판 다리 지름길',
+    desc: '유빙 직선·빙판 스위치백·빙산 루프와 크레바스 고가 교차',
     gimmicks: ['빙하 대이동', '운명의 버튼', '빙하의 심판'],
     kind: 'ice', tint: ['#a8e4ff'],
     bg: ['#d8f2ff', '#6b9fc4'],
@@ -1373,8 +1930,9 @@ MAPS.forEach(m => {
   m.bigIsland = trk.big;
   m.landmarkPos = trk.landmarkPos;
   m.landAt = trk.landAt;
-  m.cols = m.spec.cols;
-  m.rows = m.spec.rows;
+  m.crossings = trk.crossings;
+  m.cols = trk.cols;
+  m.rows = trk.rows;
   m.n = trk.nodes.length;
   m.w = MAP_MARGIN * 2 + m.cols * GRID;
   m.h = MAP_MARGIN * 2 + m.rows * GRID;
@@ -1501,6 +2059,7 @@ function buildBoard(mapId) {
   BOARD.prv = map.prv;
   BOARD.tiles = nodes.map((nd, i) => ({
     i: i, x: nd.x, y: nd.y, ang: nd.ang || 0, k: nd.k, ground: nd.ground,
+    elev: nd.elev || 0, air: !!nd.air, over: nd.over || 0, under: nd.under || 0,
     c: Math.round((nd.x - MAP_MARGIN - GRID / 2) / GRID),
     r: Math.round((nd.y - MAP_MARGIN - GRID / 2) / GRID),
     fork: (map.nxt[i] || []).length > 1,
@@ -1570,30 +2129,14 @@ function buildBoard(mapId) {
   const gi = claimNear('gimmick', atFrac(sp.gimmickFrac, 0), 10);
   (sp.fateFrac || []).forEach(f => claimNear('fate', atFrac(f), 10));
 
-  /* ---------- 지름길 발판 성격 ----------
-     지름길은 짧은 대신 험하고, 본선 우회로는 안전하게 코인이 많다. */
-  const BR_FLAVOR = [
-    ['trap', 'minus', 'coin', 'minus', 'trap', 'coin'],
-    ['coin', 'coin', 'event', 'coin', 'coin', 'minus']
-  ];
-  (map.track.branches || []).forEach((br, bi) => {
-    const flav = BR_FLAVOR[bi % BR_FLAVOR.length];
-    br.idx.forEach((i, k) => {
-      if (reserved[i] || i === star) return;
-      types[i] = flav[k % flav.length];
-      special.push(i);
-      reserved[i] = 'branch';
-    });
-  });
-
   /* 남는 발판: 코인 · 돈 빼앗는 칸 · 벌칙 · 물음표(전체의 5%) */
   const countOf = t => { let c = 0; for (let i = 0; i < n; i++) if (types[i] === t) c++; return c; };
   const free = [];
   for (let i = 0; i < n; i++) if (!reserved[i] && i !== star) free.push(i);
   free.sort((a, b) => first.dist[a] - first.dist[b]);
   const nEvent = Math.max(1, Math.round(n * .05));
-  const nMinus = Math.round(n * .17);
-  const nTrap = Math.round(n * .13);
+  const nMinus = Math.round(n * .16);
+  const nTrap = Math.round(n * .12);
   let needE = Math.max(0, nEvent - countOf('event'));
   let needM = Math.max(0, nMinus - countOf('minus'));
   let needT = Math.max(0, nTrap - countOf('trap'));
@@ -1618,6 +2161,53 @@ function buildBoard(mapId) {
   });
   for (let k = 0; k < rest.length && mi < needM; k++) { const i = rest[k]; if (types[i] === 'coin') { types[i] = 'minus'; mi++; } }
   for (let k = 0; k < rest.length && ti < needT; k++) { const i = rest[k]; if (types[i] === 'coin') { types[i] = 'trap'; ti++; } }
+
+  /* ---------- 갈림길: 위험한 길과 안전한 길을 마주 놓는다 ----------
+     '운명'처럼 무조건 밟는 칸이 없도록, 갈림길마다 한쪽은 험하게
+     다른 쪽은 안전하게 만든다. 총 개수는 그대로 두고 자리만 바꾼다. */
+  const atDist = free.slice();
+  (map.track.branches || []).forEach((br, bi) => {
+    const riskOnBranch = br.theme !== 'safe';
+    const d = (br.R - br.F + n) % n;
+    const stretch = [];
+    for (let k = 1; k < d; k++) stretch.push((br.F + k) % n);
+    const ok = i => !reserved[i] && i !== star;
+    const bList = br.idx.filter(ok);
+    const mList = stretch.filter(ok);
+    if (!bList.length || !mList.length) return;
+    const hazRoute = riskOnBranch ? bList : mList;
+    const safeRoute = riskOnBranch ? mList : bList;
+    /* 험한 길: 가운데 코인 발판을 강탈/벌칙으로 */
+    let made = 0;
+    for (let k = 0; k < hazRoute.length && made < 2; k++) {
+      const i = hazRoute[Math.floor(hazRoute.length * (k + 1) / (Math.min(2, hazRoute.length) + 1))] || hazRoute[k];
+      if (types[i] === 'coin') { types[i] = (made % 2 ? 'trap' : 'minus'); made++; }
+    }
+    /* 안전한 길: 같은 수만큼 위험을 코인으로 */
+    let undone = 0;
+    for (let k = 0; k < safeRoute.length && undone < made; k++) {
+      const i = safeRoute[k];
+      if (types[i] === 'minus' || types[i] === 'trap') { types[i] = 'coin'; undone++; }
+    }
+  });
+
+  /* 개수 재조정 — 비율을 정확히 맞춘다 */
+  const rebalance = (type, target) => {
+    let c = countOf(type);
+    if (c > target) {
+      for (let k = 0; k < atDist.length && c > target; k++) {
+        const i = atDist[k];
+        if (types[i] === type && !reserved[i] && i !== star) { types[i] = 'coin'; c--; }
+      }
+    } else if (c < target) {
+      for (let k = 0; k < atDist.length && c < target; k++) {
+        const i = atDist[k];
+        if (types[i] === 'coin' && !reserved[i] && i !== star) { types[i] = type; c++; }
+      }
+    }
+  };
+  rebalance('minus', nMinus);
+  rebalance('trap', nTrap);
 
   BOARD.types = types;
 
@@ -2287,7 +2877,7 @@ function drawAlly(c, x, y, h, id, t) {
    소품은 스프라이트로 만들어 매 프레임 뷰컬링하며 그린다.
    ========================================================= */
 
-const DECOR_S = .6;                    /* 정적 캔버스 해상도 배율 */
+const DECOR_S = .45;                    /* 정적 캔버스 해상도 배율 */
 const DECOR_LAYERS = { prop: 1, front: 2 };
 
 const GROUND_ART = {
@@ -2298,6 +2888,7 @@ const GROUND_ART = {
   basalt:{ top: ['#8a7168', '#523c36'], edge: '#2b1d1a', cliff: ['#4a352f', '#1e1212'], rim: ['#5c463e', '#33241f'], speck: '#9c7a66' },
   ash:   { top: ['#6d5a52', '#40302c'], edge: '#241a18', cliff: ['#39302c', '#160f0f'], rim: ['#544039', '#2c201c'], speck: '#7d6357' },
   rock:  { top: ['#8e8578', '#5c544a'], edge: '#332d26', cliff: ['#4a4238', '#241f19'], rim: ['#6a6155', '#3d362d'], speck: '#a49a8a' },
+  scorch:{ top: ['#b8846a', '#8a5138'], edge: '#5a2c20', cliff: ['#6a3a2a', '#2e1712'], rim: ['#a7715a', '#6b3b2a'], speck: '#d8a184' },
   ice:   { top: ['#e8f8ff', '#a9d3ea'], edge: '#6ea3c2', cliff: ['#8dc0d8', '#437a99'], rim: ['#bfe0f2', '#7fa9c4'], speck: '#ffffff' },
   snow:  { top: ['#fdfeff', '#c6e2f2'], edge: '#87b3cd', cliff: ['#a8cde2', '#5f8cab'], rim: ['#c2dced', '#84a8c0'], speck: '#f4fcff' }
 };
@@ -2866,17 +3457,153 @@ function paintTrackPaths(c, map) {
 
 function paintBridges(c, map) {
   const T = BOARD.tiles || [];
-  const bridgeTiles = T.filter(t => t.k === 'bridge');
-  /* 갑판 아래 그늘 (물 위에 떠 보이게) */
-  bridgeTiles.forEach(t => {
-    c.save();
-    c.translate(t.x, t.y + GRID * .16);
-    c.rotate(t.ang || 0);
-    c.fillStyle = 'rgba(10,20,30,.26)';
-    c.beginPath(); c.ellipse(0, 0, GRID * .56, GRID * .34, 0, 0, TAU); c.fill();
-    c.restore();
+  const NX = BOARD.nxt || [];
+  const isBr = i => T[i] && T[i].k === 'bridge';
+  const seen = {};
+  const runs = [];
+  for (let i = 0; i < T.length; i++) {
+    if (!isBr(i) || seen[i]) continue;
+    const pv = (BOARD.prv && BOARD.prv[i]) || [];
+    if (pv.length === 1 && isBr(pv[0])) continue;      /* 달리는 도중이면 건너뛴다 */
+    const run = [i];
+    seen[i] = 1;
+    let cur = i;
+    for (let g = 0; g < 500; g++) {
+      const outs = (NX[cur] || []).filter(isBr);
+      if (outs.length !== 1) break;
+      const nx2 = outs[0];
+      if (seen[nx2]) break;
+      run.push(nx2); seen[nx2] = 1; cur = nx2;
+    }
+    runs.push(run);
+  }
+  /* 물 위에 떠 보이는 그늘 — 고가는 더 멀리 */
+  runs.forEach(run => {
+    const elevated = run.some(i => T[i].elev);
+    const pts = run.map(i => [T[i].x, T[i].y]);
+    pts.forEach(p => {
+      c.save();
+      c.translate(p[0], p[1] + GRID * (elevated ? .55 : .16));
+      c.fillStyle = elevated ? 'rgba(6,12,22,.40)' : 'rgba(10,20,30,.26)';
+      c.beginPath(); c.ellipse(0, 0, GRID * (elevated ? .62 : .56), GRID * (elevated ? .40 : .34), 0, 0, TAU); c.fill();
+      c.restore();
+    });
   });
-  bridgeTiles.forEach(t => paintBridgeCell(c, t, t.ground, map));
+  /* 다리 기둥 (고가) — 갑판보다 먼저 그려 아래로 내려가 보이게 */
+  runs.forEach(run => {
+    if (!run.some(i => T[i].elev)) return;
+    run.forEach((i, k) => {
+      if (k % 2) return;
+      const t = T[i];
+      c.save();
+      c.translate(t.x, t.y);
+      c.rotate(t.ang || 0);
+      const dw = GRID * .40, dh = GRID * .52;
+      [-1, 1].forEach(sg => {
+        c.fillStyle = 'rgba(46,38,32,.55)';
+        c.fillRect(-GRID * .05, sg * dw - GRID * .05, GRID * .10, dh);
+        c.fillStyle = 'rgba(120,104,86,.75)';
+        c.fillRect(-GRID * .035, sg * dw - GRID * .04, GRID * .07, dh * .92);
+      });
+      c.restore();
+    });
+  });
+  /* 갑판 — 이어지는 한 장의 길 */
+  runs.forEach(run => {
+    if (run.length === 1) { paintBridgeCell(c, T[run[0]], T[run[0]].ground, map); return; }
+    paintBridgeRun(c, run, map);
+  });
+}
+
+/* 이어지는 다리 갑판 한 벌 (판자 · 난간 · 이음선) */
+function paintBridgeRun(c, run, map) {
+  const T = BOARD.tiles;
+  const kind = T[run[0]].ground || 'wood';
+  const elevated = run.some(i => T[i].elev);
+  const pts = run.map(i => [T[i].x, T[i].y]);
+  const halfW = GRID * .47;
+  const poly = strokeOutline(pts, halfW, 941 + run[0] * 53);
+  const bb = polyBBox(poly);
+  const dark0 = map && map.kind === 'volcano';
+
+  c.save();
+  polyPath(c, poly, true);
+  let g;
+  if (kind === 'stone') {
+    g = c.createLinearGradient(bb.x0, bb.y0, bb.x1, bb.y1);
+    if (dark0) { g.addColorStop(0, '#7d6a60'); g.addColorStop(.5, '#544139'); g.addColorStop(1, '#33231f'); }
+    else { g.addColorStop(0, '#cfc7b6'); g.addColorStop(.5, '#b0a695'); g.addColorStop(1, '#847a68'); }
+  } else if (kind === 'ice') {
+    g = c.createLinearGradient(bb.x0, bb.y0, bb.x1, bb.y1);
+    g.addColorStop(0, 'rgba(244,253,255,.98)'); g.addColorStop(.5, 'rgba(206,238,251,.97)'); g.addColorStop(1, 'rgba(160,206,230,.97)');
+  } else {
+    const dark = kind === 'dock' ? '#7a4d24' : '#83521f';
+    const mid = kind === 'dock' ? '#b98550' : '#c08f57';
+    const light = kind === 'dock' ? '#dcb07a' : '#e0b478';
+    g = c.createLinearGradient(bb.x0, bb.y0, bb.x1, bb.y1);
+    g.addColorStop(0, light); g.addColorStop(.5, mid); g.addColorStop(1, dark);
+  }
+  c.fillStyle = g;
+  c.fill();
+
+  /* 판자 이음선 (길 방향과 수직) */
+  c.save();
+  polyPath(c, poly, true);
+  c.clip();
+  c.lineCap = 'butt';
+  const plankCol = kind === 'stone' ? 'rgba(74,68,56,.34)' : kind === 'ice' ? 'rgba(120,175,205,.40)' : 'rgba(92,58,26,.34)';
+  c.strokeStyle = plankCol;
+  c.lineWidth = 1.8;
+  for (let k = 0; k < pts.length; k++) {
+    const a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)];
+    const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    c.save();
+    c.translate(pts[k][0], pts[k][1]);
+    c.rotate(ang);
+    c.beginPath(); c.moveTo(0, -halfW - 3); c.lineTo(0, halfW + 3); c.stroke();
+    c.beginPath(); c.moveTo(-GRID * .34, -halfW - 3); c.lineTo(-GRID * .34, halfW + 3); c.stroke();
+    c.restore();
+  }
+  /* 이음 매끈 */
+  c.restore();
+
+  /* 난간 */
+  const railCol = kind === 'stone' ? (dark0 ? '#a58d80' : '#ddd4bf')
+    : kind === 'ice' ? 'rgba(255,255,255,.92)' : '#d9ab73';
+  const railDark = kind === 'stone' ? 'rgba(20,14,12,.42)'
+    : kind === 'ice' ? 'rgba(110,170,205,.5)' : 'rgba(60,34,10,.40)';
+  [1, -1].forEach(sgn => {
+    const edge = [];
+    for (let k = 0; k < pts.length; k++) {
+      const a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)];
+      let dx = b[0] - a[0], dy = b[1] - a[1];
+      const L = Math.hypot(dx, dy) || 1;
+      dx /= L; dy /= L;
+      const nx = -dy * sgn, ny = dx * sgn;
+      edge.push([pts[k][0] + nx * (halfW - GRID * .04), pts[k][1] + ny * (halfW - GRID * .04)]);
+    }
+    c.lineJoin = 'round'; c.lineCap = 'round';
+    c.strokeStyle = railDark; c.lineWidth = GRID * .085;
+    c.beginPath(); edge.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
+    c.strokeStyle = railCol; c.lineWidth = GRID * .05;
+    c.beginPath(); edge.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
+  });
+
+  /* 테두리 */
+  polyPath(c, poly, true);
+  c.strokeStyle = kind === 'ice' ? 'rgba(110,170,205,.55)' : dark0 ? 'rgba(22,16,14,.55)' : 'rgba(28,22,16,.45)';
+  c.lineWidth = 3;
+  c.stroke();
+  /* 고가 다리 윗면 하이라이트 */
+  if (elevated) {
+    c.save();
+    polyPath(c, poly, true);
+    c.clip();
+    c.fillStyle = 'rgba(255,255,255,.10)';
+    c.fillRect(bb.x0, bb.y0, bb.w, bb.h * .45);
+    c.restore();
+  }
+  c.restore();
 }
 
 /* 트랙 방향에 맞춰 비스듬히 놓인 다리 갑판 */
@@ -4728,7 +5455,11 @@ function moveStar() {
     if (starDistOf(i) >= 0 && starDistOf(i) < 5) continue;
     cand.push(i);
   }
-  const idx = cand.length ? cand[Math.floor(RND() * cand.length)] : Math.floor(BOARD.n / 2);
+  /* 별은 너무 가깝지도, 너무 막막하게 멀지도 않은 자리로 옮긴다 */
+  const dcur = bfsFrom(G.starIndex).dist;
+  const mid = cand.filter(i => dcur[i] >= 16 && dcur[i] <= 64);
+  const pool = mid.length ? mid : cand;
+  const idx = pool.length ? pool[Math.floor(RND() * pool.length)] : Math.floor(BOARD.n / 2);
   G.starIndex = idx;
   refreshStarDist();
   const tp = tilePos(idx);
