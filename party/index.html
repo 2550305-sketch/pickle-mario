@@ -4258,7 +4258,7 @@ function propPool(kind) {
       : kind === 'stone' ? ['torch', 'flag', 'crate', 'flowerbox', 'rock']
         : kind === 'ice' ? ['icicle', 'snowpile', 'rock', 'flag']
           : kind === 'snow' ? ['pine', 'snowpile', 'rock', 'icicle', 'pine']
-            : kind === 'basalt' || kind === 'ash' || kind === 'rock' ? ['rock', 'torch', 'flag', 'crate']
+            : kind === 'basalt' || kind === 'ash' || kind === 'rock' || kind === 'scorch' ? ['rock', 'torch', 'flag', 'crate', 'emberrock']
               : ['tree', 'palm', 'bush', 'flower', 'rock', 'flowerbox'];
 }
 
@@ -4312,7 +4312,7 @@ function collectProps(map, seed) {
       : kind === 'deck' ? ['pebble', 'cratelet']
         : kind === 'stone' ? ['pebble', 'flower']
           : kind === 'ice' || kind === 'snow' ? ['snowpile', 'pebble']
-            : kind === 'basalt' || kind === 'ash' || kind === 'rock' ? ['pebble', 'emberrock']
+            : kind === 'basalt' || kind === 'ash' || kind === 'rock' || kind === 'scorch' ? ['pebble', 'emberrock']
               : ['tuft', 'flower', 'pebble'];
     const tries = Math.round((bb.w * bb.h) / 36000);
     for (let k = 0; k < tries; k++) {
