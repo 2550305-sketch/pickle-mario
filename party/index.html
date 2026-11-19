@@ -188,6 +188,7 @@ canvas{display:block}
 #cvStage{position:absolute;inset:0;width:100%;height:100%}
 #pads{display:grid;gap:6px;padding:0 7px calc(var(--safe-b) + 8px);height:33%;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
 #pads.n2{grid-template-columns:1fr 1fr;grid-template-rows:1fr}
+#pads.n3{grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr}
 .pad{border-radius:16px;position:relative;overflow:hidden;color:#fff;font-weight:900;
   background:linear-gradient(160deg,var(--c1),var(--c2));
   box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),inset 0 3px 0 rgba(255,255,255,.26),0 5px 12px rgba(0,0,0,.28);
@@ -4714,7 +4715,7 @@ const G = {
   mgOrder: [], mgHistory: [], bag: null,
   fx: [], texts: [], icons: [], rings: [], coins: [], hold: null, starShine: null, time: 0,
   move: null, movePreview: null, moveWaiter: null, fork: null, forkWaiter: null,
-  ghostFly: null, ghostUsedAt: 0, pipeSpawn: null, gates: null,
+  ghostFly: null, ghostUsedAt: 0, ghostHandled: false, pipeSpawn: null, gates: null,
   ended: false
 };
 
@@ -4888,8 +4889,11 @@ function starDistOf(i) {
   return G.starDist[i] === undefined ? -1 : G.starDist[i];
 }
 function refreshStarDist() {
-  const { dist } = bfsFrom(G.starIndex);
-  G.starDist = dist;
+  /* 별까지 남은 칸 = 지금 칸에서 앞으로 가는 최단 칸수.
+     예전에는 별에서 출발해 앞으로 가는 BFS(별→현재)를 써서, 별 반대편에 선
+     플레이어의 남은 칸이 실제와 다르게(별 기준 거꾸로) 표시됐다.
+     이제는 별에서 '거꾸로' 도는 BFS(= 각 칸→별 최단 칸수)를 쓴다. */
+  G.starDist = bfsToStar(G.starIndex);
 }
 
 /* ---------- setup ---------- */
@@ -4989,6 +4993,8 @@ function hasAllyBonus(p, kind) {
 async function doTurn(p) {
   if (G.busy || G.ended) return;
   G.busy = true;
+  p._starOffer = -1;   /* 턴마다 별 구매 기회를 새로 연다 (워프 도착 시 중복/누락 방지) */
+  G.ghostHandled = false;   /* 유령은 턴당 한 번만 불러 세운다 */
   G.phase = 'roll';
   enableDice(false); renderItems(null);
   const mode = p.rollMode || 'normal';
@@ -5045,6 +5051,7 @@ async function doTurn(p) {
    ========================================================= */
 async function runMovement(p, steps) {
   p._starOffer = -1;
+  G.ghostHandled = false;
   G.move = { p: p, remain: steps, total: steps, from: p.pos, visited: [p.pos], ghostDone: false, tollPaid: -1 };
   G.movePreview = null;
   G.fork = null;
@@ -5063,7 +5070,10 @@ async function runMovement(p, steps) {
       if (gate) {
         const take = await tollDecision(p, gate);
         if (G.ended) break;
-        if (!take) pick = 0;
+        /* 통행료를 내지 않으면 '지름길이 아닌' 쪽으로 간다.
+           지름길이 0번 옵션이어도 공짜로 지나가지 않도록 고른 번호를 뒤집는다. */
+        if (!take) pick = (pick === gate.optK && opts.length > 1) ? (gate.optK === 0 ? 1 : 0) : pick;
+        pick = clamp(pick, 0, opts.length - 1);
       }
     }
     const ni = opts[clamp(pick, 0, opts.length - 1)];
@@ -5200,7 +5210,7 @@ async function onContact(p, i) {
     return;
   }
   /* 유령 도둑: 도착하거나 지나가면 한 번 불러 세운다 */
-  if (ty === 'ghost') await runGhost(p);
+  if (ty === 'ghost') { G.ghostHandled = true; await runGhost(p); }
 }
 
 /* ---------- 이동 후 (도착 칸 이벤트 발동) ---------- */
@@ -5233,7 +5243,8 @@ async function applyTile(p, depth) {
     }
     case 'minus': {
       /* 돈 빼앗는 칸 — 코인 3개를 잃고, 그 코인은 가장 부자에게 */
-      const steal = Math.min(3, p.coins);
+      const shield = hasAllyBonus(p, 'shield') ? 1 : 0;   /* 펭귄 동료: 함정 피해 -1 */
+      const steal = Math.max(0, Math.min(3, p.coins) - shield);
       if (steal > 0) {
         const others = G.players.filter(o => o !== p).sort((a, b) => (b.coins - a.coins) || (b.stars - a.stars));
         const to = others[0];
@@ -5245,6 +5256,8 @@ async function applyTile(p, depth) {
         } else {
           showToast('코인 -' + steal, '빨간 발판에 걸렸어요', 1150);
         }
+      } else if (shield) {
+        showToast('펭귄이 막아냈어요!', '함정 피해 -1코인', 1000);
       } else {
         showToast('빼앗을 코인이 없어요', '가난은 무죄!', 1000);
       }
@@ -5255,7 +5268,10 @@ async function applyTile(p, depth) {
     case 'fate': await runFate(p); break;
     case 'shop': await openShop(p); break;
     case 'gimmick': await runGimmick(p); break;
-    case 'ghost': break;      /* onContact 에서 이미 처리 */
+    case 'ghost':
+      /* 이동 중에는 onContact 가 부른다. 여기는 워프로 곧바로 도착했을 때만 */
+      if (!G.ghostHandled) await runGhost(p);
+      break;
     case 'ally': await recruitAlly(p); break;
     default: break;
   }
@@ -5782,7 +5798,8 @@ function moveStar() {
   const cand = [];
   for (let i = 0; i < BOARD.n; i++) {
     const ty = BOARD.types[i];
-    if (ty === 'shop' || ty === 'portal' || ty === 'start' || ty === 'ghost') continue;
+    if (ty === 'shop' || ty === 'portal' || ty === 'start' || ty === 'ghost' ||
+      ty === 'ally' || ty === 'fate' || ty === 'gimmick') continue;
     if (i === G.starIndex) continue;
     if (G.players.some(p => p.pos === i)) continue;
     if (starDistOf(i) >= 0 && starDistOf(i) < 5) continue;
@@ -5805,7 +5822,7 @@ function moveStar() {
 const ITEMS = {
   double: { name: '더블 주사위', short: '더블', cost: 12, desc: '주사위 2개(1~12 · 최대 24칸)', color: '#ff9f43' },
   gold: { name: '황금 주사위', short: '황금', cost: 10, desc: '1~12 + 보너스 4칸 (5~16칸)', color: '#f5c518' },
-  warp: { name: '랜던 워프', short: '랜던', cost: 13, desc: '맵 어디든 무작위 발판으로 순간이동', color: '#a06bff' },
+  warp: { name: '랜덤 워프', short: '랜덤', cost: 13, desc: '맵 어디든 무작위 발판으로 순간이동', color: '#a06bff' },
   pipe: { name: '황금 파이프', short: '파이프', cost: 27, desc: '지금 별 바로 앞 칸으로 즉시 워프', color: '#ffb524' },
   triple: { name: '트리플 주사위', short: '트리플', cost: 20, desc: '주사위 3개(1~12) 합산 · 최대 36칸', color: '#8b5cf6' }
 };
@@ -5951,9 +5968,15 @@ async function openShop(p) {
     title: '상점 입장!', sub: '코인으로 주사위 아이템을 사자', icon: 'SHOP',
     x: tp0.x, y: tp0.y, color: '#ffc23c', dur: 1600, sfx: 'buy', zoom: 1.5, shake: 4, fx: 'shop'
   });
+  const itemFull = p.items.length >= 3;   /* 아이템 칸은 3개까지 */
   const opts = Object.keys(ITEMS).map(k => {
     const it = ITEMS[k];
-    return { value: k, label: it.name, sub: it.desc, cost: it.cost, disabled: p.coins < it.cost, img: itemArtURL(k), icon: it.short[0], color: it.color };
+    return {
+      value: k, label: it.name,
+      sub: itemFull ? '아이템 칸이 가득 찼어요 (3/3)' : it.desc,
+      cost: it.cost, disabled: p.coins < it.cost || itemFull,
+      img: itemArtURL(k), icon: it.short[0], color: it.color
+    };
   });
   if (p.bot) {
     const affordable = opts.filter(o => !o.disabled);
@@ -5973,7 +5996,9 @@ async function openShop(p) {
     sub: '보유 코인 ' + p.coins + ' · 아이템 ' + p.items.length + '/3',
     buttons: opts.concat([{ value: 'skip', label: '그냥 가기' }])
   });
-  if (choice && choice !== 'skip' && ITEMS[choice] && p.coins >= ITEMS[choice].cost) {
+  if (choice && choice !== 'skip' && ITEMS[choice] && p.items.length >= 3) {
+    showToast('아이템 칸이 가득!', '3칸이 모두 차서 더 살 수 없어요', 1200);
+  } else if (choice && choice !== 'skip' && ITEMS[choice] && p.coins >= ITEMS[choice].cost) {
     p.coins -= ITEMS[choice].cost;
     p.items.push(choice);
     sfx('buy'); sfx('bling'); updateHud();
@@ -6020,7 +6045,7 @@ async function pipeWarp(p) {
   showToast('황금 파이프!', '별 바로 앞으로 워프했어요', 1200);
 }
 
-/* 랜던 워프 — 맵 전체에서 완전 무작위 발판으로 순간이동 */
+/* 랜덤 워프 — 맵 전체에서 완전 무작위 발판으로 순간이동 */
 async function randomWarp(p) {
   const n = BOARD.n;
   let dest = randInt(n);
@@ -6033,7 +6058,7 @@ async function randomWarp(p) {
   ring(from.x, from.y, 'rgba(180,140,255,.9)', GRID * .2, GRID * .95, 700, 6);
   burst(from.x, from.y, '#c3a8ff', 26);
   await cutBeat({
-    title: '랜던 워프!', sub: '어디로 튈지 아무도 몰라요', icon: '', iconImg: itemArtURL('warp'),
+    title: '랜덤 워프!', sub: '어디로 튈지 아무도 몰라요', icon: '', iconImg: itemArtURL('warp'),
     x: from.x, y: from.y, zoom: 1.6, ms: 1300, fx: 'ghost', good: false, color: '#a06bff', sfx: 'warp', shake: 6
   });
   if (G.ended) { hideCutShell(); return; }
@@ -6055,7 +6080,7 @@ async function randomWarp(p) {
   });
   hideCutShell();
   await wait(120);
-  showToast('랜던 워프!', tn + ' 발판으로 순간이동', 1200);
+  showToast('랜덤 워프!', tn + ' 발판으로 순간이동', 1200);
 }
 
 async function useItem(p, key) {
@@ -6075,10 +6100,12 @@ async function useItem(p, key) {
     return;
   }
   if (key === 'warp') {
-    /* 완전 랜던 워프 — 맵 어디든 무작위 발판으로 */
+    /* 완전 랜덤 워프 — 맵 어디든 무작위 발판으로 */
     p.items.splice(idx, 1);
     updateHud(); hideItems();
     G.busy = true;
+    p._starOffer = -1;   /* 워프로 별 칸에 떨어졌을 때 구매 기회를 놓치지 않도록 */
+    G.ghostHandled = false;   /* 워프로 유령 칸에 떨어지면 불러 세운다 */
     await randomWarp(p);
     if (G.ended) { G.busy = false; return; }
     G.busy = true;
@@ -6090,6 +6117,8 @@ async function useItem(p, key) {
     await nextPlayerTurn();
     return;
   }
+  /* 주사위 아이템 — 사용 연출이 끝날 때까지 다른 입력을 막는다 */
+  G.busy = true;
   p.items.splice(idx, 1);
   const it = ITEMS[key];
   p.rollMode = key;
@@ -6112,6 +6141,7 @@ async function useItem(p, key) {
   hideCutShell();
   showToast(it.name + ' 사용!', it.desc, 900);
   await wait(460);
+  G.busy = false;
   await doTurn(p);
 }
 
@@ -6420,6 +6450,8 @@ async function runPaidGimmick(p, silent) {
   if (p.coins < PAID_GM_COST) { showToast('코인이 부족해요', '기믹 발동에는 ' + PAID_GM_COST + '코인', 1000); return false; }
   if (!silent && !p.bot && !G.autoMove) {
     const g = PAID_GM[(BOARD.map && BOARD.map.kind) || 'meadow'] || PAID_GM.meadow;
+    /* 묻는 동안 다른 입력(주사위·아이템·발동 버튼)이 끼어들지 않게 잠근다 */
+    G.busy = true;
     const ans = await askModal({
       title: g.name + ' 발동',
       sub: g.head,
@@ -6428,7 +6460,8 @@ async function runPaidGimmick(p, silent) {
         { value: 'no', label: '그만두기' }
       ]
     });
-    if (ans !== 'yes') return false;
+    G.busy = false;
+    if (ans !== 'yes') { updatePaidBtn(p); return false; }
   }
   p.paidRound = G.round;
   gain(p, -PAID_GM_COST);
@@ -6740,7 +6773,7 @@ function bigText(c, text, x, y, size, color, align) {
 function buildPads(n, teamOf) {
   const pads = $('#pads');
   pads.innerHTML = '';
-  pads.className = n === 2 ? 'n2' : '';
+  pads.className = n === 2 ? 'n2' : (n === 3 ? 'n3' : '');
   MG.padVals = [];
   for (let i = 0; i < n; i++) {
     const p = G.players[i];
@@ -7170,7 +7203,9 @@ const MINIGAMES = [
     tap(m, i) {
       if (m.done || m.tapT[i] !== undefined) return;
       m.tapT[i] = m.t; sfx('pop'); setPad(i, m.t.toFixed(2) + 's');
-      if (m.players.every((p, k) => !p.bot ? m.tapT[k] !== undefined : true)) this.finish(m);
+      /* 전원이 터치했을 때만 끝낸다 — 봇이 아직 안 눌렀는데 사람 터치로 끝나면
+         봇이 전부 '미터치'가 되어 순위가 뒤집혔다 */
+      if (m.players.every((p, k) => m.tapT[k] !== undefined)) this.finish(m);
     },
     update(m) {
       if (m.players.every((p, i) => m.tapT[i] !== undefined)) this.finish(m);
@@ -8676,7 +8711,7 @@ function buildGuide() {
     const gates = (BOARD.gates || []).length;
     const rows = [
       ['👻', '유령 도둑', '<b>15코인</b> 상대 코인 강탈 · <b>48코인</b> 상대 별 1개 빼앗기', '지나가거나 도착하면 불러 세워요'],
-      ['◎', '상점 5종', '파이프 <b>27</b> · 트리플 <b>20</b> · 랜던 워프 <b>13</b> · 더블 12 · 황금 10', '상점에서 사는 필살기'],
+      ['◎', '상점 5종', '파이프 <b>27</b> · 트리플 <b>20</b> · 랜덤 워프 <b>13</b> · 더블 12 · 황금 10', '상점에서 사는 필살기'],
       ['⛩', '통행료 게이트', '지름길 입구에서 <b>12코인</b> · 안 내면 우회로', gates ? '이 맵에 ' + gates + '곳' : '지름길 입구'],
       ['💥', m.gimmick ? m.gimmick.name : '대표 기믹', '<b>14코인</b>으로 내 턴에 강제 발동 (라운드 1회)', '상대를 방해해 판을 흔들기']
     ];
@@ -8858,7 +8893,15 @@ function hideMoveConfirm() { const el = $('#moveCfm'); if (el) el.classList.remo
 
 /* ---------- modal ---------- */
 let pendingModal = null;
+/* 모달은 한 번에 하나만 — 이미 떠 있으면 닫힌 다음에 이어서 띄운다.
+   (두 모달이 겹치면 앞 모달의 약속이 영영 풀리지 않아 턴이 멈춘다) */
+let modalQueue = Promise.resolve();
 function askModal(cfg) {
+  const p = modalQueue.then(() => askModalNow(cfg), () => askModalNow(cfg));
+  modalQueue = p.then(() => {}, () => {});
+  return p;
+}
+function askModalNow(cfg) {
   return new Promise(resolve => {
     const card = $('#modalCard');
     let html = '<div class="mt">' + (cfg.title || '') + '</div>';
@@ -8876,10 +8919,11 @@ function askModal(cfg) {
     card.innerHTML = html;
     const close = val => {
       $('#modal').classList.remove('on');
-      pendingModal = null;
+      if (pendingModal === me) pendingModal = null;
       resolve(val);
     };
-    pendingModal = { close, cfg };
+    const me = { close: close, cfg: cfg };
+    pendingModal = me;
     card.querySelectorAll('.mbtn').forEach(btn => {
       btn.onclick = () => { const b = cfg.buttons[+btn.dataset.i]; if (b.disabled) return; sfx('click'); close(b.value); };
     });
@@ -8887,7 +8931,8 @@ function askModal(cfg) {
       const pickB = cfg.buttons.find(b => b.primary && !b.disabled) ||
         cfg.buttons.find(b => b.value === 'skip' && !b.disabled) ||
         cfg.buttons.filter(b => !b.disabled).slice(-1)[0] || cfg.buttons[0];
-      setTimeout(() => { if (pendingModal) close(pickB.value); }, 220);
+      /* 내 모달이 아직 떠 있을 때만 자동 응답 */
+      setTimeout(() => { if (pendingModal === me) close(pickB.value); }, 220);
       return;
     }
     $('#modal').classList.add('on');
@@ -10328,8 +10373,14 @@ async function showResults() {
     await wait(320);
   }
   $('.rBtns').classList.add('on');
-  $('#btnAgain').onclick = () => { stopConfetti(); AU.playTrack('board'); createGame(CFG); setScreen('board'); buildHud(); startRound(); };
-  $('#btnHome').onclick = () => { stopConfetti(); AU.playTrack('board'); G.ended = false; setScreen('start'); buildStart(); };
+  $('#btnAgain').onclick = () => {
+    if (G.phase !== 'result') return;
+    stopConfetti(); AU.playTrack('board'); createGame(CFG); setScreen('board'); buildHud(); startRound();
+  };
+  $('#btnHome').onclick = () => {
+    if (G.phase !== 'result') return;
+    stopConfetti(); AU.playTrack('board'); G.ended = false; setScreen('start'); buildStart();
+  };
 }
 
 function startConfetti() {
@@ -10461,6 +10512,7 @@ function drawMeasureOverlay(c, t) {
     if (BOARD.types[i] === 'shop') auto.push({ i: i, col: '#ffb06a', ic: '상점' });
     else if (BOARD.types[i] === 'gimmick') auto.push({ i: i, col: '#ffe066', ic: '기믹' });
   }
+  const drawnBoxes = [];
   auto.forEach(a => {
     if (a.i === MEASURE.base) return;
     const p = tilePos(a.i);
@@ -10471,6 +10523,15 @@ function drawMeasureOverlay(c, t) {
     c.font = '900 ' + (11 * U) + 'px -apple-system,"Apple SD Gothic Neo",sans-serif';
     const label = a.ic + ' ' + d + '칸';
     const w2 = c.measureText(label).width + 14 * U;
+    /* 배지끼리 겹치면 건너뛴다 (모바일에서 글자가 포개지던 문제) */
+    const box = { x0: p.x - w2 / 2, x1: p.x + w2 / 2, y0: p.y - GRID * .58 - 16 * U, y1: p.y - GRID * .58 + 2 * U };
+    const hit = drawnBoxes.some(b => !(box.x1 < b.x0 || box.x0 > b.x1 || box.y1 < b.y0 || box.y0 > b.y1));
+    c.restore();
+    if (hit) return;
+    drawnBoxes.push(box);
+    c.save();
+    c.globalAlpha = .92;
+    c.font = '900 ' + (11 * U) + 'px -apple-system,"Apple SD Gothic Neo",sans-serif';
     c.fillStyle = 'rgba(16,24,40,.86)';
     roundRect(c, p.x - w2 / 2, p.y - GRID * .58 - 16 * U, w2, 18 * U, 6 * U); c.fill();
     c.strokeStyle = a.col; c.lineWidth = 1.4 * U; c.stroke();
@@ -10596,6 +10657,7 @@ function bindBoardPointer() {
 
 /* ---------- 게임 시작: 동료·스타 위치 컷씬 후 첫 라운드 ---------- */
 async function startIntro() {
+  if (G.phase === 'intro') return;   /* 두 번 눌러도 인트로는 한 번만 */
   G.phase = 'intro';
   enableDice(false);
   updateFooter();
@@ -10628,14 +10690,14 @@ function bindInput() {
   if (cutBox) cutBox.addEventListener('pointerdown', cutTap);
   $('#btnDice').addEventListener('click', () => {
     const p = activePlayer();
-    if (!p || p.bot || G.phase !== 'turn' || G.busy) return;
+    if (!p || p.bot || G.phase !== 'turn' || G.busy || pendingModal) return;
     AU.unlock();
     doTurn(p);
   });
   const btnPaid = $('#btnPaid');
   if (btnPaid) btnPaid.addEventListener('click', () => {
     const p = activePlayer();
-    if (!p || p.bot || G.phase !== 'turn' || G.busy || G.move) return;
+    if (!p || p.bot || G.phase !== 'turn' || G.busy || G.move || pendingModal) return;
     AU.unlock();
     haptic(12);
     runPaidGimmick(p);
@@ -10661,6 +10723,7 @@ function bindInput() {
   });
   document.addEventListener('keydown', e => {
     if (e.repeat) return;
+    if (pendingModal) return;   /* 모달이 떠 있는 동안에는 키보드로 턴을 시작하지 않는다 */
     const k = e.key.toLowerCase();
     if (k === 'escape') { if (MEASURE.on) { toggleMeasure(false); return; } cancelMove(); return; }
     if (k === 'l') { toggleMeasure(); return; }
@@ -10954,6 +11017,13 @@ window.__pickleParty = {
     return useItem(p, key);
   },
   setCoins(i, n) { G.players[i].coins = n; updateHud(); return n; },
+  /* 통행료 게이트 테스트 훅 — 자리/통행료를 바꿔 끼울 수 있다 */
+  setGate(o) {
+    if (!BOARD.gates || !BOARD.gates[0]) return false;
+    Object.assign(BOARD.gates[0], o || {});
+    updateFooter();
+    return BOARD.gates[0];
+  },
   setStars(i, n) { G.players[i].stars = n; updateHud(); return n; },
   ghostInfo() { return { index: BOARD.ghostIndex, pos: BOARD.ghostIndex >= 0 ? tilePos(BOARD.ghostIndex) : null }; },
   async tile(i, pos) {
@@ -11116,7 +11186,7 @@ async function starGetSequence(p, fromPos) {
   moveStar();
   const sp = tilePos(G.starIndex);
   await cutBeat({
-    title: '새로운 스타 등장!', sub: '별이 다른 자리로 옮겨갔어요 · ★까지 ' + starDistOf(G.players[0] ? G.players[0].pos : 0) + '칸', icon: '✦',
+    title: '새로운 스타 등장!', sub: '별이 다른 자리로 옮겨갔어요 · ★까지 ' + starDistOf(p ? p.pos : 0) + '칸', icon: '✦',
     x: sp.x, y: sp.y, zoom: 1.7, ms: 1600, fx: 'stars', color: '#ffe066', sfx: 'warp', shake: 7, camK: .006
   });
   hideCutShell();
@@ -11232,7 +11302,7 @@ function introHighlightSpots() {
   });
   /* 상점 */
   push('shop', firstOf('shop'), {
-    title: '상점 · 필살기', sub: '황금 파이프 27 · 트리플 20 · 랜던 워프 13 · 더블 12 · 황금 10', icon: '🛒',
+    title: '상점 · 필살기', sub: '황금 파이프 27 · 트리플 20 · 랜덤 워프 13 · 더블 12 · 황금 10', icon: '🛒',
     color: '#ffc23c', fx: 'shop', sfx: 'buy', zoom: 2.0
   });
   /* 별은 마지막에 (그리고 출발선으로 복귀) */
