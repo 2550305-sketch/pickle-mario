@@ -4905,6 +4905,10 @@ function createGame(cfg) {
   G.bags = {}; G.mgModePlan = null; G.mgTeams = null; G.lastMgMode = null;
   G.fx = []; G.texts = []; G.icons = []; G.rings = []; G.coins = []; G.hold = null; G.starShine = null; G.ended = false;
   G.badges = []; G._lastCoinChime = 0; COINF.list.length = 0;
+  /* 새 판이 시작되면 남아 있던 모달/대기열도 비운다 (앞 판의 모달이 남아 입력을 막지 않도록) */
+  pendingModal = null;
+  modalQueue = Promise.resolve();
+  if ($('#modal')) $('#modal').classList.remove('on');
   G.move = null; G.movePreview = null; G.moveWaiter = null;
   G.ghostFly = null; G.ghostUsedAt = 0; G.pipeSpawn = null;
   buildBoard(G.mapId);
