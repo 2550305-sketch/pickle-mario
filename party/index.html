@@ -187,8 +187,14 @@ canvas{display:block}
   background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 2px rgba(255,255,255,.12),inset 0 8px 30px rgba(0,0,0,.3)}
 #cvStage{position:absolute;inset:0;width:100%;height:100%}
 #pads{display:grid;gap:6px;padding:0 7px calc(var(--safe-b) + 8px);height:33%;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+#pads.n4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
 #pads.n2{grid-template-columns:1fr 1fr;grid-template-rows:1fr}
 #pads.n3{grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr}
+/* 사람이 1명뿐이면 하단 전체 폭의 큰 버튼 하나 (가운데 정렬, 최대 520px) */
+#pads.n1{grid-template-columns:1fr;grid-template-rows:1fr;height:22%;min-height:80px;max-height:150px}
+#pads.n1 .pad{width:100%;max-width:520px;margin:0 auto}
+/* 사람이 0명(전원 AI)이면 패드 영역 자체를 없애 무대가 화면을 채운다 */
+#pads.none{display:none}
 .pad{border-radius:16px;position:relative;overflow:hidden;color:#fff;font-weight:900;
   background:linear-gradient(160deg,var(--c1),var(--c2));
   box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),inset 0 3px 0 rgba(255,255,255,.26),0 5px 12px rgba(0,0,0,.28);
@@ -314,7 +320,7 @@ canvas{display:block}
 .g-gimmick canvas{width:46px;height:46px;flex:none;border-radius:12px;background:rgba(60,40,0,.18)}
 .g-gimmick .gg-n{font-size:12.5px;font-weight:900;color:#7a4d00;line-height:1.2}
 .g-gimmick .gg-d{font-size:10px;font-weight:800;color:#8a6a18;line-height:1.35;margin-top:1px}
-/* 코인 소비 4종 안내 카드 */
+/* 코인 소비 3종 안내 카드 */
 .g-coin{background:rgba(255,255,255,.72);border-radius:16px;padding:7px 9px;
   border:2px solid rgba(255,180,40,.5)}
 .g-coin .gc-t{font-size:11.5px;font-weight:900;color:#8a4a04;display:flex;align-items:center;gap:5px}
@@ -325,15 +331,6 @@ canvas{display:block}
 .g-coin .gc-n{font-size:10.5px;font-weight:900;color:#26455c;line-height:1.25}
 .g-coin .gc-n b{color:#c98a00}
 .g-coin .gc-d{font-size:9px;font-weight:800;color:#6b8aa0;line-height:1.3}
-/* 유료 기믹 발동 버튼 */
-#payRow{display:flex;justify-content:center}
-#btnPaid{height:30px;border-radius:11px;padding:0 13px;display:flex;align-items:center;gap:6px;
-  font-size:11.5px;font-weight:900;color:#3a1d6e;
-  background:linear-gradient(180deg,#e9dcff,#c3a8ff);box-shadow:0 3px 0 #8f6fe0;
-  transition:transform .08s,filter .18s}
-#btnPaid .pbc{font-size:10.5px;font-weight:900;color:#5a3300;background:#ffe066;border-radius:7px;padding:1px 5px}
-#btnPaid:active:not(.dis){transform:translateY(2px);box-shadow:0 1px 0 #8f6fe0}
-#btnPaid.dis{filter:grayscale(.75);opacity:.55;color:#5b5b6b;background:linear-gradient(180deg,#eee,#d2d2da);box-shadow:0 3px 0 #a8a8b4}
 /* 아이템 일러스트 */
 .mcard .mbtn .mbim{width:34px;height:34px;flex:none;border-radius:9px;object-fit:contain;
   background:radial-gradient(circle at 50% 40%, rgba(255,255,255,.9), rgba(220,235,250,.5));
@@ -388,6 +385,28 @@ canvas{display:block}
 
 /* 맵 오프닝 인트로: 스토리 카드 + 건너뛰기 */
 #cut.story .cb-card{display:none}
+#cut.intro .cb-card{display:none}
+/* 인트로 로어서드: 아이콘 + 타이핑 제목 + 한 문장씩 타이핑되는 자막 */
+#cutCap{position:absolute;left:0;right:0;bottom:calc(10% + 16px);z-index:2;display:flex;flex-direction:column;align-items:center;
+  gap:7px;padding:0 14px;opacity:0;transform:translateY(12px);pointer-events:none;
+  transition:opacity .3s ease,transform .3s cubic-bezier(.2,1.1,.35,1)}
+#cutCap.on{opacity:1;transform:none}
+#cutCap .cc-head{display:flex;align-items:center;justify-content:center;gap:7px;max-width:100%}
+#cutCap .cc-ic{font-size:21px;line-height:1;font-weight:900;color:var(--acc,#ffe066);flex:none;
+  text-shadow:0 0 16px var(--acc,#ffe066),0 2px 0 rgba(0,0,0,.55)}
+#cutCap .cc-tt{font-size:22px;font-weight:900;letter-spacing:-.6px;color:#fff;text-align:left;max-width:calc(100% - 34px);
+  line-height:1.2;word-break:keep-all;
+  text-shadow:0 3px 0 rgba(0,0,0,.62),0 0 26px rgba(255,214,90,.42)}
+#cutCap .cc-sub{position:relative;min-height:42px;width:min(88vw,430px);display:flex;align-items:center;justify-content:center;
+  padding:8px 13px;border-radius:12px;text-align:center;
+  background:linear-gradient(180deg,rgba(8,12,26,.72),rgba(6,10,22,.88));
+  border:1.2px solid rgba(255,255,255,.13);box-shadow:0 9px 24px rgba(0,0,0,.38);
+  font-size:13.5px;font-weight:800;color:#f3f7ff;line-height:1.5;letter-spacing:-.2px;
+  text-shadow:0 1px 0 rgba(0,0,0,.5)}
+#cutCap .cc-sub .cs-tx{white-space:pre-wrap;word-break:keep-all}
+#cutCap .cc-sub .cs-cur{display:inline-block;width:2px;height:15px;margin-left:3px;vertical-align:-2px;
+  background:var(--acc,#ffe066);box-shadow:0 0 8px var(--acc,#ffe066);animation:csBlink .72s steps(2,end) infinite}
+@keyframes csBlink{50%{opacity:0}}
 #msCard{position:absolute;left:50%;bottom:9%;transform:translate(-50%,16px);width:min(92vw,540px);
   padding:11px 14px 12px;border-radius:18px;opacity:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(10,16,32,.90),rgba(6,10,22,.96));
@@ -398,8 +417,10 @@ canvas{display:block}
 #msCard .ms-top{display:flex;align-items:center;gap:7px;justify-content:center}
 #msCard .ms-badge{font-size:10px;font-weight:900;color:#101826;background:var(--acc,#ffe066);border-radius:999px;padding:2px 8px;letter-spacing:-.1px}
 #msCard .ms-name{font-size:21px;font-weight:900;color:#fff;letter-spacing:-.7px;text-shadow:0 2px 0 rgba(0,0,0,.55)}
-#msCard .ms-zones{margin-top:2px;font-size:10.5px;font-weight:900;color:var(--acc,#ffe066);text-align:center;letter-spacing:-.1px;line-height:1.35}
-#msCard .ms-story{margin-top:6px;font-size:12px;font-weight:800;color:#e9effc;line-height:1.5;text-align:center;text-shadow:0 1px 0 rgba(0,0,0,.65)}
+#msCard .ms-zones{margin-top:2px;font-size:10.5px;font-weight:900;color:var(--acc,#ffe066);text-align:center;letter-spacing:-.1px;line-height:1.35;min-height:15px}
+#msCard .ms-story{margin-top:6px;font-size:12px;font-weight:800;color:#e9effc;line-height:1.5;text-align:center;text-shadow:0 1px 0 rgba(0,0,0,.65);min-height:36px}
+#msCard .ms-story .cs-cur,#msCard .ms-zones .cs-cur,#msCard .ms-name .cs-cur{display:inline-block;width:2px;height:12px;margin-left:3px;
+  vertical-align:-1px;background:var(--acc,#ffe066);box-shadow:0 0 8px var(--acc,#ffe066);animation:csBlink .72s steps(2,end) infinite}
 #msCard .ms-bar{margin:9px auto 0;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,.16);overflow:hidden}
 #msCard .ms-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc,#ffe066),#fff)}
 #msCard.on .ms-bar i{animation:msBar var(--bar,2.4s) linear forwards}
@@ -539,7 +560,6 @@ body.introOn #turnTag{opacity:0;transition:opacity .25s;pointer-events:none}
     <div id="footer">
       <div id="footTop"><span id="roundInfo">라운드 1 / 4</span><span id="zoneInfo">초원 지대</span></div>
       <div id="items"></div>
-      <div id="payRow"><button id="btnPaid" class="dis"><span>💥</span><span class="pbn">기믹 강제 발동</span><span class="pbc">14</span></button></div>
       <button id="btnDice"><canvas id="cvDice"></canvas><span id="diceLabel">주사위 굴리기</span></button>
     </div>
   </section>
@@ -581,6 +601,10 @@ body.introOn #turnTag{opacity:0;transition:opacity .25s;pointer-events:none}
       <div class="ms-zones"></div>
       <div class="ms-story"></div>
       <div class="ms-bar"><i></i></div>
+    </div>
+    <div id="cutCap">
+      <div class="cc-head"><span class="cc-ic"></span><span class="cc-tt"></span></div>
+      <div class="cc-sub"><span class="cs-tx"></span><i class="cs-cur"></i></div>
     </div>
     <button id="cutSkip" type="button">건너뛰기 ⏭</button>
     <div class="cut-tip">탭하면 넘어가요</div>
@@ -638,6 +662,11 @@ function randInt(n) {
   return v % n;
 }
 function rollDie(faces) { return 1 + randInt(faces || DICE_MAX); }
+/* 배열에서 하나를 OS 난수(crypto)로 고른다 — 별 위치처럼 매번 달라야 하는 선택에 쓴다 */
+function cryptoPick(arr) {
+  if (!arr || !arr.length) return -1;
+  return arr[randInt(arr.length)];
+}
 
 /* ---------- timing ---------- */
 let TIME_SCALE = 1;
@@ -884,6 +913,10 @@ const AU = {
       case 'beep': this.osc('square', 880, t, .12, .10); break;
       case 'go': this.osc('square', 1320, t, .28, .12); this.osc('square', 1760, t + .04, .3, .07); break;
       case 'tick': this.osc('square', 1500, t, .04, .05); break;
+      case 'type':
+        /* 자막 타자 소리: 아주 짧고 작은 딸깍 */
+        this.noise(t, .018, .035, { freq: 2400 + Math.random() * 1800, q: 2.2, type: 'bandpass' });
+        this.osc('square', 1150 + Math.random() * 320, t, .016, .018); break;
       case 'pop': this.noise(t, .11, .18, { freq: 2400, to: 700, q: .7 }); this.osc('sine', 500, t, .09, .1, { to: 180 }); break;
       case 'boom':
         this.noise(t, .5, .3, { freq: 420, to: 60, type: 'lowpass', q: .8 });
@@ -2217,9 +2250,18 @@ function buildBoard(mapId) {
   };
 
   const sp = map.spec;
-  /* 별 */
-  const star = atFrac(sp.starFrac, 0);
+  /* ---------- 별 — 매판 맵 전체에서 완전 무작위 ----------
+     고정 비율 위치(starFrac) 대신, 일반 발판 중 출발점에서 최소 5칸 떨어진 곳
+     (되도록 50칸 이내)을 OS 난수(crypto)로 뽑는다. 별 자리는 reserved 로 잠가
+     상점·동료·기믹·운명·유령이 그 칸을 차지하지 못하게 한다. */
+  const starOk = i => i !== start && !reserved[i] && types[i] === 'coin' && first.dist[i] >= 5;
+  let starPool = [];
+  for (let i = 0; i < n; i++) if (starOk(i) && first.dist[i] <= 50) starPool.push(i);
+  if (!starPool.length) for (let i = 0; i < n; i++) if (starOk(i)) starPool.push(i);
+  const star = starPool.length ? cryptoPick(starPool) : Math.floor(n / 2);
   BOARD.starIndex = star;
+  BOARD.starStart = star;
+  reserved[star] = 'star';
 
   /* 상점 · 동료 · 대표 기믹 · 운명의 버튼 */
   (sp.shopFrac || []).forEach(f => claimNear('shop', atFrac(f), 8));
@@ -2247,7 +2289,7 @@ function buildBoard(mapId) {
   {
     const gs = (map.track.branches || []).map(br => ({
       br: br, k: (map.nxt[br.F] || []).indexOf(br.idx[0]), d: first.dist[br.F]
-    })).filter(o => o.k >= 0 && o.d >= Math.max(18, M * .12) && o.br.theme !== 'safe' && o.br.saved >= 4)
+    })).filter(o => o.k >= 0 && o.d >= Math.max(18, M * .12) && o.br.theme !== 'safe' && o.br.saved >= 4 && o.br.F !== star)
       .sort((a, b) => (b.br.saved - a.br.saved) || (Math.abs(a.d - M * .40) - Math.abs(b.d - M * .40)));
     if (gs.length) {
       const c = gs[0];
@@ -4924,7 +4966,7 @@ function createGame(cfg) {
       i, ci, name: CHARS[ci].n, bot: !!cfg.bots[i], coins: 10, stars: 0,
       pos: BOARD.start, allies: [], items: [], mgWins: 0, mgRank: 0,
       px: sp.x, py: sp.y, hop: 0, trail: [], rollMode: null, extraRoll: false, finished: false,
-      diceHalf: false, paidRound: 0,
+      diceHalf: false,
       tilt: 0, sx: 1, sy: 1, cheerAt: 0, cheerMs: 700, shakeAt: 0, shakeMs: 480
     };
     G.players.push(p);
@@ -4967,23 +5009,11 @@ async function nextPlayerTurn() {
   CAM.manual = 0;
   if (p.bot) {
     enableDice(false);
-    updatePaidBtn(p);
     await wait(650);
-    /* 봇도 코인을 내고 기믹을 강제 발동할 수 있다 */
-    if (!G.ended && botWantsPaid(p)) {
-      p.paidRound = G.round;
-      gain(p, -PAID_GM_COST);
-      G.busy = true;
-      await paidGimmickSequence(p);
-      G.busy = false;
-      if (G.ended) return;
-      await wait(180);
-    }
     await doTurn(p);
   } else {
     enableDice(true);
     renderItems(p);
-    updatePaidBtn(p);
   }
 }
 
@@ -5806,14 +5836,13 @@ function moveStar() {
       ty === 'ally' || ty === 'fate' || ty === 'gimmick') continue;
     if (i === G.starIndex) continue;
     if (G.players.some(p => p.pos === i)) continue;
-    if (starDistOf(i) >= 0 && starDistOf(i) < 5) continue;
     cand.push(i);
   }
-  /* 별은 너무 가깝지도, 너무 막막하게 멀지도 않은 자리로 옮긴다 */
+  /* 이전 별에서 최단거리 5~50칸 안이면 어디든 — 고정 거리대 없이 OS 난수로 고른다 */
   const dcur = bfsFrom(G.starIndex).dist;
-  const mid = cand.filter(i => dcur[i] >= 12 && dcur[i] <= 44);
-  const pool = mid.length ? mid : cand;
-  const idx = pool.length ? pool[Math.floor(RND() * pool.length)] : Math.floor(BOARD.n / 2);
+  const near = cand.filter(i => dcur[i] >= 5 && dcur[i] <= 50);
+  const pool = near.length ? near : cand;   /* 50칸 안에 후보가 없을 때만 전체 폴백 */
+  const idx = pool.length ? cryptoPick(pool) : Math.floor(BOARD.n / 2);
   G.starIndex = idx;
   refreshStarDist();
   const tp = tilePos(idx);
@@ -6385,108 +6414,6 @@ async function tollDecision(p, gate) {
   return true;
 }
 
-/* =========================================================
-   코인 소비 4종 — 유료 기믹 발동 (내 턴에 한 번)
-   ========================================================= */
-const PAID_GM_COST = 14;
-const PAID_GM = {
-  meadow: {
-    name: '고대 유적 봉인 해제', icon: '◎', fx: 'relic', color: '#c9a8ff', sfx: 'boom', back: 4, coins: 4, gain: 4,
-    head: '유적의 봉인이 풀려 상대가 4칸 밀리고 코인 -4'
-  },
-  volcano: {
-    name: '대분화 강제 점화', icon: '▲', fx: 'eruption', color: '#ff8a3c', sfx: 'boom', back: 3, coins: 6, gain: 6,
-    head: '분화구가 터져 상대 코인 -6 · 나는 +6'
-  },
-  ice: {
-    name: '빙하 대이동 강제', icon: '❄', fx: 'glacier', color: '#7ef0e0', sfx: 'boost', back: 5, coins: 3, gain: 3,
-    head: '빙판이 갈라져 상대가 5칸 미끄러지고 코인 -3'
-  }
-};
-
-function paidGmUsed(p) { return p && p.paidRound === G.round; }
-
-async function paidGimmickSequence(p) {
-  const kind = (BOARD.map && BOARD.map.kind) || 'meadow';
-  const g = PAID_GM[kind] || PAID_GM.meadow;
-  const others = G.players.filter(o => o !== p);
-  const prevPhase = G.phase;
-  const tp = tilePos(p.pos);
-  G.phase = 'gimmick';
-  updateFooter();
-  showCutShell({ color: g.color });
-  await cutBeat({
-    title: g.name + '!', sub: g.head, icon: g.icon, x: tp.x, y: tp.y, zoom: 1.42,
-    ms: p.bot || G.autoMove ? 900 : 1250, fx: g.fx, good: false, color: g.color, sfx: g.sfx, sfx2: 'warp', shake: 10
-  });
-  if (G.ended) { hideCutShell(); return; }
-  for (let k = 0; k < others.length; k++) {
-    const o = others[k];
-    camFly(o.px, o.py, 1.42, 480, .08);
-    ring(o.px, o.py, g.color, GRID * .16, GRID * .8, 520, 5);
-    burst(o.px, o.py, g.color, 14);
-    sfx('punch');
-    await wait(240);
-    if (g.back) await pushBack(o, g.back);
-    if (g.coins) { gain(o, -g.coins); shake(o, 620); }
-    await wait(180);
-  }
-  if (g.gain) { gain(p, g.gain); cheer(p, 900); iconPop(p, '+' + g.gain, '#ffd166'); }
-  camRelease();
-  CAM.k = .006;
-  focusPlayer(p);
-  await cutBeat({
-    title: '판이 흔들렸다!', sub: '상대 ' + others.length + '명 방해 완료 · 나는 +' + (g.gain || 0) + '코인',
-    icon: '✦', x: p.px, y: p.py, zoom: 1.3, ms: p.bot || G.autoMove ? 800 : 1200,
-    fx: 'pulse', color: g.color, sfx: 'win', shake: 4
-  });
-  hideCutShell();
-  await wait(120);
-  G.phase = prevPhase;
-  updateHud(); updateFooter();
-}
-
-/* 사람: 버튼을 눌러 직접 발동 / 봇: 판단해서 발동 */
-async function runPaidGimmick(p, silent) {
-  if (!p || G.ended) return false;
-  if (G.busy || G.phase !== 'turn' || G.move) return false;
-  if (paidGmUsed(p)) return false;
-  if (p.coins < PAID_GM_COST) { showToast('코인이 부족해요', '기믹 발동에는 ' + PAID_GM_COST + '코인', 1000); return false; }
-  if (!silent && !p.bot && !G.autoMove) {
-    const g = PAID_GM[(BOARD.map && BOARD.map.kind) || 'meadow'] || PAID_GM.meadow;
-    /* 묻는 동안 다른 입력(주사위·아이템·발동 버튼)이 끼어들지 않게 잠근다 */
-    G.busy = true;
-    const ans = await askModal({
-      title: g.name + ' 발동',
-      sub: g.head,
-      buttons: [
-        { value: 'yes', label: '발동하기', sub: '이번 라운드 1회 · 주사위 전에만', cost: PAID_GM_COST, primary: true, icon: g.icon, color: g.color },
-        { value: 'no', label: '그만두기' }
-      ]
-    });
-    G.busy = false;
-    if (ans !== 'yes') { updatePaidBtn(p); return false; }
-  }
-  p.paidRound = G.round;
-  gain(p, -PAID_GM_COST);
-  G.busy = true;
-  await paidGimmickSequence(p);
-  G.busy = false;
-  hideItems();
-  updateHud(); updateFooter();
-  return true;
-}
-
-function botWantsPaid(p) {
-  if (!p || !p.bot) return false;
-  if (paidGmUsed(p)) return false;
-  if (p.coins < PAID_GM_COST + 8) return false;
-  const F = aiF();
-  const rival = G.players.some(o => o !== p && (o.stars > p.stars || (o.stars === p.stars && starDistOf(o.pos) < starDistOf(p.pos) && o.coins > p.coins)));
-  if (!rival) return false;
-  return rnd() < .14 + F.plan * .38;
-}
-
 /* ---------- events ---------- */
 const EVENTS = [
   { t: '코인 샤워!', d: '모두 +2코인', fn: () => G.players.forEach(o => gain(o, 2)) },
@@ -6701,7 +6628,7 @@ async function awardMinigame(ranks, m, def) {
    피클 파티 — 12 minigames (shared 4-pad framework)
    ========================================================= */
 
-const MG = { def: null, m: null, raf: null, running: false, demo: false, w: 0, h: 0, dpr: 1, padVals: [] };
+const MG = { def: null, m: null, raf: null, running: false, demo: false, w: 0, h: 0, dpr: 1, padVals: [], padEls: {}, padHosts: [] };
 
 /* ---------- 팀전 (2대2 · 1대3) ---------- */
 const TEAM_COL = { blue: '#4a86ff', blue2: '#1c3ea8', red: '#ff5364', red2: '#a8142c' };
@@ -6774,12 +6701,23 @@ function bigText(c, text, x, y, size, color, align) {
 }
 
 /* ---------- pad handling ---------- */
-function buildPads(n, teamOf) {
+/* 조작 패드는 사람 플레이어 몫만 만든다. AI(봇)는 내부 로직으로만 움직인다. */
+function humanPadHosts() {
+  return G.players.map((p, i) => i).filter(i => !G.players[i].bot);
+}
+/* 키보드 Q/P/Z/M 은 사람 순서(k)로 받아 실제 플레이어 번호로 바꿔 준다 */
+function humanAt(k) {
+  const h = MG.padHosts || [];
+  return h[k] !== undefined ? h[k] : k;
+}
+
+function buildPads(teamOf) {
   const pads = $('#pads');
   pads.innerHTML = '';
-  pads.className = n === 2 ? 'n2' : (n === 3 ? 'n3' : '');
-  MG.padVals = [];
-  for (let i = 0; i < n; i++) {
+  const hosts = humanPadHosts();
+  MG.padVals = []; MG.padEls = {}; MG.padHosts = hosts;
+  pads.className = hosts.length ? ('n' + hosts.length) : 'none';
+  hosts.forEach((i, k) => {
     const p = G.players[i];
     const ch = CHARS[p.ci];
     const el = document.createElement('button');
@@ -6789,17 +6727,20 @@ function buildPads(n, teamOf) {
     el.style.setProperty('--c2', tm ? (tm === 'blue' ? TEAM_COL.blue2 : TEAM_COL.red2) : ch.d);
     if (tm) el.classList.add('t-' + tm);
     el.innerHTML = '<span class="pn">' + (tm ? '<i class="tdot"></i>' : '') + p.name + '</span>' +
-      '<span class="pk">' + 'QPZM'[i] + '</span><span class="pv"></span>';
+      '<span class="pk">' + 'QPZM'[k] + '</span><span class="pv"></span>';
     el.addEventListener('pointerdown', e => { e.preventDefault(); padTap(i, el); }, { passive: false });
     el.dataset.i = i;
     pads.appendChild(el);
-    MG.padVals.push(el.querySelector('.pv'));
-  }
+    MG.padEls[i] = el;
+    MG.padVals[i] = el.querySelector('.pv');
+  });
 }
 
 function padTap(i, el) {
-  if (!MG.running || !MG.def) return;
-  el = el || $$('#pads .pad')[i];
+  if (!MG.running || !MG.def || !MG.m || MG.m.__def !== MG.def) return;   /* 게임 전환 중 터치 방어 */
+  const host = G.players[i];
+  if (!host || host.bot) return;   /* AI 자리는 패드가 없으므로 터치도 받지 않는다 */
+  el = el || MG.padEls[i];
   if (el) {
     el.classList.add('hit');
     setTimeout(() => el.classList.remove('hit'), 90);
@@ -6819,11 +6760,12 @@ function setPad(i, text) {
 }
 function padDead(i, dead) {
   if (MG.demo) return;
-  const el = $$('#pads .pad')[i];
+  const el = MG.padEls[i];
   if (el) el.classList.toggle('dead', !!dead);
 }
 function resetPads() {
-  MG.padVals.forEach((v, i) => { if (v) v.textContent = ''; padDead(i, false); });
+  MG.padVals.forEach(v => { if (v) v.textContent = ''; });
+  (MG.padHosts || []).forEach(i => padDead(i, false));
 }
 
 /* ---------- stage ---------- */
@@ -6840,13 +6782,13 @@ function resizeStage() {
 
 /* ---------- minigame runner ---------- */
 async function playMinigame(def) {
-  MG.def = def; MG.running = false; MG.demo = false;
+  MG.def = def; MG.m = null; MG.running = false; MG.demo = false;
   const teams = def.team ? makeTeams(def.team, G.players) : null;
   if (teams) G.mgTeams = teams;
   setScreen('mini');
   $('#miniTitle').textContent = def.title;
   $('#miniSub').textContent = def.sub;
-  buildPads(G.players.length, teams && teams.teamOf);
+  buildPads(teams && teams.teamOf ? teams.teamOf : null);
   resetPads();
   await showMiniReady(def, teams);
   const m = {
@@ -6856,6 +6798,7 @@ async function playMinigame(def) {
     teamOf: teams ? Object.assign({}, teams.teamOf) : null
   };
   def.init(m);
+  m.__def = def;
   MG.m = m;
   resizeStageIfNeeded();
   MG.running = true;
@@ -8709,17 +8652,16 @@ function buildGuide() {
     grid.appendChild(item);
   });
 
-  /* 코인 소비 4종 안내 */
+  /* 코인 소비 3종 안내 */
   const gc = $('#gCoin');
   if (gc) {
     const gates = (BOARD.gates || []).length;
     const rows = [
       ['👻', '유령 도둑', '<b>15코인</b> 상대 코인 강탈 · <b>48코인</b> 상대 별 1개 빼앗기', '지나가거나 도착하면 불러 세워요'],
       ['◎', '상점 5종', '파이프 <b>27</b> · 트리플 <b>20</b> · 랜덤 워프 <b>13</b> · 더블 12 · 황금 10', '상점에서 사는 필살기'],
-      ['⛩', '통행료 게이트', '지름길 입구에서 <b>12코인</b> · 안 내면 우회로', gates ? '이 맵에 ' + gates + '곳' : '지름길 입구'],
-      ['💥', m.gimmick ? m.gimmick.name : '대표 기믹', '<b>14코인</b>으로 내 턴에 강제 발동 (라운드 1회)', '상대를 방해해 판을 흔들기']
+      ['⛩', '통행료 게이트', '지름길 입구에서 <b>12코인</b> · 안 내면 우회로', gates ? '이 맵에 ' + gates + '곳' : '지름길 입구']
     ];
-    gc.innerHTML = '<div class="gc-t">🪙 코인 소비 4종 <em>코인을 써서 판을 뒤집어요</em></div>' +
+    gc.innerHTML = '<div class="gc-t">🪙 코인 소비 3종 <em>코인을 써서 판을 뒤집어요</em></div>' +
       rows.map(r => '<div class="gc-row"><div class="gc-ic">' + r[0] + '</div><div><div class="gc-n">' + r[1] + '</div>' +
         '<div class="gc-d">' + r[2] + ' · ' + r[3] + '</div></div></div>').join('');
   }
@@ -8812,23 +8754,7 @@ function updateFooter() {
   enableDice(false);
   if (p && !p.bot && G.phase === 'turn') enableDice(true);
   renderItems(p);
-  updatePaidBtn(p);
   updateMoveBar();
-}
-
-/* 유료 기믹 발동 버튼 상태 */
-function updatePaidBtn(p) {
-  const b = $('#btnPaid');
-  if (!b) return;
-  const pl = p || G.players[G.active];
-  const gm = PAID_GM[(BOARD.map && BOARD.map.kind) || 'meadow'] || PAID_GM.meadow;
-  const on = !!pl && !pl.bot && G.screen === 'board' && G.phase === 'turn' && !G.busy && !G.move && !G.ended;
-  const can = on && pl.coins >= PAID_GM_COST && !paidGmUsed(pl);
-  b.classList.toggle('dis', !can);
-  b.title = gm.name + ' — ' + gm.head;
-  b.dataset.k = can ? '1' : '0';
-  const lb = b.querySelector('.pbn');
-  if (lb) lb.textContent = gm.name;
 }
 
 function enableDice(on) {
@@ -9073,7 +8999,24 @@ function drawBoard(t, dt) {
     const k = clamp((fxn - fx.t0) / fx.dur, 0, 1);
     const ramp = fx.hold ? clamp(k / .2, 0, 1)
       : (k < .22 ? k / .22 : k > .72 ? (1 - k) / .28 : 1);
-    CAM.tx = fx.x; CAM.ty = fx.y;
+    const el = (fxn - fx.t0) / 1000;
+    let tx = fx.x, ty = fx.y;
+    /* 지점 간 이동: 이전 지점에서 새 지점까지 부드럽게 활강 */
+    if (fx.from && fx.slide) {
+      const q = easeInOut(clamp(el / fx.slide, 0, 1));
+      tx = lerp(fx.from.x, fx.x, q);
+      ty = lerp(fx.from.y, fx.y, q);
+    }
+    /* 줌인한 지점 주변을 좌우로 천천히 훑는 패닝 */
+    if (fx.pan) {
+      const st = Math.max(0, el - (fx.slide || 0));
+      const ph = fx.panPh || 0;
+      const amp = fx.pan * clamp(st / .9, 0, 1);
+      const wob = .55 + .45 * Math.sin(el * .42 + ph);
+      tx += Math.sin(st * .82 + ph) * amp * wob;
+      ty += Math.sin(st * .57 + ph * 1.7) * amp * .42;
+    }
+    CAM.tx = tx; CAM.ty = ty;
     CAM.ts = baseS * (1 + ((fx.zoom || 1.5) - 1) * easeInOut(clamp(ramp, 0, 1)));
   } else if (manual) {
     CAM.tx = CAM.x; CAM.ty = CAM.y;
@@ -9384,7 +9327,7 @@ function drawSpecialHighlights(c, t, x0, y0, x1, y1) {
 }
 
 /* =========================================================
-   코인 소비 4종 — 유령 도둑 NPC · 통행료 게이트 시각 표현
+   코인 소비 3종 — 유령 도둑 NPC · 통행료 게이트 시각 표현
    ========================================================= */
 function drawGhostNpc(c, t) {
   const i = BOARD.ghostIndex;
@@ -10698,14 +10641,6 @@ function bindInput() {
     AU.unlock();
     doTurn(p);
   });
-  const btnPaid = $('#btnPaid');
-  if (btnPaid) btnPaid.addEventListener('click', () => {
-    const p = activePlayer();
-    if (!p || p.bot || G.phase !== 'turn' || G.busy || G.move || pendingModal) return;
-    AU.unlock();
-    haptic(12);
-    runPaidGimmick(p);
-  });
   $('#btnMap').addEventListener('click', () => {
     if (MEASURE.on) toggleMeasure(false);
     CAM.mode = CAM.mode === 'full' ? 'follow' : 'full';
@@ -10731,10 +10666,10 @@ function bindInput() {
     const k = e.key.toLowerCase();
     if (k === 'escape') { if (MEASURE.on) { toggleMeasure(false); return; } cancelMove(); return; }
     if (k === 'l') { toggleMeasure(); return; }
-    if (k === 'q') padTap(0);
-    else if (k === 'p') padTap(1);
-    else if (k === 'z') padTap(2);
-    else if (k === 'm') padTap(3);
+    if (k === 'q') padTap(humanAt(0));
+    else if (k === 'p') padTap(humanAt(1));
+    else if (k === 'z') padTap(humanAt(2));
+    else if (k === 'm') padTap(humanAt(3));
     else if (k === ' ' || k === 'enter') {
       const p = activePlayer();
       if (p && !p.bot && G.phase === 'turn' && !G.busy) { AU.unlock(); doTurn(p); }
@@ -10789,7 +10724,6 @@ window.__pickleParty = {
       fork: G.fork ? { pos: G.fork.pos, opts: G.fork.opts.slice() } : null,
       gates: (BOARD.gates || []).map(g => ({ F: g.F, via: g.via, R: g.R, toll: g.toll, saved: g.saved, optK: g.optK })),
       ghostIndex: BOARD.ghostIndex, ghostFly: !!G.ghostFly, pipeSpawn: !!G.pipeSpawn,
-      paid: { round: G.round, used: G.players.map(p => p.paidRound === G.round) },
       items: ITEMS, itemKeys: Object.keys(ITEMS),
       preview: G.movePreview ? { target: G.movePreview.target, path: G.movePreview.path.slice() } : null,
       waitingForTap: !!G.forkWaiter
@@ -10811,6 +10745,25 @@ window.__pickleParty = {
     doTurn(p); return true;
   },
   tap(i) { padTap(i); return true; },
+  pads() {
+    const box = $('#pads');
+    const els = box ? Array.from(box.querySelectorAll('.pad')) : [];
+    return {
+      hosts: (MG.padHosts || []).slice(),
+      running: !!MG.running, demo: !!MG.demo, def: MG.def ? MG.def.key : null,
+      bots: G.players.filter(p => p.bot).map(p => p.i),
+      cls: box ? box.className : '',
+      box: box ? (() => { const r = box.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.x), y: Math.round(r.y) }; })() : null,
+      count: els.length,
+      visible: els.filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; }).length,
+      items: els.map(el => {
+        const r = el.getBoundingClientRect();
+        return { i: +el.dataset.i, name: el.querySelector('.pn').textContent, key: el.querySelector('.pk').textContent,
+          val: el.querySelector('.pv').textContent, dead: el.classList.contains('dead'),
+          x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+      })
+    };
+  },
   answer(v) { if (pendingModal) pendingModal.close(v); return true; },
   setAutoAnswer(v) { G.autoAnswer = !!v; },
   setAutoReady(v) { G.autoReady = !!v; return G.autoReady; },
@@ -10848,7 +10801,28 @@ window.__pickleParty = {
     return {
       total: INTRO_LEN, overview: INTRO_OVERVIEW, final: INTRO_FINAL,
       per: Math.round((INTRO_LEN - INTRO_OVERVIEW - INTRO_FINAL) / Math.max(1, sp.length)),
-      spots: sp.map(s => ({ key: s.key, idx: s.idx, x: Math.round(s.x), y: Math.round(s.y), title: s.title }))
+      spots: sp.map(s => ({ key: s.key, idx: s.idx, x: Math.round(s.x), y: Math.round(s.y), title: s.title, lines: s.lines.slice() }))
+    };
+  },
+  introState() {
+    const cap = $('#cutCap'), card = $('#msCard');
+    const tt = cap && cap.querySelector('.cc-tt'), tx = cap && cap.querySelector('.cs-tx');
+    const sub = cap && cap.querySelector('.cc-sub');
+    return {
+      on: CUT.on, intro: CUT.intro, spot: CUT.spot, skipAll: CUT.skipAll, demo: false,
+      capOn: !!(cap && cap.classList.contains('on')),
+      capTitle: tt ? tt.textContent : '',
+      capText: tx ? tx.textContent : '',
+      capCur: !!(cap && cap.querySelector('.cs-cur')),
+      capBox: sub ? (() => { const r = sub.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }; })() : null,
+      cardOn: !!(card && card.classList.contains('on')),
+      cardName: card ? card.querySelector('.ms-name').textContent : '',
+      cardZones: card ? card.querySelector('.ms-zones').textContent : '',
+      cardStory: card ? card.querySelector('.ms-story').textContent : '',
+      cam: { x: Math.round(CAM.x), y: Math.round(CAM.y), s: +CAM.s.toFixed(3), k: CAM.k || 0, pan: CAM.fx ? (CAM.fx.pan || 0) : 0 },
+      cut: $('#cut') ? $('#cut').className : '',
+      skipBtn: !!($('#cutSkip') && getComputedStyle($('#cutSkip')).display !== 'none'),
+      w: innerWidth, h: innerHeight
     };
   },
   mapName() { return { id: BOARD.map && BOARD.map.id, name: BOARD.map && BOARD.map.name, kind: BOARD.map && BOARD.map.kind, w: MAP_W, h: MAP_H }; },
@@ -11002,11 +10976,6 @@ window.__pickleParty = {
     const via = G.players[p.i].pos;
     return { coins: before - p.coins, from: pos0, pos: via, onShortcut: via === g.via, gate: g };
   },
-  async paid() {
-    const p = activePlayer() || G.players[0];
-    G.phase = 'turn';
-    return runPaidGimmick(p, true);
-  },
   buy(key) {
     const p = activePlayer() || G.players[0];
     if (!ITEMS[key]) return false;
@@ -11056,9 +11025,14 @@ window.__pickleParty = {
    ========================================================= */
 
 /* ---------- 카메라: 영화처럼 천천히 따라가기 ---------- */
-function camFly(x, y, zoom, ms, k) {
+function camFly(x, y, zoom, ms, k, opt) {
   const dur = Math.max(200, (ms || 900) / TIME_SCALE);
-  CAM.fx = { x: x, y: y, t0: performance.now(), dur: dur, zoom: zoom || 1.5, hold: true };
+  opt = opt || {};
+  CAM.fx = {
+    x: x, y: y, t0: performance.now(), dur: dur, zoom: zoom || 1.5, hold: true,
+    pan: opt.pan || 0, panPh: opt.panPh !== undefined ? opt.panPh : Math.random() * 6.283,
+    from: opt.from || null, slide: opt.slide || 0
+  };
   CAM.k = k || .055;
 }
 function camRelease() {
@@ -11211,30 +11185,35 @@ async function starSpawnCutscene() {
 }
 
 /* =========================================================
-   게임 시작: 맵 오프닝 인트로 (약 10초)
-   (a) 맵 전체 오버뷰 + 세계관 스토리 카드
-   (b) 중요 지점(대표 기믹·운명의 버튼·동료·상점·별) 줌인 하이라이트
+   게임 시작: 맵 오프닝 인트로 (약 30초)
+   (a) 맵 전체 오버뷰 + 세계관 스토리 카드 (타이핑 자막)
+   (b) 중요 지점(대표 기믹·운명의 버튼·동료·상점·별) 줌인 + 옆으로 패닝
    (c) 출발선 복귀 + "게임 시작!" → 본 게임
+   자막은 한 문장씩 타자 치는 모션으로 적힌다.
    ========================================================= */
-const INTRO_LEN = 10000;      /* 기본 재생 시간 (ms). 9~11초 범위 유지 */
-const INTRO_OVERVIEW = 2400;  /* (a) 오버뷰 */
-const INTRO_FINAL = 1600;     /* (c) 출발선 복귀 + 시작 */
+const INTRO_LEN = 30000;      /* 전체 재생 시간 (ms). 기존 10초의 3배 */
+const INTRO_OVERVIEW = 6200;  /* (a) 오버뷰 */
+const INTRO_FINAL = 3200;     /* (c) 출발선 복귀 + 시작 */
+const INTRO_SLIDE = 900;      /* (c) 출발선으로 활강하는 시간 */
 
 const MAP_STORY = {
   meadow: {
     icon: '🌿', badge: '기본', color: '#7be0ff',
     line: '바다가 감싼 초원 섬 — 옛 신전의 유적이 잠든 곳',
-    story: '출발 해변에서 나무다리를 건너 꽃밭 언덕 · 호수 숲을 지나 무지개 고원의 신전까지. 갈림길마다 지름길과 함정이 갈라져요.'
+    story: '출발 해변에서 나무다리를 건너 꽃밭 언덕 · 호수 숲을 지나 무지개 고원의 신전까지. 갈림길마다 지름길과 함정이 갈라져요.',
+    lines: ['바다가 감싼 초원 섬,', '옛 신전의 유적이 잠든 곳.', '나무다리를 건너 꽃밭 언덕으로,', '호수 숲을 지나 무지개 고원의 신전까지.']
   },
   volcano: {
     icon: '🌋', badge: '위험', color: '#ff9a4c',
     line: '식지 않는 화산 위에 세워진 성곽',
-    story: '성문 앞에서 성벽 돌다리를 넘고 용암 회랑을 지나 분화구 심장까지. 분화구가 터지면 금덩이가 쏟아지거나 불벼락이 내려요.'
+    story: '성문 앞에서 성벽 돌다리를 넘고 용암 회랑을 지나 분화구 심장까지. 분화구가 터지면 금덩이가 쏟아지거나 불벼락이 내려요.',
+    lines: ['식지 않는 화산 위에 세워진 성곽.', '성벽 돌다리를 넘고 용암 회랑을 지나', '분화구 심장까지 이어지는 길.', '불벼락이 내리면 모두가 물러나요.']
   },
   ice: {
     icon: '❄', badge: '변덕', color: '#7ef0e0',
     line: '끝없이 갈라지는 빙하의 나라',
-    story: '눈꽃 숲에서 유빙을 타고 빙하 계곡 · 얼음 동굴을 지나 오로라 언덕까지. 미끄러운 빙판에서 한 수가 승부를 가릅니다.'
+    story: '눈꽃 숲에서 유빙을 타고 빙하 계곡 · 얼음 동굴을 지나 오로라 언덕까지. 미끄러운 빙판에서 한 수가 승부를 가릅니다.',
+    lines: ['끝없이 갈라지는 빙하의 나라.', '유빙을 타고 빙하 계곡을 지나', '얼음 동굴과 오로라 언덕까지.', '미끄러운 빙판에서 한 수가 승부를 가릅니다.']
   }
 };
 
@@ -11259,6 +11238,94 @@ function mapStoryCard(show, map, st, ms) {
   card.classList.add('on');
 }
 
+/* ---------- 자막 타자기 (한 문장씩 또각또각) ---------- */
+const SUBT = { token: 0 };
+
+function capEl() { return $('#cutCap'); }
+
+function capShow(on) {
+  const el = capEl();
+  if (el) el.classList.toggle('on', !!on);
+}
+
+/* 로어서드(아이콘 + 제목 + 자막)를 새로 세팅하고 타이핑 대상 노드를 돌려준다 */
+function capSet(icon, title, color) {
+  const el = capEl();
+  if (!el) return null;
+  if (color) el.style.setProperty('--acc', color);
+  const ic = el.querySelector('.cc-ic'), tt = el.querySelector('.cc-tt'), tx = el.querySelector('.cs-tx');
+  if (ic) ic.textContent = icon || '';
+  if (tt) tt.textContent = '';
+  if (tx) tx.textContent = '';
+  return { tt: tt, tx: tx };
+}
+
+/* 한 글자씩 찍는 타이핑 (건너뛰기면 즉시 완성) */
+function typeChars(el, text, charMs, quiet) {
+  return new Promise(res => {
+    if (!el) { res(); return; }
+    text = text || '';
+    if (CUT.skipAll) { el.textContent = text; res(); return; }
+    const t0 = performance.now();
+    let i = 0, next = 0;
+    const step = () => {
+      if (CUT.skipAll) { el.textContent = text; res(); return; }
+      const ep = performance.now() - t0;
+      while (i < text.length && next <= ep) {
+        i++;
+        el.textContent = text.slice(0, i);
+        if (!quiet && i % 2 === 1 && text[i - 1] !== ' ') sfx('type');
+        next += charMs * (.66 + Math.random() * .72);
+      }
+      if (i >= text.length) { res(); return; }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+/* 여러 문장을 주어진 시간(budgetMs) 안에 한 문장씩 타이핑한다 */
+async function typeLines(el, lines, budgetMs) {
+  const my = ++SUBT.token;
+  lines = (lines || []).filter(s => s && s.length);
+  budgetMs = Math.max(180, budgetMs || 0);
+  if (!lines.length) { await cutWait(budgetMs); return; }
+  if (CUT.skipAll) {
+    if (el) el.textContent = lines[lines.length - 1];
+    await cutWait(60);
+    return;
+  }
+  const t0 = performance.now();
+  const gap = Math.min(520, Math.max(190, budgetMs * .09));
+  const totalChars = lines.reduce((s, l) => s + l.length, 0);
+  const typeBudget = Math.max(260, budgetMs - gap * (lines.length - 1) - 220);
+  const charMs = clamp(typeBudget / totalChars, 20, 64);
+  for (let k = 0; k < lines.length; k++) {
+    if (SUBT.token !== my || CUT.skipAll) break;
+    if (el) el.textContent = '';
+    await typeChars(el, lines[k], charMs);
+    if (CUT.skipAll || SUBT.token !== my) break;
+    if (k < lines.length - 1) await cutWait(gap);
+  }
+  const used = performance.now() - t0;
+  if (SUBT.token === my && used < budgetMs) await cutWait(budgetMs - used);
+}
+
+/* 챕터 시작 시각 대비 남은 시간만큼 기다린다 (전체 러닝타임 고정) */
+async function holdUntil(t0, ms) {
+  const left = ms - (performance.now() - t0);
+  if (left > 0) await cutWait(left);
+}
+
+/* 카메라를 지점으로 옮기며, 도착 뒤에는 그 주변을 옆으로 훑는 패닝 */
+function introCamTo(spot, zoom, ms, from, fine) {
+  camFly(spot.x, spot.y, zoom, ms, fine ? .0015 : .0045, {
+    pan: fine ? 0 : GRID * .8,
+    from: fine ? null : from,
+    slide: fine ? .3 : .85
+  });
+}
+
 /* 이 맵에서 소개할 중요 지점 — 출발선에서 가까운 순서로 둘러본다 */
 function introHighlightSpots() {
   const map = BOARD.map || MAPS[0];
@@ -11271,7 +11338,7 @@ function introHighlightSpots() {
     o = o || {};
     out.push({
       key: key, idx: idx, x: p.x, y: p.y, zoom: o.zoom || 1.95, camK: o.camK || .006,
-      title: o.title || '', sub: o.sub || '', icon: o.icon || '✦',
+      title: o.title || '', sub: o.sub || '', lines: (o.lines || []).slice(), icon: o.icon || '✦',
       color: o.color || '#ffe066', fx: o.fx || 'stars', sfx: o.sfx || 'star',
       good: o.good !== false, shake: o.shake || 0,
       d: Math.hypot(p.x - startP.x, p.y - startP.y)
@@ -11285,6 +11352,11 @@ function introHighlightSpots() {
     const kind = gm.kind || 'gate';
     push('gimmick', gi, {
       title: '대표 기믹 · ' + (gm.name || '기믹'), sub: gm.desc || '이 맵의 큰 기믹이 발동!',
+      lines: kind === 'valve'
+        ? ['용암이 터져 나와요.', '상대 코인 -3, 나는 +8.']
+        : kind === 'glacier'
+          ? ['빙판을 타고 별 쪽으로 6칸.', '코인도 같이 굴러와요.']
+          : ['별이 있는 쪽으로 순간이동.', '코인 8개도 같이 챙겨요.'],
       icon: kind === 'gate' ? '◎' : kind === 'valve' ? '▲' : '❄',
       color: kind === 'valve' ? '#ff8a3c' : kind === 'glacier' ? '#7ef0e0' : '#c9a8ff',
       fx: kind === 'valve' ? 'eruption' : kind === 'glacier' ? 'glacier' : 'stars',
@@ -11296,23 +11368,26 @@ function introHighlightSpots() {
   const fate = (BOARD.fateIdx || [])[0];
   const fm = FATE[map.kind] || FATE.meadow;
   push('fate', fate, {
-    title: '운명의 버튼', sub: fm.event + ' — 좋은 일? 나쁜 일?', icon: '!',
+    title: '운명의 버튼', sub: fm.event + ' — 좋은 일? 나쁜 일?',
+    lines: [fm.event + ', 버튼을 누르면 발동!', '좋은 일? 나쁜 일?'], icon: '!',
     color: '#ffd166', fx: 'pulse', sfx: 'event', zoom: 1.9
   });
   /* 동료 */
   push('ally', firstOf('ally'), {
-    title: '동료가 기다리는 곳', sub: '여기서 멈추면 동료가 함께해요 · 이동 +1~2칸', icon: '🤝',
+    title: '동료가 기다리는 곳', sub: '여기서 멈추면 동료가 함께해요 · 이동 +1~2칸',
+    lines: ['동료가 기다리는 자리.', '같이 걸으면 이동 거리가 늘어나요.'], icon: '🤝',
     color: '#ff8fc8', fx: 'hearts', sfx: 'buy', zoom: 2.0
   });
   /* 상점 */
   push('shop', firstOf('shop'), {
-    title: '상점 · 필살기', sub: '황금 파이프 27 · 트리플 20 · 랜덤 워프 13 · 더블 12 · 황금 10', icon: '🛒',
+    title: '상점 · 필살기', sub: '황금 파이프 27 · 트리플 20 · 랜덤 워프 13 · 더블 12 · 황금 10',
+    lines: ['코인으로 주사위 아이템을 사요.', '황금 파이프 · 트리플 · 랜덤 워프.'], icon: '🛒',
     color: '#ffc23c', fx: 'shop', sfx: 'buy', zoom: 2.0
   });
   /* 별은 마지막에 (그리고 출발선으로 복귀) */
-  const sd = starDistOf(BOARD.start);
   push('star', G.starIndex, {
     title: '별이 숨은 자리', sub: '코인 10개로 별 구매 · 누가 사면 새 자리로 이동!',
+    lines: ['별 하나를 사려면 코인 10개.', '누가 먼저 사면 별은 다른 자리로.'],
     icon: '★', color: '#ffe066', fx: 'stars', sfx: 'star', zoom: 2.0, shake: 6
   });
 
@@ -11328,59 +11403,102 @@ async function introCutscene() {
   const map = BOARD.map || MAPS[0];
   const st = MAP_STORY[map.kind] || MAP_STORY.meadow;
   const spots = introHighlightSpots();
-  const per = Math.max(900, Math.round((INTRO_LEN - INTRO_OVERVIEW - INTRO_FINAL) / Math.max(1, spots.length)));
+  const per = Math.max(1800, Math.round((INTRO_LEN - INTRO_OVERVIEW - INTRO_FINAL) / Math.max(1, spots.length)));
 
   showCutShell({ color: st.color });
   el.classList.add('intro');
   document.body.classList.add('introOn');
   CUT.intro = true;
-  CUT.spot = null;
+  CUT.spot = 'overview';
   sfx('warp');
 
-  /* ---------- (a) 맵 전체 오버뷰 + 세계관 이야기 ---------- */
+  /* ---------- (a) 맵 전체 오버뷰 + 세계관 이야기 (한 문장씩 타이핑) ---------- */
   const startP = tilePos(BOARD.start);
+  const ovT0 = performance.now();
   CAM.mode = 'full';
   CAM.manual = 0;
   CAM.k = .02;                     /* 부드럽게 줌아웃 */
+  capShow(false);
   mapStoryCard(true, map, st, INTRO_OVERVIEW);
+  const card = el.querySelector('#msCard');
+  const cName = card && card.querySelector('.ms-name');
+  const cZones = card && card.querySelector('.ms-zones');
+  const cStory = card && card.querySelector('.ms-story');
+  if (cName) cName.textContent = '';
+  if (cZones) cZones.textContent = '';
+  if (cStory) cStory.textContent = '';
   ring(startP.x, startP.y, 'rgba(255,255,255,.55)', GRID * .3, GRID * 2.6, 1500, 5);
   burst(startP.x, startP.y, st.color, 18);
-  await cutWait(INTRO_OVERVIEW);
+  await cutWait(340);
+  await typeChars(cName, map.name || '', 58, true);
+  await cutWait(110);
+  await typeChars(cZones, (map.zones || []).map(o => o.name).join(' · '), 14, true);
+  await cutWait(140);
+  await typeLines(cStory, st.lines, Math.max(900, INTRO_OVERVIEW - 520 - (performance.now() - ovT0)));
+  await holdUntil(ovT0, INTRO_OVERVIEW);
   mapStoryCard(false);
+  await cutWait(140);
 
-  /* ---------- (b) 중요 지점 줌인 하이라이트 ---------- */
+  /* ---------- (b) 중요 지점 줌인 + 옆으로 패닝 (+ 한 문장씩 자막) ---------- */
   CAM.mode = 'follow';
+  let from = { x: CAM.x, y: CAM.y };
   for (let i = 0; i < spots.length; i++) {
     const s = spots[i];
+    const bt = performance.now();
     CUT.spot = s.key;
-    ring(s.x, s.y, s.color, GRID * .2, GRID * 1.1, Math.min(1100, per * .9), 5);
-    await cutBeat({
-      title: s.title, sub: s.sub, icon: s.icon,
-      x: s.x, y: s.y, zoom: s.zoom, camK: CUT.skipAll ? .0015 : s.camK,
-      fx: CUT.skipAll ? null : s.fx, good: s.good, color: s.color,
-      sfx: s.sfx, shake: s.shake, ms: per
-    });
+    const parts = capSet(s.icon, s.title, s.color);
+    capShow(true);
+    introCamTo(s, s.zoom, per, from, CUT.skipAll);
+    if (!CUT.skipAll) {
+      ring(s.x, s.y, s.color, GRID * .2, GRID * 1.1, Math.min(1500, per * .85), 5);
+      CutFX.start(s.fx, Math.min(per, 3200), s.color, s.good);
+      sfx(s.sfx);
+      if (s.sfx2) setTimeout(() => sfx(s.sfx2), 240);
+      if (s.shake) setTimeout(() => screenShake(s.shake, 420), 110);
+      burst(s.x, s.y, s.color, 16);
+    }
+    await typeChars(parts && parts.tt, s.title, 32);
+    const left = Math.max(600, per - (performance.now() - bt) - 180);
+    await typeLines(parts && parts.tx, s.lines, left);
+    await holdUntil(bt, per);
+    from = { x: CAM.x, y: CAM.y };
   }
 
   /* ---------- (c) 출발선 복귀 → 게임 시작 ---------- */
   const first = G.players && G.players[0] ? G.players[0].name : '피클';
+  const ft = performance.now();
   CUT.spot = 'return';
-  camFly(startP.x, startP.y, 1.35, 700, CUT.skipAll ? .0015 : .004);
+  capShow(false);
+  CutFX.stop();
+  introCamTo(startP, 1.35, INTRO_SLIDE, from, CUT.skipAll);
   if (!CUT.skipAll) sfx('warp');
-  await cutWait(700);
+  await cutWait(INTRO_SLIDE);
+
   CUT.spot = 'start';
-  await cutBeat({
-    title: '게임 시작!', sub: '라운드 1 · ' + first + '부터 주사위를 굴려요', icon: '▶',
-    x: startP.x, y: startP.y, zoom: 1.25, camK: CUT.skipAll ? .0015 : .008,
-    fx: CUT.skipAll ? null : 'stars', color: '#7be0ff', sfx: 'go', shake: 4,
-    ms: Math.max(600, INTRO_FINAL - 700)
-  });
+  const parts = capSet('▶', '게임 시작!', '#7be0ff');
+  capShow(true);
+  introCamTo(startP, 1.25, INTRO_FINAL - INTRO_SLIDE, from, CUT.skipAll);
+  if (!CUT.skipAll) {
+    CutFX.start('stars', 1800, '#7be0ff', true);
+    sfx('go');
+    burst(startP.x, startP.y, '#7be0ff', 18);
+    setTimeout(() => screenShake(4, 360), 100);
+  }
+  await typeChars(parts && parts.tt, '게임 시작!', 34);
+  await typeLines(parts && parts.tx,
+    ['라운드 1, ' + first + '부터 주사위를 굴려요.', '별을 가장 많이 모은 사람이 우승!'],
+    Math.max(500, INTRO_FINAL - INTRO_SLIDE - 700 - (performance.now() - ft - INTRO_SLIDE)));
+  await holdUntil(ft, INTRO_FINAL);
 
   CUT.spot = null;
   CUT.intro = false;
   el.classList.remove('intro');
   document.body.classList.remove('introOn');
+  capShow(false);
   mapStoryCard(false);
+  if (cName) cName.textContent = map.name || '';
+  if (cZones) cZones.textContent = (map.zones || []).map(o => o.name).join(' · ');
+  if (cStory) cStory.textContent = st.story || '';
   hideCutShell();
   await wait(120);
 }
