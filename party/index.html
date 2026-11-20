@@ -391,10 +391,10 @@ canvas{display:block}
   gap:7px;padding:0 14px;opacity:0;transform:translateY(12px);pointer-events:none;
   transition:opacity .3s ease,transform .3s cubic-bezier(.2,1.1,.35,1)}
 #cutCap.on{opacity:1;transform:none}
-#cutCap .cc-head{display:flex;align-items:center;justify-content:center;gap:7px;max-width:100%}
-#cutCap .cc-ic{font-size:21px;line-height:1;font-weight:900;color:var(--acc,#ffe066);flex:none;
+#cutCap .cc-head{display:flex;align-items:flex-start;justify-content:center;gap:7px;max-width:100%}
+#cutCap .cc-ic{font-size:21px;line-height:1;font-weight:900;color:var(--acc,#ffe066);flex:none;margin-top:3px;
   text-shadow:0 0 16px var(--acc,#ffe066),0 2px 0 rgba(0,0,0,.55)}
-#cutCap .cc-tt{font-size:22px;font-weight:900;letter-spacing:-.6px;color:#fff;text-align:left;max-width:calc(100% - 34px);
+#cutCap .cc-tt{font-size:22px;font-weight:900;letter-spacing:-.6px;color:#fff;text-align:center;max-width:min(86vw,420px);
   line-height:1.2;word-break:keep-all;
   text-shadow:0 3px 0 rgba(0,0,0,.62),0 0 26px rgba(255,214,90,.42)}
 #cutCap .cc-sub{position:relative;min-height:42px;width:min(88vw,430px);display:flex;align-items:center;justify-content:center;
@@ -11255,7 +11255,12 @@ function capSet(icon, title, color) {
   if (color) el.style.setProperty('--acc', color);
   const ic = el.querySelector('.cc-ic'), tt = el.querySelector('.cc-tt'), tx = el.querySelector('.cs-tx');
   if (ic) ic.textContent = icon || '';
-  if (tt) tt.textContent = '';
+  if (tt) {
+    tt.textContent = '';
+    /* 긴 제목은 한 줄에 들어가도록 글자를 살짝 줄인다 */
+    const len = (title || '').length;
+    tt.style.fontSize = clamp(22 - Math.max(0, len - 9) * .72, 15, 22).toFixed(1) + 'px';
+  }
   if (tx) tx.textContent = '';
   return { tt: tt, tx: tx };
 }
