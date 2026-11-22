@@ -495,6 +495,82 @@ body.introOn #turnTag{opacity:0;transition:opacity .25s;pointer-events:none}
 @keyframes readyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
 .mo-hint{font-size:9.5px;font-weight:800;color:#c9d2f5;letter-spacing:.2px}
 .mo-count{font-size:76px;font-weight:900;color:#ffe066;line-height:1;text-shadow:0 6px 0 rgba(0,0,0,.4);animation:pop .26s ease-out}
+
+/* ============ 미니게임 모드 (자유 선택) ============ */
+.alt-btn{margin-top:0;height:52px;border-radius:17px;font-size:15.5px;font-weight:900;color:#0f3d2a;
+  background:linear-gradient(180deg,#dcffe8,#8fe3a0 66%,#5fd07c);
+  box-shadow:0 5px 0 #2f9a4a,0 12px 20px rgba(47,154,74,.28),inset 0 2px 0 rgba(255,255,255,.7);letter-spacing:.1px}
+.alt-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #2f9a4a}
+#scMgSel{background:linear-gradient(180deg,#5b4ba8,#2a2050 58%,#170f2c);color:#fff}
+.msel-top{display:flex;align-items:center;gap:10px;padding:calc(var(--safe-t) + 12px) 12px 4px}
+.msel-back{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.16);color:#fff;font-size:17px;font-weight:900;flex:none}
+.msel-title{font-size:19px;font-weight:900;letter-spacing:-.4px;line-height:1.1}
+.msel-sub{font-size:10px;font-weight:800;color:#c9bfff}
+.msel-tabs{display:flex;gap:5px;padding:4px 12px 6px}
+.msel-tabs button{flex:1;height:34px;border-radius:11px;font-size:11px;font-weight:900;color:#d7cdff;background:rgba(255,255,255,.10)}
+.msel-tabs button.on{background:#ffe066;color:#3a2a00;box-shadow:0 3px 0 #cf8108}
+.msel-count{font-size:10.5px;font-weight:800;color:#b9aee8;padding:0 14px 5px;min-height:14px}
+.msel-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 10px 8px;align-content:start}
+.mgcard{display:flex;flex-direction:column;gap:2px;text-align:left;background:rgba(255,255,255,.10);border-radius:14px;padding:8px 9px;border:2px solid transparent;min-height:60px}
+.mgcard.on{border-color:#ffe066;background:rgba(255,224,102,.16);box-shadow:0 6px 16px rgba(255,192,40,.22)}
+.mgcard .mgc-top{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.mgcard .mgc-tag{font-style:normal;font-size:8.5px;font-weight:900;border-radius:5px;padding:1px 4px;background:#6f5fd0;color:#ede7ff;flex:none}
+.mgcard .mgc-tag.t2v2{background:#4a86ff;color:#fff}
+.mgcard .mgc-tag.t1v3{background:#ff5364;color:#fff}
+.mgcard .mgc-n{font-size:12px;font-weight:900;color:#fff;line-height:1.2}
+.mgcard .mgc-s{font-size:9px;font-weight:800;color:#c6bced;line-height:1.35}
+.msel-foot{padding:10px 12px calc(var(--safe-b) + 10px);display:flex;flex-direction:column;gap:7px;
+  background:linear-gradient(180deg,rgba(23,15,44,0) 0%,rgba(23,15,44,.94) 16%,#170f2c 48%)}
+.msel-foot .row{margin:0 2px}
+.msel-foot .row-l{color:#c9bfff}
+.msel-players{display:flex;gap:5px}
+.pslot{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;background:rgba(255,255,255,.10);border-radius:11px;padding:4px 2px;border:2px solid transparent}
+.pslot.off{opacity:.32}
+.pslot .av{width:22px;height:22px}
+.pslot .psn{font-size:9px;font-weight:900;color:#fff}
+.pslot .pst{font-size:8.5px;font-weight:900;color:#9fe6b8}
+.pslot .pst.bot{color:#ffb3c6}
+#btnMgPlay{font-size:17px;height:50px;margin-top:1px}
+.mo-btns{display:flex;gap:8px;margin-top:9px;width:100%;max-width:300px}
+.mo-btn{flex:1;height:46px;border-radius:14px;font-size:14.5px;font-weight:900;color:#5a3300;
+  background:linear-gradient(180deg,#ffe066,#ffb524 62%,#ff9c14);
+  box-shadow:0 5px 0 #cf8108,inset 0 2px 0 rgba(255,255,255,.7)}
+.mo-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #cf8108}
+.mo-btn.ghost{background:rgba(255,255,255,.14);color:#e6eaff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.28)}
+
+/* ============ 발판으로 팀 정하기 ============ */
+.team-pick{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
+  background:rgba(8,10,24,.84);backdrop-filter:blur(4px);padding:12px}
+.team-pick.on{display:flex}
+.tp-card{width:100%;max-width:370px;display:flex;flex-direction:column;align-items:center;gap:7px;
+  background:linear-gradient(180deg,rgba(42,50,96,.98),rgba(16,20,42,.99));border-radius:22px;padding:14px 12px 12px;
+  box-shadow:0 20px 46px rgba(0,0,0,.55),0 0 0 2px rgba(255,255,255,.10)}
+.tp-head{font-size:17px;font-weight:900;color:#fff;text-align:center;line-height:1.25}
+.tp-head em{font-style:normal;font-size:11px;font-weight:900;color:#1b1330;background:#ffe066;border-radius:7px;padding:2px 7px;margin-left:4px;vertical-align:middle}
+.tp-sub{font-size:10px;font-weight:800;color:#c9d2f5;text-align:center;line-height:1.45}
+.tp-sub b{color:#ffe066}
+.tp-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;margin-top:2px}
+.tp-pad{display:flex;flex-direction:column;align-items:center;gap:1px;background:rgba(255,255,255,.07);border-radius:12px;
+  padding:5px 3px;border:2px solid transparent;transition:.2s;opacity:0;transform:translateY(8px)}
+.tp-pad.in{opacity:1;transform:none}
+.tp-pad .av{width:26px;height:26px}
+.tp-pad .tp-nm{font-size:10.5px;font-weight:900;color:#fff}
+.tp-pad .tp-ico{width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.tp-pad .tp-tile{font-size:9px;font-weight:800;color:#cfd6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tp-pad.t-blue{border-color:#4a86ff;background:rgba(74,134,255,.22);box-shadow:0 0 0 3px rgba(74,134,255,.18)}
+.tp-pad.t-red{border-color:#ff5364;background:rgba(255,83,100,.20);box-shadow:0 0 0 3px rgba(255,83,100,.16)}
+.tp-msg{font-size:11.5px;font-weight:900;color:#ffe066;min-height:16px;text-align:center;line-height:1.35}
+.tp-wheel{display:none;width:100%;gap:4px;grid-template-columns:1fr}
+.tp-wheel.on{display:grid}
+.tp-opt{font-size:11px;font-weight:900;color:#cfd6ff;background:rgba(255,255,255,.07);border-radius:10px;padding:6px 8px;
+  text-align:center;border:2px solid transparent;transition:transform .1s,background .1s}
+.tp-opt.on{border-color:#ffe066;background:rgba(255,224,102,.20);color:#fff;transform:scale(1.03)}
+.tp-opt.on::before{content:'▶ ';color:#ffe066;font-size:10px}
+.tp-wheel.spin .tp-opt{opacity:.62}
+.tp-wheel.spin .tp-opt.on{opacity:1}
+.tp-wheel .tp-wh{font-size:10px;font-weight:900;color:#ffe066;text-align:center;letter-spacing:1px}
+.tp-final{font-size:11.5px;font-weight:900;color:#9dffbd;min-height:16px;text-align:center;line-height:1.35}
+@media (min-width:430px){ .tp-row{grid-template-columns:repeat(4,1fr)} }
 </style>
 </head>
 <body>
@@ -515,6 +591,7 @@ body.introOn #turnTag{opacity:0;transition:opacity .25s;pointer-events:none}
         <div class="row" style="margin-top:9px"><span class="row-l">라운드</span><div class="seg" id="segRounds"></div></div>
       </div>
       <button id="btnStart" class="big-btn">파티 시작!</button>
+      <button id="btnMiniMode" class="alt-btn">🎯 미니게임 모드 · 30종 자유 선택</button>
       <div class="hint">섬을 잇는 한 줄 트랙 3종 · 발판 9종 · 주사위 1~12<br>길은 자동으로 따라가고, <b>갈림길에서만</b> 방향을 골라요<br>📏 길 측정 · 미니게임은 개인전 위주, 가끔 2대2/1대3</div>
     </div>
   </section>
@@ -571,10 +648,27 @@ body.introOn #turnTag{opacity:0;transition:opacity .25s;pointer-events:none}
     <div id="miniOverlay" class="mini-overlay"></div>
   </section>
 
+  <section id="scMgSel" class="screen">
+    <div class="msel-top">
+      <button id="btnMgBack" class="msel-back" aria-label="뒤로">←</button>
+      <div><div class="msel-title">미니게임 모드</div><div class="msel-sub">30종 중 골라서 바로 플레이</div></div>
+    </div>
+    <div class="msel-tabs" id="mselTabs"></div>
+    <div class="msel-count" id="mselCount"></div>
+    <div class="msel-list" id="mselList"></div>
+    <div class="msel-foot">
+      <div class="row"><span class="row-l">인원</span><div class="seg" id="mselSeg"></div></div>
+      <div class="msel-players" id="mselPlayers"></div>
+      <button id="btnMgPlay" class="big-btn">이 게임 시작!</button>
+    </div>
+  </section>
+
   <section id="scResult" class="screen">
     <canvas id="cvResult"></canvas>
     <div id="resultUi"></div>
   </section>
+
+  <div id="teamPick" class="team-pick"></div>
 
   <div id="modal"><div class="mcard" id="modalCard"></div></div>
 
@@ -6529,7 +6623,10 @@ async function minigamePhase() {
   const mg = pickMinigame();
   await runRoulette(mg);
   if (G.ended) return;
-  await playMinigame(mg);
+  /* 2대2 · 1대3 은 지금 밟고 있는 발판 그림으로 팀을 정한다 (안 맞으면 룰렛) */
+  const preset = mg.team ? await pickTeamsByPad(mg.team) : null;
+  if (G.ended) return;
+  await playMinigame(mg, preset);
   if (G.ended) return;
   /* 스타는 라운드가 바뀌어도 그대로 — 누가 별을 사면 그 자리에서 즉시 새 위치로 이동 */
   G.round++;
@@ -6582,7 +6679,7 @@ function pickMinigame() {
   return m;
 }
 
-async function awardMinigame(ranks, m, def) {
+async function awardMinigame(ranks, m, def, free) {
   /* 팀전: 이긴 팀 전원 +10, 진 팀 전원 +2 (무승부 +6) */
   if (m && m.teamResult) {
     const win = m.teamResult.win;
@@ -6593,11 +6690,13 @@ async function awardMinigame(ranks, m, def) {
       const coins = win === 'draw' ? 6 : (isWin ? 10 : 2);
       ids.forEach(i => {
         const p = G.players[i];
-        p.coins += coins;
-        p.mgRank += (win === 'draw' ? 2 : (isWin ? 1 : 3));
-        if (isWin) p.mgWins++;
+        if (!free) {
+          p.coins += coins;
+          p.mgRank += (win === 'draw' ? 2 : (isWin ? 1 : 3));
+          if (isWin) p.mgWins++;
+        }
         out.push({
-          i: i, rank: win === 'draw' ? 1 : (isWin ? 1 : 2), coins: coins,
+          i: i, rank: win === 'draw' ? 1 : (isWin ? 1 : 2), coins: free ? 0 : coins,
           value: isWin ? '승리' : (win === 'draw' ? '무승부' : '패배')
         });
       });
@@ -6616,10 +6715,12 @@ async function awardMinigame(ranks, m, def) {
     const p = G.players[r.i];
     let total = coins;
     if (hasAllyBonus(p, 'mini') && coins > 0) total += 2;
-    p.coins += total;
-    p.mgRank += (rank + 1);
-    if (rank === 0) p.mgWins++;
-    out.push({ i: r.i, rank: rank + 1, coins: total, value: r.label });
+    if (!free) {
+      p.coins += total;
+      p.mgRank += (rank + 1);
+      if (rank === 0) p.mgWins++;
+    }
+    out.push({ i: r.i, rank: rank + 1, coins: free ? 0 : total, value: r.label });
   });
   updateHud();
   return out;
@@ -6780,10 +6881,339 @@ function resizeStage() {
   return c;
 }
 
+/* ---------- 발판으로 팀 정하기 (2대2 · 1대3) ----------
+   보드에서 지금 밟고 있는 발판 그림이 같으면 같은 팀.
+   4명이 다 다른 발판이거나 인원 비율이 맞지 않으면 룰렛으로 정한다. */
+const TP_MODE_LABEL = { '2v2': '2 대 2', '1v3': '1 대 3' };
+
+function tileGlyphEl(type, size) {
+  const cv = document.createElement('canvas');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(size * dpr); cv.height = Math.round(size * dpr);
+  cv.style.width = size + 'px'; cv.style.height = size + 'px';
+  const c = cv.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.translate(size / 2, size / 2);
+  c.scale(size / 34, size / 34);   /* drawTileIcon 은 100 기준 좌표라 아이콘이 꽉 차게 확대 */
+  try { drawTileIcon(c, type, 100); } catch (e) { }
+  return cv;
+}
+
+function padTileOf(i) {
+  const p = G.players[i];
+  const ty = (BOARD && BOARD.types && BOARD.types.length) ? (BOARD.types[p.pos] || 'coin') : 'coin';
+  const info = TILE_INFO[ty] || TILE_INFO.coin;
+  return { i: i, type: ty, name: info.name, badge: info.badge };
+}
+
+function teamsObj(mode, blue, red) {
+  const t = { blue: blue.slice(), red: red.slice(), teamOf: {}, mode: mode };
+  blue.forEach(i => { t.teamOf[i] = 'blue'; });
+  red.forEach(i => { t.teamOf[i] = 'red'; });
+  return t;
+}
+
+function padGroupPlan(mode) {
+  const items = G.players.map((p, i) => padTileOf(i));
+  const groups = [];
+  items.forEach(it => {
+    const g = groups.filter(x => x.type === it.type)[0];
+    if (g) g.ids.push(it.i); else groups.push({ type: it.type, name: it.name, ids: [it.i] });
+  });
+  groups.sort((a, b) => b.ids.length - a.ids.length);
+  const need = mode === '1v3' ? [3, 1] : [2, 2];
+  let teams = null;
+  if (groups.length === 2 && groups[0].ids.length === need[0] && groups[1].ids.length === need[1]) {
+    if (mode === '1v3') {
+      const solo = groups.filter(g => g.ids.length === 1)[0];
+      const trio = groups.filter(g => g.ids.length === 3)[0];
+      teams = teamsObj('1v3', solo.ids, trio.ids);
+    } else {
+      teams = teamsObj('2v2', groups[0].ids, groups[1].ids);
+    }
+  }
+  return {
+    items: items, groups: groups, natural: !!teams, teams: teams,
+    types: items.map(it => it.type)
+  };
+}
+
+function pairOptions() {
+  const idx = G.players.map((p, i) => i);
+  const out = [];
+  const a = idx[0];
+  for (let k = 1; k < idx.length; k++) {
+    const rest = idx.filter(i => i !== a && i !== idx[k]);
+    if (rest.length !== 2) continue;
+    out.push([[a, idx[k]], rest]);
+  }
+  return out;
+}
+
+function teamNames(ids) { return ids.map(i => G.players[i].name).join('·'); }
+
+async function showTeamPick(mode, plan, opts, target, teams) {
+  const box = $('#teamPick');
+  if (!box) return;
+  const modeTag = TP_MODE_LABEL[mode] || '';
+  let html = '<div class="tp-card">' +
+    '<div class="tp-head">발판으로 팀 정하기 <em>' + modeTag + '</em></div>' +
+    '<div class="tp-sub">지금 밟고 있는 <b>발판 그림</b>이 같으면 같은 팀!</div>' +
+    '<div class="tp-row">';
+  plan.items.forEach(it => {
+    const p = G.players[it.i];
+    html += '<div class="tp-pad" data-i="' + it.i + '">' + avatarSVG(p.ci, 26) +
+      '<div class="tp-nm">' + p.name + '</div>' +
+      '<div class="tp-ico" id="tpIco' + it.i + '"></div>' +
+      '<div class="tp-tile">' + it.name + '</div></div>';
+  });
+  html += '</div><div class="tp-msg" id="tpMsg"></div>' +
+    '<div class="tp-wheel" id="tpWheel">';
+  opts.forEach((o, k) => { html += '<div class="tp-opt" data-k="' + k + '">' + o.label + '</div>'; });
+  html += '</div><div class="tp-final" id="tpFinal"></div></div>';
+  box.innerHTML = html;
+  box.classList.add('on');
+  plan.items.forEach(it => {
+    const host = $('#tpIco' + it.i);
+    if (host) host.appendChild(tileGlyphEl(it.type, 28));
+  });
+  const pads = Array.prototype.slice.call(box.querySelectorAll('.tp-pad'));
+  for (let k = 0; k < pads.length; k++) { pads[k].classList.add('in'); await wait(90); }
+  await wait(300);
+  const msg = $('#tpMsg'), final = $('#tpFinal');
+  const paintTeam = () => {
+    teams.blue.forEach(i => {
+      const el = box.querySelector('.tp-pad[data-i="' + i + '"]');
+      if (el) el.classList.add('t-blue');
+    });
+    teams.red.forEach(i => {
+      const el = box.querySelector('.tp-pad[data-i="' + i + '"]');
+      if (el) el.classList.add('t-red');
+    });
+    if (final) final.textContent = '파랑 ' + teamNames(teams.blue) + '  vs  빨강 ' + teamNames(teams.red);
+  };
+  if (plan.natural) {
+    sfx('win');
+    if (msg) msg.textContent = '같은 발판끼리 팀 확정!';
+    paintTeam();
+    await wait(1300);
+  } else {
+    if (msg) msg.textContent = '발판이 겹치지 않아요 → 룰렛으로 정해요!';
+    const wheel = $('#tpWheel');
+    if (wheel) { wheel.classList.add('on', 'spin'); }
+    await wait(700);
+    const chips = Array.prototype.slice.call(box.querySelectorAll('.tp-opt'));
+    const n = chips.length;
+    const steps = n * 3 + target + 1;
+    for (let k = 0; k < steps; k++) {
+      chips.forEach(c2 => c2.classList.remove('on'));
+      chips[k % n].classList.add('on');
+      sfx('tick');
+      await wait(55 + (k / Math.max(1, steps - 1)) * 225);
+    }
+    chips.forEach(c2 => c2.classList.remove('on'));
+    if (chips[target]) chips[target].classList.add('on');
+    sfx('win');
+    if (msg) msg.textContent = '룰렛 결과!';
+    paintTeam();
+    await wait(1200);
+  }
+  box.classList.remove('on');
+  box.innerHTML = '';
+  await wait(140);
+}
+
+async function pickTeamsByPad(mode) {
+  if (!G.players || G.players.length !== 4) {
+    const t = makeTeams(mode, G.players);
+    G.lastTeamPick = { mode: mode, natural: false, fallback: true, blue: t.blue.slice(), red: t.red.slice(), types: [] };
+    return t;
+  }
+  const plan = padGroupPlan(mode);
+  const opts = [];
+  if (mode === '1v3') {
+    G.players.forEach((p, i) => { opts.push({ ids: [i], label: p.name + ' 혼자', solo: i }); });
+  } else {
+    pairOptions().forEach(pr => {
+      opts.push({ ids: pr[0].concat(pr[1]), label: teamNames(pr[0]) + ' vs ' + teamNames(pr[1]), pair: pr });
+    });
+  }
+  const target = plan.natural ? -1 : randInt(opts.length);
+  let teams = plan.teams;
+  if (!teams) {
+    if (mode === '1v3') {
+      const solo = opts[target].solo;
+      teams = teamsObj('1v3', [solo], G.players.map((p, i) => i).filter(i => i !== solo));
+    } else {
+      teams = teamsObj('2v2', opts[target].pair[0], opts[target].pair[1]);
+    }
+  }
+  G.lastTeamPick = {
+    mode: mode, natural: plan.natural, types: plan.types.slice(),
+    groups: plan.groups.map(g => ({ type: g.type, ids: g.ids.slice() })),
+    blue: teams.blue.slice(), red: teams.red.slice(), spinTarget: target
+  };
+  await showTeamPick(mode, plan, opts, target, teams);
+  return teams;
+}
+
+/* ---------- 미니게임 모드 (자유 선택) ---------- */
+G.msel = { cat: 'all', key: null, count: 1, bots: [false, true, true, true] };
+G.freeMode = false;
+G.freeBusy = false;
+
+function mgModeOf(m) { return m.team || 'ffa'; }
+function mgModeTag(k) { return k === '2v2' ? '2:2' : k === '1v3' ? '1:3' : '개인'; }
+function cshuffle(a) {
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = b[i]; b[i] = b[j]; b[j] = t; }
+  return b;
+}
+
+function openMiniMode() {
+  G.freeMode = true;
+  if (!G.msel.key || !MINI_BY_KEY[G.msel.key]) G.msel.key = MINIGAMES[0].key;
+  setScreen('mgsel');
+  buildMgSel();
+}
+
+function buildMgSel() {
+  const tabs = $('#mselTabs');
+  if (!tabs) return;
+  const counts = { all: MINIGAMES.length, ffa: 0, '2v2': 0, '1v3': 0 };
+  MINIGAMES.forEach(m => { counts[mgModeOf(m)]++; });
+  const cats = [['all', '전체'], ['ffa', '개인전'], ['2v2', '2대2'], ['1v3', '1대3']];
+  tabs.innerHTML = '';
+  cats.forEach(c2 => {
+    const b = document.createElement('button');
+    b.textContent = c2[1] + ' ' + counts[c2[0]];
+    b.className = G.msel.cat === c2[0] ? 'on' : '';
+    b.onclick = () => { G.msel.cat = c2[0]; sfx('click'); buildMgSel(); };
+    tabs.appendChild(b);
+  });
+  const sel = G.msel.key ? MINI_BY_KEY[G.msel.key] : null;
+  if (sel && sel.team) G.msel.count = 4;
+  const list = $('#mselList');
+  list.innerHTML = '';
+  const items = MINIGAMES.filter(m => G.msel.cat === 'all' || mgModeOf(m) === G.msel.cat);
+  items.forEach(m => {
+    const card = document.createElement('button');
+    card.className = 'mgcard' + (G.msel.key === m.key ? ' on' : '');
+    const tag = mgModeOf(m);
+    card.dataset.key = m.key;
+    card.innerHTML = '<div class="mgc-top"><em class="mgc-tag' + (tag === 'ffa' ? '' : ' t' + tag) + '">' +
+      mgModeTag(tag) + '</em><span class="mgc-n">' + m.title + '</span></div>' +
+      '<div class="mgc-s">' + m.sub + '</div>';
+    card.onclick = () => {
+      G.msel.key = m.key;
+      if (m.team) G.msel.count = 4;
+      sfx('click');
+      buildMgSel();
+    };
+    list.appendChild(card);
+  });
+  const cnt = $('#mselCount');
+  if (cnt) {
+    cnt.textContent = items.length + '개' +
+      (sel ? ' · 선택: ' + sel.title + (sel.team ? ' (팀전은 4인)' : '') : ' · 게임을 고르세요');
+  }
+  const seg = $('#mselSeg');
+  if (seg) {
+    seg.innerHTML = '';
+    [1, 2, 3, 4].forEach(n => {
+      const b = document.createElement('button');
+      b.textContent = n + '명';
+      b.className = G.msel.count === n ? 'on' : '';
+      b.onclick = () => {
+        if (sel && sel.team) return;
+        G.msel.count = n; sfx('click'); buildMgSel();
+      };
+      seg.appendChild(b);
+    });
+  }
+  const box = $('#mselPlayers');
+  if (box) {
+    box.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+      const on = i < G.msel.count;
+      const bot = G.msel.bots[i];
+      const p = document.createElement('button');
+      p.className = 'pslot' + (on ? '' : ' off');
+      p.dataset.i = i;
+      p.innerHTML = avatarSVG(i, 22) + '<span class="psn">' + CHARS[i].n + '</span>' +
+        '<span class="pst' + (bot ? ' bot' : '') + '">' + (bot ? 'AI' : '사람') + '</span>';
+      p.onclick = () => {
+        if (i >= G.msel.count) return;
+        G.msel.bots[i] = !G.msel.bots[i];
+        if (!G.msel.bots.slice(0, G.msel.count).some(v => !v)) G.msel.bots[i] = false;
+        sfx('click'); buildMgSel();
+      };
+      box.appendChild(p);
+    }
+  }
+  const play = $('#btnMgPlay');
+  if (play) play.disabled = !G.msel.key;
+}
+
+/* 자유 플레이용 판: 보드 없이도 팀 결정에 쓸 '발판'을 만들기 위해 조용히 한 판 세팅한다 */
+function prepareFreeBoard() {
+  createGame({ count: G.msel.count, bots: G.msel.bots.slice(), mapId: CFG.mapId, diff: CFG.diff, rounds: 4 });
+  G.autoAnswer = true;
+  const keys = Object.keys(TILE_INFO).filter(k => k !== 'start');
+  const byType = {};
+  for (let i = 0; i < BOARD.n; i++) {
+    const t = BOARD.types[i];
+    (byType[t] = byType[t] || []).push(i);
+  }
+  const n = G.players.length;
+  const k1 = keys[randInt(keys.length)];
+  const others = keys.filter(k => k !== k1);
+  const k2 = others[randInt(Math.max(1, others.length))];
+  const r = Math.random();
+  let types;
+  if (n === 4 && r < .34) types = [k1, k1, k2, k2];
+  else if (n === 4 && r < .56) types = [k1, k1, k1, k2];
+  else if (n === 3 && r < .30) types = [k1, k1, k2];
+  else if (n === 2 && r < .35) types = [k1, k1];
+  else types = cshuffle(keys).slice(0, n);
+  types = cshuffle(types);
+  G.players.forEach((p, i) => {
+    const pool = (byType[types[i]] && byType[types[i]].length) ? byType[types[i]] : [BOARD.start];
+    const idx = pool[randInt(pool.length)];
+    p.pos = idx;
+    const tp = tilePos(idx);
+    p.px = tp.x; p.py = tp.y;
+  });
+}
+
+async function playFreeGame(key) {
+  const def = MINI_BY_KEY[key];
+  if (!def || G.freeBusy) return false;
+  G.freeBusy = true;
+  G.freeMode = true;
+  G.ended = false;
+  if (def.team) G.msel.count = 4;
+  if (!G.msel.bots.slice(0, G.msel.count).some(v => !v)) G.msel.bots[0] = false;
+  buildMgSel();
+  let act = 'again';
+  while (act === 'again') {
+    prepareFreeBoard();
+    let preset = null;
+    if (def.team) preset = await pickTeamsByPad(def.team);
+    act = await playMinigame(def, preset, { free: true });
+    G.ended = false;
+    buildMgSel();
+  }
+  G.freeBusy = false;
+  if (G.screen !== 'mgsel') { setScreen('mgsel'); buildMgSel(); }
+  return act || 'list';
+}
+
 /* ---------- minigame runner ---------- */
-async function playMinigame(def) {
-  MG.def = def; MG.m = null; MG.running = false; MG.demo = false;
-  const teams = def.team ? makeTeams(def.team, G.players) : null;
+async function playMinigame(def, presetTeams, opts) {
+  const free = !!(opts && opts.free);
+  MG.def = def; MG.m = null; MG.running = false; MG.demo = false; MG.free = free;
+  const teams = presetTeams || (def.team ? makeTeams(def.team, G.players) : null);
   if (teams) G.mgTeams = teams;
   setScreen('mini');
   $('#miniTitle').textContent = def.title;
@@ -6823,10 +7253,11 @@ async function playMinigame(def) {
   cancelAnimationFrame(MG.raf);
   m.done = true;
   if (!m.ranks.length && !m.teamResult) def.finish(m);
-  const rows = await awardMinigame(m.ranks, m, def);
-  await showMiniResult(rows, def, m);
-  setScreen('board');
-  await wait(200);
+  const rows = await awardMinigame(m.ranks, m, def, free);
+  const act = await showMiniResult(rows, def, m, opts);
+  if (free) setScreen('mgsel');
+  else { setScreen('board'); await wait(200); }
+  return act || 'auto';
 }
 
 let _stageCtx = null;
@@ -6956,7 +7387,8 @@ async function showMiniReady(def, teams) {
   ov.className = 'mini-overlay';
 }
 
-async function showMiniResult(rows, def, m) {
+async function showMiniResult(rows, def, m, opts) {
+  const free = !!(opts && opts.free);
   const ov = $('#miniOverlay');
   ov.className = 'mini-overlay on';
   rows.sort((a, b) => a.rank - b.rank || b.coins - a.coins);
@@ -6974,15 +7406,33 @@ async function showMiniResult(rows, def, m) {
       '<div class="rp">' + (r.rank === 1 ? '승' : '') + '</div>' + avatarSVG(p.ci, 21) +
       '<div class="rnm">' + p.name + (tm ? '<small>' + (tm === 'blue' ? '파랑' : '빨강') + '</small>' : '') + '</div>' +
       '<div class="rv">' + (r.value || '') + '</div>' +
-      '<div class="rc">+' + r.coins + '</div></div>';
+      '<div class="rc">' + (free ? '' : '+' + r.coins) + '</div></div>';
   });
   html += '</div>';
+  if (free) {
+    html += '<div class="mo-btns"><button class="mo-btn" data-a="again">다시 하기</button>' +
+      '<button class="mo-btn ghost" data-a="list">미니게임 목록</button></div>';
+  }
   ov.innerHTML = html;
+  /* 결과 버튼은 그리는 즉시 연결한다 — 등장 연출을 기다리는 동안 눌러도 반응하도록 */
+  let pickAct = null;
+  const actP = new Promise(res => { pickAct = res; });
+  if (free && !G.autoResult) {
+    ov.querySelectorAll('.mo-btn').forEach(b => {
+      b.onclick = () => { sfx('click'); pickAct(b.dataset.a || 'list'); };
+    });
+  }
   sfx('drum');
   await wait(300);
   sfx('coin');
-  await wait(2600);
+  if (!free) {
+    await wait(2600);
+    ov.className = 'mini-overlay';
+    return 'auto';
+  }
+  const act = G.autoResult ? await wait(420).then(() => G.autoResult) : await actP;
   ov.className = 'mini-overlay';
+  return act;
 }
 
 /* ---------- shared helpers for games ---------- */
@@ -8453,7 +8903,990 @@ const MINIGAMES = [
         c.restore();
       }
     }
-  }
+  },
+
+  /* =========================================================
+     개인전 13. 뜨거운 감자 (hot) — 넘기기 생존
+     ========================================================= */
+  {
+    key: 'hot', title: '뜨거운 감자', sub: '폭탄이 터지기 전에 옆 사람에게 넘겨라!',
+    rule: '감자를 들고 있을 때 내 패드를 터치하면 다음 사람에게 넘어가요.<br>터지는 순간 감자를 들고 있던 사람이 꼴찌!',
+    dur: 7,
+    init(m) {
+      m.holder = randInt(m.n);
+      m.explodeAt = 2.6 + Math.random() * 3.2;
+      m.passes = {}; m.plan = {}; m.done = false; m.boom = -1; m.fx = [];
+      m.players.forEach((p, i) => { m.passes[i] = 0; if (p.bot) m.plan[i] = .3 + Math.random() * .5; });
+      setPad(m.holder, '내가 들었어!');
+    },
+    pass(m, i) {
+      if (m.done || m.holder !== i) return;
+      const to = (i + 1) % m.n;
+      m.passes[i]++;
+      m.fx.push({ from: i, to: to, t: 0 });
+      m.holder = to;
+      setPad(i, m.passes[i] + '번 넘김');
+      setPad(to, '받았다!');
+      sfx('tick');
+      if (m.players[to] && m.players[to].bot) m.plan[to] = m.t + .18 + Math.random() * .5 / Math.max(.4, aiF().speed);
+    },
+    botTick(m, dt) {
+      if (m.done) return;
+      const h = m.holder;
+      if (!m.players[h] || !m.players[h].bot) return;
+      if (m.plan[h] === undefined) m.plan[h] = m.t + .35;
+      if (m.t >= m.plan[h]) this.pass(m, h);
+    },
+    tap(m, i) { this.pass(m, i); },
+    update(m, dt) {
+      m.fx.forEach(f => { f.t += dt; });
+      m.fx = m.fx.filter(f => f.t < .34);
+      if (!m.done && m.t >= m.explodeAt) {
+        m.done = true; m.boom = m.holder; sfx('trap');
+        m.ranks = m.players.map((p, i) => ({
+          i, sortVal: i === m.boom ? -999 : 100,
+          label: i === m.boom ? '펑!' : '생존'
+        })).sort((a, b) => b.sortVal - a.sortVal);
+      }
+    },
+    finish(m) { if (!m.done) this.update(m, 0); },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#3a1630'); g.addColorStop(1, '#150a1b');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const cx = w / 2, cy = h * .55, R = Math.min(w * .29, h * .27);
+      c.strokeStyle = 'rgba(255,255,255,.13)'; c.lineWidth = 2;
+      c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.05)';
+      c.beginPath(); c.arc(cx, cy, R * .42, 0, TAU); c.fill();
+      bigText(c, '감자를 든 사람이 터치하면 넘어가요', cx, 16, Math.min(11, w * .032), '#e3c6ff');
+      const pos = i => {
+        const a = -Math.PI / 2 + i / m.n * TAU;
+        return { x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R };
+      };
+      const sz = Math.min(66, Math.min(w, h) * .21);
+      m.players.forEach((p, i) => {
+        const q = pos(i);
+        const hot = m.holder === i && !m.done;
+        c.fillStyle = hot ? 'rgba(255,110,80,.22)' : 'rgba(255,255,255,.06)';
+        c.beginPath(); c.arc(q.x, q.y, sz * .62, 0, TAU); c.fill();
+        drawChar(c, q.x, q.y + sz * .66, sz, p.ci, { time: t, mood: hot ? 'shock' : 'normal' });
+        bigText(c, p.name, q.x, q.y + sz * .92, Math.min(10, sz * .17), hot ? '#ffd0a0' : '#cbd6ff');
+      });
+      const hp = pos(m.holder);
+      const bob = Math.sin(t * 14) * 3;
+      const spark = m.done ? 1 : .6 + .4 * Math.sin(t * (8 + (3 - Math.min(3, Math.max(0, m.explodeAt - m.t))) * 6));
+      c.fillStyle = 'rgba(255,120,60,' + (.18 + .2 * spark) + ')';
+      c.beginPath(); c.arc(hp.x, hp.y - sz * .42 + bob, sz * .48 + spark * 8, 0, TAU); c.fill();
+      c.fillStyle = '#b98a5a'; c.strokeStyle = '#7d552f'; c.lineWidth = 3;
+      c.beginPath(); c.ellipse(hp.x, hp.y - sz * .42 + bob, sz * .30, sz * .23, .3, 0, TAU); c.fill(); c.stroke();
+      c.fillStyle = m.done ? '#fff' : '#ffcf5c';
+      c.beginPath(); c.arc(hp.x + sz * .26, hp.y - sz * .64 + bob, 4 + spark * 5, 0, TAU); c.fill();
+      bigText(c, m.done ? '펑!' : 'HOT!', hp.x, hp.y - sz * .78, Math.min(16, sz * .3), m.done ? '#ff9b7a' : '#ffd166');
+      m.fx.forEach(f => {
+        const a = pos(f.from), b = pos(f.to), k = f.t / .34;
+        c.strokeStyle = 'rgba(255,220,120,' + (.9 * (1 - k)) + ')';
+        c.lineWidth = 3;
+        c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+      });
+    }
+  },
+
+  /* =========================================================
+     개인전 14. 줄넘기 리듬 (rhythm)
+     ========================================================= */
+  {
+    key: 'rhythm', title: '줄넘기 리듬', sub: '박자에 맞춰 점프! 삑 소리에 터치!',
+    rule: '돌아가는 줄이 발밑을 지나는 박자에 패드를 터치하세요.<br>박자를 맞힌 횟수가 많으면 1등!',
+    dur: 8.2,
+    init(m) {
+      m.beat = .62; m.win = .19; m.hits = {}; m.miss = {}; m.tapBeat = {}; m.jump = {};
+      m.lastBeat = -1; m.botPlan = {}; m.done = false;
+      m.players.forEach((p, i) => {
+        m.hits[i] = 0; m.miss[i] = 0; m.tapBeat[i] = -9; m.jump[i] = 0;
+        if (p.bot) m.botPlan[i] = 0;
+      });
+    },
+    botTick(m, dt) {
+      if (m.done) return;
+      const b = Math.floor(m.t / m.beat);
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.botPlan[i] === b) return;
+        m.botPlan[i] = b;
+        const acc = clamp(.5 + .42 * aiF().acc, 0, .97);
+        if (Math.random() < acc) { m.hits[i]++; m.jump[i] = 1; }
+        else if (Math.random() < .6) { m.miss[i]++; }
+      });
+    },
+    tap(m, i) {
+      if (m.done) return;
+      const b = Math.round(m.t / m.beat);
+      const err = Math.abs(m.t - b * m.beat);
+      if (err <= m.win && m.tapBeat[i] !== b) {
+        m.tapBeat[i] = b; m.hits[i]++; m.jump[i] = 1; sfx('tick'); setPad(i, m.hits[i] + '회');
+      } else {
+        m.miss[i]++; m.jump[i] = .25; sfx('trap'); setPad(i, '삑!');
+      }
+    },
+    update(m, dt) {
+      const b = Math.floor(m.t / m.beat);
+      if (b !== m.lastBeat) { m.lastBeat = b; if (b > 0) sfx('beep'); }
+      m.players.forEach((p, i) => { m.jump[i] = Math.max(0, m.jump[i] - dt * 3.4); });
+    },
+    finish(m) {
+      if (m.done) return; m.done = true;
+      m.ranks = m.players.map((p, i) => ({
+        i, sortVal: m.hits[i] * 10 - m.miss[i] * 3,
+        label: m.hits[i] + '회 · 실수 ' + m.miss[i]
+      })).sort((a, b) => b.sortVal - a.sortVal);
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#17324e'); g.addColorStop(1, '#0a1524');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const ph = (m.t % m.beat) / m.beat;
+      const lamp = ph < .22 ? 1 : .3;
+      c.fillStyle = 'rgba(255,225,120,' + (.25 + .55 * lamp) + ')';
+      c.beginPath(); c.arc(w / 2, 15, 6 + lamp * 3, 0, TAU); c.fill();
+      bigText(c, '박자에 맞춰!', w / 2, 32, Math.min(11, w * .032), '#cfe4ff');
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const cx = r.x + r.w / 2;
+        const ground = r.y + r.h * .80;
+        const p = m.players[i];
+        const sw = Math.sin(ph * Math.PI);
+        c.strokeStyle = 'rgba(200,230,255,.7)'; c.lineWidth = Math.max(2, r.w * .012);
+        c.beginPath();
+        c.ellipse(cx, ground - 4, r.w * .36, 8 + (1 - sw) * r.h * .30, 0, Math.PI, TAU);
+        c.stroke();
+        const jk = m.jump[i];
+        drawChar(c, cx, ground - jk * r.h * .16, Math.min(62, r.w * .46), p.ci, { time: t, mood: jk > .5 ? 'happy' : 'normal' });
+        bigText(c, m.hits[i] + '회', cx, r.y + 20, Math.min(20, r.w * .17), '#fff');
+        if (m.miss[i]) bigText(c, '실수 ' + m.miss[i], cx, r.y + r.h - 9, Math.min(10, r.w * .095), 'rgba(255,160,160,.92)');
+      });
+    }
+  },
+
+  /* =========================================================
+     개인전 15. 딱 맞춰 N번 (exact)
+     ========================================================= */
+  {
+    key: 'exact', title: '딱 맞춰 N번', sub: '목표 횟수만큼만! 넘치면 실격',
+    rule: '위에 나온 목표 횟수만큼 정확히 터치하세요.<br>한 번이라도 넘치면 실격, 먼저 정확히 채운 사람이 1등!',
+    dur: 6.5,
+    init(m) {
+      m.target = 6 + randInt(7); m.count = {}; m.fail = {}; m.at = {}; m.done = false;
+      m.players.forEach((p, i) => { m.count[i] = 0; });
+    },
+    add(m, i) {
+      if (m.done || m.fail[i] || m.at[i] !== undefined) return;
+      m.count[i]++;
+      if (m.count[i] === m.target) { m.at[i] = m.t; sfx('win'); setPad(i, '딱!'); }
+      else if (m.count[i] > m.target) { m.fail[i] = true; padDead(i, true); sfx('trap'); setPad(i, '실격'); }
+      else { setPad(i, m.count[i] + '/' + m.target); sfx('tick'); }
+    },
+    tap(m, i) { this.add(m, i); },
+    botTick(m, dt) {
+      if (m.done) return;
+      m.botAcc = m.botAcc || {};
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.at[i] !== undefined || m.fail[i]) return;
+        if (m.botAcc[i] === undefined) m.botAcc[i] = Math.random();
+        m.botAcc[i] += dt * (2.0 + Math.random() * .6) * aiF().speed;
+        while (m.botAcc[i] >= 1 && m.at[i] === undefined && !m.fail[i]) { m.botAcc[i] -= 1; this.add(m, i); }
+      });
+    },
+    judge(m, force) {
+      if (m.done) return;
+      if (!force && !m.players.every((p, i) => m.fail[i] || m.at[i] !== undefined)) return;
+      m.done = true;
+      m.ranks = m.players.map((p, i) => ({
+        i, sortVal: m.fail[i] ? -999 : (m.at[i] !== undefined ? 1000 - m.at[i] : m.count[i]),
+        label: m.fail[i] ? '실격' : (m.at[i] !== undefined ? '딱 ' + m.at[i].toFixed(2) + '초' : m.count[i] + '번')
+      })).sort((a, b) => b.sortVal - a.sortVal);
+    },
+    update(m) { this.judge(m, false); },
+    finish(m) { this.judge(m, true); },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#2b2450'); g.addColorStop(1, '#120f26');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      bigText(c, '목표 ' + m.target + '번', w / 2, 18, Math.min(22, w * .062), '#ffe066');
+      bigText(c, '넘치면 실격!', w / 2, 34, Math.min(10, w * .029), '#d9c8ff');
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const cx = r.x + r.w / 2;
+        const p = m.players[i];
+        drawChar(c, cx, r.y + r.h * .50, Math.min(56, r.w * .44), p.ci, { time: t, mood: m.fail[i] ? 'shock' : 'normal' });
+        bigText(c, String(m.count[i]), cx, r.y + r.h * .70, Math.min(30, r.w * .23), m.fail[i] ? '#ff8a8a' : '#fff');
+        const n = m.target, pw = Math.min(7, (r.w - 24) / n);
+        for (let k = 0; k < n; k++) {
+          const x = cx - (n * (pw + 2) - 2) / 2 + k * (pw + 2);
+          c.fillStyle = k < m.count[i] ? (m.fail[i] ? '#ff6b6b' : '#ffe066') : 'rgba(255,255,255,.22)';
+          roundRect(c, x, r.y + r.h * .81, pw, 6, 3); c.fill();
+        }
+        if (m.at[i] !== undefined) bigText(c, '딱!', cx, r.y + r.h * .92, Math.min(13, r.w * .1), '#9dffbd');
+        else if (m.fail[i]) bigText(c, '실격', cx, r.y + r.h * .92, Math.min(13, r.w * .1), '#ff9b9b');
+      });
+    }
+  },
+
+  /* =========================================================
+     개인전 16. 욕심쟁이 코인 (greed)
+     ========================================================= */
+  {
+    key: 'greed', title: '욕심쟁이 코인', sub: '터치 = 코인 +1 · 너무 많이 터치하면 몰수!',
+    rule: '터치할 때마다 코인 1개를 쌓아요.<br>하지만 숨은 한도를 넘기면 전부 날아가요. 언제 멈출까요?',
+    dur: 6.5,
+    init(m) {
+      m.limit = 7 + randInt(9); m.taps = {}; m.bust = {}; m.done = false; m.botAcc = {}; m.botStop = {};
+      m.players.forEach((p, i) => {
+        m.taps[i] = 0;
+        m.botStop[i] = Math.max(2, Math.round(m.limit * (p.bot ? .55 + .35 * aiF().acc + Math.random() * .25 : .8)));
+      });
+    },
+    add(m, i) {
+      if (m.done || m.bust[i]) return;
+      m.taps[i]++;
+      if (m.taps[i] > m.limit) { m.bust[i] = true; padDead(i, true); sfx('trap'); setPad(i, '몰수!'); }
+      else { setPad(i, m.taps[i] + '개'); sfx('tick'); }
+    },
+    tap(m, i) { this.add(m, i); },
+    botTick(m, dt) {
+      if (m.done) return;
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.bust[i] || m.taps[i] >= m.botStop[i]) return;
+        if (m.botAcc[i] === undefined) m.botAcc[i] = Math.random();
+        m.botAcc[i] += dt * (2.4 + Math.random() * .8) * aiF().speed;
+        while (m.botAcc[i] >= 1 && m.taps[i] < m.botStop[i]) { m.botAcc[i] -= 1; this.add(m, i); }
+      });
+    },
+    update() { },
+    finish(m) {
+      if (m.done) return; m.done = true;
+      m.ranks = m.players.map((p, i) => ({
+        i, sortVal: m.bust[i] ? -999 : m.taps[i],
+        label: m.bust[i] ? '몰수' : m.taps[i] + '개'
+      })).sort((a, b) => b.sortVal - a.sortVal);
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#2e2a12'); g.addColorStop(1, '#14130a');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      bigText(c, '욕심을 내면 몰수!', w / 2, 16, Math.min(11, w * .032), '#ffe9a8');
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const cx = r.x + r.w / 2;
+        const p = m.players[i];
+        const n = Math.min(9, m.taps[i]);
+        for (let k = 0; k < n; k++) {
+          const yy = r.y + r.h * .60 - k * 7;
+          c.fillStyle = k % 2 ? '#ffe066' : '#f0b52a';
+          c.beginPath(); c.ellipse(cx, yy, Math.min(13, r.w * .13), Math.min(5, r.w * .05), 0, 0, TAU); c.fill();
+          c.strokeStyle = 'rgba(120,80,10,.8)'; c.lineWidth = 1.5; c.stroke();
+        }
+        drawChar(c, cx, r.y + r.h * .76, Math.min(46, r.w * .36), p.ci, { time: t, mood: m.bust[i] ? 'shock' : 'happy' });
+        bigText(c, m.bust[i] ? '몰수' : m.taps[i] + '개', cx, r.y + r.h * .87, Math.min(20, r.w * .16), m.bust[i] ? '#ff9b9b' : '#ffe066');
+        const risk = clamp(m.taps[i] / 16, 0, 1);
+        const bw = r.w - 24, bx = r.x + 12, by = r.y + r.h - 8;
+        c.fillStyle = 'rgba(255,255,255,.16)'; roundRect(c, bx, by, bw, 6, 3); c.fill();
+        if (risk > 0) {
+          c.fillStyle = m.bust[i] ? '#ff4d4d' : (risk > .7 ? '#ff7a3c' : '#ffc93c');
+          roundRect(c, bx, by, bw * risk, 6, 3); c.fill();
+        }
+      });
+    }
+  },
+
+  /* =========================================================
+     개인전 17. 레이저 피하기 (laser)
+     ========================================================= */
+  {
+    key: 'laser', title: '레이저 피하기', sub: '레이저가 발밑을 지날 때 터치!',
+    rule: '빨간 레이저가 위에서 다가옵니다.<br>발밑을 스치는 순간 패드를 터치해 숙이면 회피 성공!',
+    dur: 7.4,
+    init(m) {
+      m.period = 1.05; m.off = {}; m.hits = {}; m.dodge = {}; m.duck = {}; m.ph = {}; m.pending = []; m.done = false;
+      m.players.forEach((p, i) => {
+        m.off[i] = i * .13; m.hits[i] = 0; m.dodge[i] = 0; m.duck[i] = -9; m.ph[i] = undefined;
+      });
+    },
+    botTick(m, dt) {
+      m.players.forEach((p, i) => {
+        if (!p.bot) return;
+        const ph = (((m.t - m.off[i]) % m.period) + m.period) % m.period / m.period;
+        if (ph > .70 && ph < .86 && m.t - m.duck[i] > .45 && Math.random() < .45 * aiF().acc) m.duck[i] = m.t;
+      });
+    },
+    tap(m, i) { if (!m.done) { m.duck[i] = m.t; sfx('tick'); } },
+    resolve(m, i) {
+      if (m.t - m.duck[i] < .42) { m.dodge[i]++; sfx('tick'); setPad(i, '회피 ' + m.dodge[i]); }
+      else { m.hits[i]++; sfx('pop'); setPad(i, '피격 ' + m.hits[i]); }
+    },
+    update(m, dt) {
+      if (m.done) return;
+      m.players.forEach((p, i) => {
+        const ph = (((m.t - m.off[i]) % m.period) + m.period) % m.period / m.period;
+        const prev = m.ph[i];
+        if (prev !== undefined && prev < .84 && ph >= .84 && ph - prev < .5) m.pending.push({ i: i, due: m.t + .09 });
+        m.ph[i] = ph;
+      });
+      const keep = [];
+      m.pending.forEach(j => { if (m.t >= j.due) this.resolve(m, j.i); else keep.push(j); });
+      m.pending = keep;
+    },
+    finish(m) {
+      if (m.done) return; m.done = true;
+      m.ranks = m.players.map((p, i) => ({
+        i, sortVal: m.dodge[i] * 10 - m.hits[i] * 12,
+        label: '회피 ' + m.dodge[i] + ' · 피격 ' + m.hits[i]
+      })).sort((a, b) => b.sortVal - a.sortVal);
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#241026'); g.addColorStop(1, '#0c0814');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const cx = r.x + r.w / 2;
+        const p = m.players[i];
+        const ph = (((m.t - m.off[i]) % m.period) + m.period) % m.period / m.period;
+        const y = r.y + r.h * (.10 + ph * .72);
+        const ducked = m.t - m.duck[i] < .34;
+        c.fillStyle = 'rgba(255,60,60,.16)';
+        c.fillRect(r.x + 6, y - 7, r.w - 12, 14);
+        c.fillStyle = 'rgba(255,90,80,.95)';
+        c.fillRect(r.x + 6, y, r.w - 12, Math.max(3, r.h * .012));
+        c.fillStyle = 'rgba(255,255,255,.75)';
+        c.fillRect(r.x + 6, y - 1, r.w - 12, 1);
+        drawChar(c, cx, r.y + r.h * .84, Math.min(56, r.w * .44), p.ci, {
+          time: t, sx: ducked ? 1.12 : 1, sy: ducked ? .64 : 1, mood: ducked ? 'happy' : 'normal'
+        });
+        bigText(c, '회피 ' + m.dodge[i], cx, r.y + 16, Math.min(15, r.w * .13), '#9dffbd');
+        if (m.hits[i]) bigText(c, '피격 ' + m.hits[i], cx, r.y + 32, Math.min(11, r.w * .1), '#ff9b9b');
+        if (ducked) bigText(c, '숙임!', cx, r.y + r.h * .95, Math.min(11, r.w * .1), '#9dc0ff');
+      });
+    }
+  },
+
+  /* =========================================================
+     개인전 18. 트램폴린 점프 (trampoline)
+     ========================================================= */
+  {
+    key: 'trampoline', title: '트램폴린 점프', sub: '정점에서 터치하면 더 높이!',
+    rule: '캐릭터가 가장 높이 올라간 순간 패드를 터치!<br>타이밍이 맞을수록 높이가 쌓여요. 합계 높이가 1위!',
+    dur: 7.4,
+    init(m) {
+      m.power = {}; m.perfect = {}; m.wob = {}; m.sp = {}; m.cd = {}; m.acc = {}; m.done = false;
+      m.players.forEach((p, i) => {
+        m.power[i] = .18; m.perfect[i] = 0; m.wob[i] = 0; m.sp[i] = .95 + i * .06; m.cd[i] = 0;
+      });
+    },
+    yOf(m, i) {
+      const ph = (m.t * m.sp[i] + i * .31) % 1;
+      return Math.abs(Math.sin(ph * Math.PI));
+    },
+    boost(m, i) {
+      if (m.done) return;
+      const y = this.yOf(m, i);
+      if (y > .86 && m.t >= m.cd[i]) {
+        m.power[i] = Math.min(1, m.power[i] + .09); m.perfect[i]++; m.cd[i] = m.t + .5;
+        sfx('win'); setPad(i, 'PERFECT ' + m.perfect[i]);
+      } else if (y < .55) {
+        m.power[i] = Math.max(.08, m.power[i] - .03); m.wob[i] = 1;
+        sfx('trap'); setPad(i, '아쉽!');
+      } else if (m.t >= m.cd[i]) {
+        m.power[i] = Math.min(1, m.power[i] + .05); m.cd[i] = m.t + .1; sfx('tick');
+      }
+    },
+    tap(m, i) { this.boost(m, i); },
+    botTick(m, dt) {
+      m.players.forEach((p, i) => {
+        if (!p.bot || m.t < m.cd[i]) return;
+        const want = .92 - (1 - aiF().acc) * .22;   /* 실력이 낮을수록 조금 이르게 눌러 정점을 놓친다 */
+        if (this.yOf(m, i) > want && Math.random() < .3 * aiF().acc + .12) this.boost(m, i);
+      });
+    },
+    update(m, dt) { m.players.forEach((p, i) => { m.wob[i] = Math.max(0, m.wob[i] - dt * 2); }); },
+    finish(m) {
+      if (m.done) return; m.done = true;
+      m.ranks = m.players.map((p, i) => ({
+        i, sortVal: Math.round(m.power[i] * 1000) + m.perfect[i],
+        label: Math.round(m.power[i] * 100) + 'm · P' + m.perfect[i]
+      })).sort((a, b) => b.sortVal - a.sortVal);
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#1c3350'); g.addColorStop(1, '#0a1424');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const cx = r.x + r.w / 2;
+        const p = m.players[i];
+        const y = this.yOf(m, i);
+        const amp = r.h * (.16 + m.power[i] * .30);
+        const by = r.y + r.h * .86 - y * amp;
+        /* 트램폴린 */
+        c.strokeStyle = '#5b8cff'; c.lineWidth = Math.max(3, r.w * .022); c.lineCap = 'round';
+        c.beginPath(); c.moveTo(cx - r.w * .30, r.y + r.h * .88); c.lineTo(cx + r.w * .30, r.y + r.h * .88); c.stroke();
+        c.strokeStyle = 'rgba(120,160,255,.5)'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(cx - r.w * .26, r.y + r.h * .88); c.lineTo(cx - r.w * .30, r.y + r.h * .98); c.stroke();
+        c.beginPath(); c.moveTo(cx + r.w * .26, r.y + r.h * .88); c.lineTo(cx + r.w * .30, r.y + r.h * .98); c.stroke();
+        drawChar(c, cx, by, Math.min(54, r.w * .42), p.ci, { time: t, mood: m.wob[i] > .5 ? 'shock' : 'happy' });
+        /* 높이 눈금 */
+        c.strokeStyle = 'rgba(255,255,255,.13)'; c.lineWidth = 1;
+        for (let k = 1; k <= 4; k++) {
+          const yy = r.y + r.h * .86 - (r.h * .46) * k / 4;
+          c.beginPath(); c.moveTo(r.x + 8, yy); c.lineTo(r.x + 8 + (r.w - 16) * .28, yy); c.stroke();
+        }
+        bigText(c, Math.round(m.power[i] * 100) + 'm', cx, r.y + 16, Math.min(19, r.w * .16), '#fff');
+        bigText(c, 'P ' + m.perfect[i], cx, r.y + 32, Math.min(11, r.w * .095), '#ffe066');
+      });
+    }
+  },
+
+  /* =========================================================
+     개인전 19. 내 색만 터치 (mycolor)
+     ========================================================= */
+  {
+    key: 'mycolor', title: '내 색만 터치', sub: '내 발판 색이 뜨면 터치, 아니면 참기!',
+    rule: '각자 정해진 색이 있어요.<br>화면에 내 색이 뜨면 터치! 다른 색에 터치하면 감점.',
+    dur: 7.2,
+    init(m) {
+      const COLS = ['#ff5f6d', '#5b8cff', '#5ad35a', '#ffd23f'];
+      m.col = {}; m.ok = {}; m.bad = {}; m.tapShow = {}; m.show = null; m.showId = 0; m.nextShow = .45; m.done = false;
+      m.players.forEach((p, i) => { m.col[i] = COLS[i % 4]; m.ok[i] = 0; m.bad[i] = 0; m.tapShow[i] = -1; });
+    },
+    tap(m, i) {
+      if (m.done || !m.show) return;
+      if (m.tapShow[i] === m.showId) return;
+      m.tapShow[i] = m.showId;
+      if (m.show === m.col[i]) { m.ok[i]++; sfx('tick'); setPad(i, '적중 ' + m.ok[i]); }
+      else { m.bad[i]++; sfx('trap'); setPad(i, '실수 ' + m.bad[i]); }
+    },
+    botTick(m, dt) {
+      if (!m.show) return;
+      m.players.forEach((p, i) => {
+        if (!p.bot) return;
+        if (m.show !== m.col[i] || m.tapShow[i] === m.showId) return;
+        m.botWait = m.botWait || {};
+        if (m.botWait[i] !== m.showId) { m.botWait[i] = m.showId; m.botAt = m.botAt || {}; m.botAt[i] = m.t + .1 + Math.random() * .25; }
+        if (m.t >= m.botAt[i] && Math.random() < .5 + .45 * aiF().acc) this.tap(m, i);
+        else if (m.t >= m.botAt[i] + .2) m.tapShow[i] = m.showId;   /* 놓침 */
+      });
+    },
+    update(m, dt) {
+      if (m.done) return;
+      if (m.t >= m.nextShow) {
+        m.nextShow = m.t + .60 + Math.random() * .32;
+        m.showId++;
+        m.show = m.col[randInt(4)];
+        sfx('beep');
+      }
+    },
+    finish(m) {
+      if (m.done) return; m.done = true;
+      m.ranks = m.players.map((p, i) => ({
+        i, sortVal: m.ok[i] * 10 - m.bad[i] * 8,
+        label: '적중 ' + m.ok[i] + ' · 실수 ' + m.bad[i]
+      })).sort((a, b) => b.sortVal - a.sortVal);
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#221a34'); g.addColorStop(1, '#0d0a16');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const cx = w / 2, cy = h * .34, R = Math.min(w * .17, h * .16);
+      c.fillStyle = 'rgba(255,255,255,.10)';
+      c.beginPath(); c.arc(cx, cy, R * 1.42, 0, TAU); c.fill();
+      if (m.show) {
+        c.fillStyle = m.show;
+        c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.fill();
+        c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = Math.max(3, R * .09); c.stroke();
+      }
+      bigText(c, m.show ? '이 색!' : '준비…', cx, cy + R * 1.62, Math.min(13, w * .038), '#dfe6ff');
+      const rs = laneRects(w, h * .58, m.n);
+      const oy = h * .40;
+      rs.forEach((r, i) => {
+        const p = m.players[i];
+        const px = r.x + r.w / 2;
+        c.fillStyle = m.col[i] + '2e';
+        roundRect(c, r.x + 4, oy, r.w - 8, h - oy - 6, 12); c.fill();
+        c.strokeStyle = m.col[i]; c.lineWidth = m.show === m.col[i] ? 4 : 2;
+        c.beginPath(); c.arc(px, oy + 26, 13, 0, TAU); c.stroke();
+        c.fillStyle = m.col[i]; c.beginPath(); c.arc(px, oy + 26, 9, 0, TAU); c.fill();
+        drawChar(c, px, oy + h * .30, Math.min(46, r.w * .36), p.ci, { time: t });
+        bigText(c, '적중 ' + m.ok[i], px, h - 30, Math.min(13, r.w * .115), '#9dffbd');
+        bigText(c, '실수 ' + m.bad[i], px, h - 14, Math.min(12, r.w * .105), '#ff9b9b');
+      });
+    }
+  },
+
+  /* =========================================================
+     개인전 20. 코인 저글링 (juggling)
+     ========================================================= */
+  {
+    key: 'juggling', title: '코인 저글링', sub: '떨어지는 코인을 계속 튕겨 올려라!',
+    rule: '코인이 바닥에 닿기 전에 패드를 터치!<br>가장 많이 튕긴 사람이 1등, 떨어뜨리면 감점.',
+    dur: 8,
+    init(m) {
+      m.coins = {}; m.jug = {}; m.drop = {}; m.hitFx = {}; m.g = 1.25; m.done = false;
+      m.players.forEach((p, i) => {
+        m.coins[i] = [{ y: .28 + Math.random() * .35, v: -.15 }];
+        m.jug[i] = 0; m.drop[i] = 0; m.hitFx[i] = 0;
+      });
+    },
+    bounce(m, i) {
+      if (m.done) return;
+      const cs = m.coins[i];
+      let best = null;
+      cs.forEach(c2 => { if (!best || c2.y > best.y) best = c2; });
+      if (!best) return;
+      best.v = -1.35;
+      m.jug[i]++; m.hitFx[i] = .18;
+      setPad(i, m.jug[i] + '번');
+      sfx('tick');
+    },
+    tap(m, i) { this.bounce(m, i); },
+    botTick(m, dt) {
+      m.players.forEach((p, i) => {
+        if (!p.bot) return;
+        const cs = m.coins[i];
+        let low = cs[0];
+        cs.forEach(c2 => { if (c2.y > low.y) low = c2; });
+        if (low.y > .60 && Math.random() < .4 + .5 * aiF().acc) this.bounce(m, i);
+      });
+    },
+    update(m, dt) {
+      if (m.done) return;
+      m.players.forEach((p, i) => {
+        m.hitFx[i] = Math.max(0, m.hitFx[i] - dt);
+        m.coins[i].forEach(c2 => {
+          c2.v += m.g * dt;
+          c2.y += c2.v * dt;
+          if (c2.y >= 1) {
+            c2.y = .86; c2.v = -.35; m.drop[i]++; sfx('trap');
+            setPad(i, '떨어짐 ' + m.drop[i]);
+          }
+          if (c2.y < .03) { c2.y = .03; c2.v = Math.abs(c2.v) * .25; }
+        });
+      });
+    },
+    finish(m) {
+      if (m.done) return; m.done = true;
+      m.ranks = m.players.map((p, i) => ({
+        i, sortVal: m.jug[i] * 10 - m.drop[i] * 6,
+        label: m.jug[i] + '번 · 실수 ' + m.drop[i]
+      })).sort((a, b) => b.sortVal - a.sortVal);
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#173a34'); g.addColorStop(1, '#08161a');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const cx = r.x + r.w / 2;
+        const p = m.players[i];
+        const ground = r.y + r.h - 22;
+        c.fillStyle = 'rgba(255,255,255,.14)';
+        c.fillRect(r.x + 8, ground, r.w - 16, 2);
+        m.coins[i].forEach(c2 => {
+          const y = r.y + 26 + (ground - r.y - 26) * c2.y;
+          c.fillStyle = '#ffe066';
+          c.beginPath(); c.ellipse(cx, y, Math.min(15, r.w * .14), Math.min(15, r.w * .14) * .62, Math.sin(t * 4) * .4, 0, TAU); c.fill();
+          c.strokeStyle = '#a8792a'; c.lineWidth = 2; c.stroke();
+        });
+        drawChar(c, cx, ground, Math.min(46, r.w * .36), p.ci, { time: t, mood: 'happy' });
+        bigText(c, m.jug[i] + '번', cx, r.y + 18, Math.min(19, r.w * .16), '#fff');
+        if (m.hitFx[i] > 0) {
+          c.strokeStyle = 'rgba(255,240,160,' + (m.hitFx[i] * 4) + ')'; c.lineWidth = 3;
+          c.beginPath(); c.arc(cx, r.y + 40, 16 + (0.18 - m.hitFx[i]) * 60, 0, TAU); c.stroke();
+        }
+        if (m.drop[i]) bigText(c, '실수 ' + m.drop[i], cx, r.y + r.h - 8, Math.min(10, r.w * .095), '#ff9b9b');
+      });
+    }
+  },
+
+
+  /* =========================================================
+     팀전 2대2 · 4. 팀 탑 쌓기 (tower)
+     ========================================================= */
+  {
+    key: 'tower', team: '2v2', title: '팀 탑 쌓기', sub: '2 대 2 · 크레인을 맞춰 블록을 쌓아라!',
+    rule: '블록이 중앙에 왔을 때 내 패드를 터치!<br>정확할수록 높이 2칸. 우리 팀 두 사람 탑 높이 합으로 승부!',
+    dur: 9,
+    init(m) {
+      m.h = {}; m.blocks = {}; m.perfect = {}; m.flash = {}; m.acc = {}; m.done = false;
+      m.players.forEach((p, i) => {
+        m.h[i] = 0; m.blocks[i] = []; m.perfect[i] = 0; m.flash[i] = 0; m.acc[i] = Math.random();
+      });
+    },
+    swingAt(m, i) { return .5 + .44 * Math.sin((m.t * .62 + i * .19) * TAU); },
+    drop(m, i) {
+      if (m.done) return;
+      const x = this.swingAt(m, i);
+      const err = Math.abs(x - .5);
+      if (err < .055) { m.h[i] += 2; m.perfect[i]++; m.flash[i] = 1; sfx('win'); }
+      else if (err < .17) { m.h[i] += 1; m.flash[i] = .6; sfx('tick'); }
+      else { m.flash[i] = .35; sfx('trap'); }
+      m.blocks[i].push({ perfect: err < .055 });
+      if (m.blocks[i].length > 14) m.blocks[i].shift();
+      setPad(i, m.h[i] + '층');
+    },
+    tap(m, i) { this.drop(m, i); },
+    botTick(m, dt) {
+      if (m.done) return;
+      m.players.forEach((p, i) => {
+        if (!p.bot) return;
+        m.acc[i] += dt * (2.0 + Math.random() * .8) * aiF().speed;
+        if (m.acc[i] >= 1) {
+          m.acc[i] = 0;
+          const err = Math.abs(this.swingAt(m, i) - .5);
+          if (err < .30) this.drop(m, i);
+        }
+      });
+    },
+    update(m, dt) { m.players.forEach((p, i) => { m.flash[i] = Math.max(0, m.flash[i] - dt * 2.2); }); },
+    finish(m) {
+      if (m.done) return; m.done = true;
+      const bh = teamSum(m, 'blue', i => m.h[i]);
+      const rh = teamSum(m, 'red', i => m.h[i]);
+      m.teamResult = {
+        win: bh === rh ? 'draw' : (bh > rh ? 'blue' : 'red'),
+        blueLabel: '파랑 ' + bh + '층', redLabel: '빨강 ' + rh + '층'
+      };
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#2a2148'); g.addColorStop(1, '#100c20');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const rs = paintLanes(c, m, w, h);
+      rs.forEach((r, i) => {
+        const p = m.players[i];
+        const cx = r.x + r.w / 2;
+        const base = r.y + r.h - 12;
+        const chH = Math.min(44, r.w * .36);
+        const bh = Math.min(9, r.h * .05);
+        const col = teamOfIdx(m, i) === 'blue' ? TEAM_COL.blue : (teamOfIdx(m, i) === 'red' ? TEAM_COL.red : CHARS[p.ci].c);
+        drawChar(c, cx, base, chH, p.ci, { time: t, mood: m.flash[i] > .8 ? 'happy' : 'normal' });
+        const stackBase = base - chH * .98;
+        m.blocks[i].forEach((b, k) => {
+          const yy = stackBase - (k + 1) * bh;
+          c.fillStyle = b.perfect ? '#ffe066' : col;
+          roundRect(c, cx - r.w * .17, yy, r.w * .34, bh - 2, 3); c.fill();
+          c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 1; c.stroke();
+        });
+        /* 크레인 */
+        const sx = r.x + r.w * .10 + (r.w * .80) * this.swingAt(m, i);
+        c.strokeStyle = 'rgba(255,255,255,.65)'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(sx, r.y + 26); c.lineTo(sx, r.y + 48); c.stroke();
+        c.fillStyle = m.flash[i] > .5 ? '#ffe066' : 'rgba(255,255,255,.9)';
+        roundRect(c, sx - r.w * .13, r.y + 48, r.w * .26, 8, 2); c.fill();
+        c.fillStyle = 'rgba(255,255,255,.14)';
+        c.fillRect(cx - 1, r.y + 26, 2, base - r.y - 26);
+        bigText(c, m.h[i] + '층', cx, r.y + 16, Math.min(18, r.w * .15), '#fff');
+        if (m.flash[i] > .8) bigText(c, 'PERFECT', cx, base - 14, Math.min(11, r.w * .095), '#ffe066');
+      });
+    }
+  },
+
+  /* =========================================================
+     팀전 2대2 · 5. 팀 폭탄 릴레이 (passbomb)
+     ========================================================= */
+  {
+    key: 'passbomb', team: '2v2', title: '팀 폭탄 릴레이', sub: '2 대 2 · 우리 팀 폭탄을 오래 버텨라!',
+    rule: '폭탄을 든 사람이 터치하면 짝꿍에게 넘어가고, 심지가 조금 늘어나요.<br>부지런히 넘겨 먼저 터지는 팀이 패배!',
+    dur: 8,
+    init(m) {
+      m.bomb = {}; m.fx = {}; m.done = false;
+      ['blue', 'red'].forEach(k => {
+        const ids = (m.teams && m.teams[k] ? m.teams[k] : []).slice();
+        m.bomb[k] = { holder: ids[0], fuse: 2.2 + Math.random() * 2.0, boom: -1, passes: 0, ids: ids, botNext: .3 };
+        m.fx[k] = { t: 0, to: ids[1] !== undefined ? ids[1] : ids[0] };
+      });
+    },
+    teamBomb(m, i) { const t = teamOfIdx(m, i); return t ? m.bomb[t] : null; },
+    pass(m, i) {
+      if (m.done) return;
+      const b = this.teamBomb(m, i);
+      if (!b || b.holder !== i || b.boom >= 0 || b.ids.length < 2) return;
+      const k = b.ids.indexOf(i);
+      const to = b.ids[(k + 1) % b.ids.length];
+      b.holder = to; b.passes++;
+      b.fuse = Math.min(b.fuse + .35, m.t + 5);   /* 넘길 때마다 심지가 조금 늘어난다 */
+      m.fx[teamOfIdx(m, i)] = { t: .3, to: to };
+      setPad(i, b.passes + '번 넘김');
+      sfx('tick');
+      if (m.players[to] && m.players[to].bot) b.botNext = m.t + .5 + Math.random() * .3 / Math.max(.4, aiF().speed);
+    },
+    tap(m, i) { this.pass(m, i); },
+    botTick(m, dt) {
+      if (m.done) return;
+      ['blue', 'red'].forEach(k => {
+        const b = m.bomb[k];
+        if (!b || b.boom >= 0 || b.ids.length < 2) return;
+        const h = m.players[b.holder];
+        if (!h || !h.bot) return;
+        if (m.t >= b.botNext) this.pass(m, b.holder);
+      });
+    },
+    update(m, dt) {
+      if (m.done) return;
+      ['blue', 'red'].forEach(k => {
+        const b = m.bomb[k];
+        if (b.boom < 0 && m.t >= b.fuse) { b.boom = m.t; sfx('trap'); }
+        if (m.fx[k] && m.fx[k].t > 0) m.fx[k].t = Math.max(0, m.fx[k].t - dt);
+      });
+      if (m.bomb.blue.boom >= 0 && m.bomb.red.boom >= 0) this.judge(m);
+    },
+    judge(m) {
+      if (m.done) return; m.done = true;
+      const B = m.bomb.blue, R = m.bomb.red;
+      const safe = b => b.boom < 0;
+      let win = 'draw';
+      if (safe(B) && !safe(R)) win = 'blue';
+      else if (safe(R) && !safe(B)) win = 'red';
+      else if (!safe(B) && !safe(R)) {
+        win = Math.abs(B.boom - R.boom) < .08 ? 'draw' : (B.boom > R.boom ? 'blue' : 'red');
+      }
+      m.teamResult = {
+        win,
+        blueLabel: '파랑 ' + (safe(B) ? '생존' : B.boom.toFixed(1) + '초 폭발'),
+        redLabel: '빨강 ' + (safe(R) ? '생존' : R.boom.toFixed(1) + '초 폭발')
+      };
+    },
+    finish(m) { this.judge(m); },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, w, 0);
+      g.addColorStop(0, '#1a2450'); g.addColorStop(.5, '#241a34'); g.addColorStop(1, '#4a1a26');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.fillStyle = 'rgba(255,255,255,.06)';
+      c.fillRect(w * .48, 0, w * .04, h);
+      ['blue', 'red'].forEach((k, side) => {
+        const b = m.bomb[k];
+        const cx = w * (side ? .74 : .26);
+        const cy = h * .60;
+        const sz = Math.min(72, w * .17);
+        bigText(c, k === 'blue' ? '파랑팀' : '빨강팀', cx, h * .13, Math.min(16, w * .045), k === 'blue' ? '#9dc0ff' : '#ffb3ba');
+        b.ids.forEach((i, q) => {
+          const p = m.players[i];
+          const px = cx + (q ? 1 : -1) * sz * .78;
+          const py = cy + (q ? -sz * .12 : sz * .12);
+          const hold = b.holder === i && b.boom < 0;
+          if (hold) {
+            c.fillStyle = 'rgba(255,90,60,' + (.18 + .14 * Math.sin(t * 9)) + ')';
+            c.beginPath(); c.arc(px, py, sz * .62, 0, TAU); c.fill();
+          }
+          drawChar(c, px, py + sz * .5, sz * .9, p.ci, { time: t, mood: hold ? 'shock' : 'normal' });
+          if (hold) {
+            c.fillStyle = '#2b2b33'; c.strokeStyle = '#111'; c.lineWidth = 2;
+            c.beginPath(); c.arc(px, py - sz * .48, sz * .20, 0, TAU); c.fill(); c.stroke();
+            const sp = .5 + .5 * Math.sin(t * 16);
+            c.fillStyle = '#ffd166';
+            c.beginPath(); c.arc(px + sz * .19, py - sz * .60, 3 + sp * 4, 0, TAU); c.fill();
+          }
+        });
+        bigText(c, '넘긴 횟수 ' + b.passes, cx, h * .87, Math.min(12, w * .033), '#dfe6ff');
+        if (b.boom >= 0) {
+          c.fillStyle = 'rgba(20,10,16,.62)';
+          roundRect(c, cx - w * .16, cy - sz * .30, w * .32, sz * .66, 14); c.fill();
+          bigText(c, '펑!', cx, cy, Math.min(30, w * .085), '#ff8a7a');
+          bigText(c, b.boom.toFixed(1) + '초', cx, cy + sz * .26, Math.min(14, w * .04), '#ffd0c0');
+        }
+      });
+    }
+  },
+
+  /* =========================================================
+     팀전 1대3 · 4. 탈출 기차 (train)
+     ========================================================= */
+  {
+    key: 'train', team: '1v3', title: '탈출 기차', sub: '1 대 3 · 혼자 기차를 탈출시켜라!',
+    rule: '혼자(파랑)는 패드를 눌러 기차를 밀어 100%까지!<br>3명(빨강)은 장애물을 던져 기차를 늦춰요. 시간 안에 탈출하면 혼자 승리.',
+    dur: 8,
+    init(m) {
+      m.prog = 0; m.hits = 0; m.acc = {}; m.rate = {}; m.fx = []; m.done = false; m.escaped = false; m.count = {};
+      const solo = (m.teams && m.teams.blue && m.teams.blue[0] !== undefined) ? m.teams.blue[0] : 0;
+      const soloBot = !!(m.players[solo] && m.players[solo].bot);
+      m.blueGain = soloBot ? 6.0 : 3.6;
+      m.players.forEach((p, i) => {
+        m.acc[i] = Math.random();
+        m.count[i] = 0;
+        m.rate[i] = (1.5 + Math.random() * .6) * aiF().speed;
+      });
+    },
+    push(m, i) {
+      if (m.done) return;
+      m.count[i] = (m.count[i] || 0) + 1;
+      if (teamOfIdx(m, i) === 'blue') {
+        m.prog = Math.min(100, m.prog + m.blueGain);
+        setPad(i, Math.round(m.prog) + '%');
+        sfx('tick');
+      } else {
+        m.prog = Math.max(0, m.prog - .35);
+        m.hits++;
+        m.fx.push({ t: 0, k: m.hits % 4 });
+        setPad(i, m.hits + '방해');
+        sfx('pop');
+      }
+      if (m.prog >= 100) { m.escaped = true; this.finish(m); }
+    },
+    tap(m, i) { this.push(m, i); },
+    botTick(m, dt) {
+      if (m.done) return;
+      m.players.forEach((p, i) => {
+        if (!p.bot) return;
+        m.acc[i] += dt * m.rate[i];
+        while (m.acc[i] >= 1) { m.acc[i] -= 1; this.push(m, i); }
+      });
+    },
+    update(m, dt) { m.fx.forEach(f => { f.t += dt; }); m.fx = m.fx.filter(f => f.t < .5); },
+    finish(m) {
+      if (m.done) return; m.done = true;
+      m.teamResult = {
+        win: m.escaped ? 'blue' : 'red',
+        blueLabel: '탈출 ' + Math.round(m.prog) + '%',
+        redLabel: '방해 ' + m.hits + '방'
+      };
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#1b2c3e'); g.addColorStop(1, '#0a1119');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const tx0 = w * .10, tx1 = w * .90, ty = h * .30;
+      c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 6; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(tx0, ty); c.lineTo(tx1, ty); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(tx0, ty); c.lineTo(tx1, ty); c.stroke();
+      const px = tx0 + (tx1 - tx0) * clamp(m.prog / 100, 0, 1);
+      /* 깃발 */
+      c.strokeStyle = '#fff'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(tx1, ty); c.lineTo(tx1, ty - 26); c.stroke();
+      c.fillStyle = '#ff5364';
+      c.beginPath(); c.moveTo(tx1, ty - 26); c.lineTo(tx1 - 20, ty - 20); c.lineTo(tx1, ty - 14); c.closePath(); c.fill();
+      /* 기차 */
+      c.fillStyle = '#ffd166';
+      roundRect(c, px - 22, ty - 14, 44, 22, 6); c.fill();
+      c.fillStyle = '#8a5c00';
+      c.beginPath(); c.arc(px - 11, ty + 9, 5, 0, TAU); c.fill();
+      c.beginPath(); c.arc(px + 11, ty + 9, 5, 0, TAU); c.fill();
+      c.fillStyle = '#2b2b33';
+      c.fillRect(px + 12, ty - 26, 6, 12);
+      const smoke = (t * 1.6) % 1;
+      c.fillStyle = 'rgba(255,255,255,' + (.35 * (1 - smoke)) + ')';
+      c.beginPath(); c.arc(px + 15, ty - 28 - smoke * 22, 5 + smoke * 8, 0, TAU); c.fill();
+      bigText(c, Math.round(m.prog) + '%', w / 2, h * .12, Math.min(30, w * .085), m.escaped ? '#9dffbd' : '#fff');
+      bigText(c, m.escaped ? '탈출 성공!' : '100%까지 밀어라!', w / 2, h * .19, Math.min(12, w * .033), '#cfe4ff');
+      /* 플레이어 */
+      const rs = laneRects(w, h * .48, m.n);
+      rs.forEach((r, i) => {
+        const p = m.players[i];
+        const cx = r.x + r.w / 2;
+        const cy = h * .56;
+        const blue = teamOfIdx(m, i) === 'blue';
+        c.fillStyle = blue ? 'rgba(74,134,255,.20)' : 'rgba(255,83,100,.16)';
+        roundRect(c, r.x + 4, cy, r.w - 8, h - cy - 8, 12); c.fill();
+        drawChar(c, cx, cy + h * .17, Math.min(52, r.w * .40), p.ci, { time: t, mood: blue ? 'happy' : 'normal' });
+        bigText(c, blue ? '기관사' : '방해꾼', cx, cy + 14, Math.min(11, r.w * .10), blue ? '#9dc0ff' : '#ffb3ba');
+        bigText(c, (m.count[i] || 0) + (blue ? '번 밀기' : '번 방해'), cx, cy + h * .24, Math.min(11, r.w * .095), 'rgba(230,238,255,.75)');
+      });
+      m.fx.forEach(f => {
+        const k = f.t / .5;
+        c.fillStyle = 'rgba(255,140,90,' + (.8 * (1 - k)) + ')';
+        c.beginPath(); c.arc(px + 10 + k * 26, ty - 10 - k * 40 - (f.k || 0) * 6, 5, 0, TAU); c.fill();
+      });
+    }
+  },
+
+  /* =========================================================
+     팀전 1대3 · 5. 코인 독식 (hog)
+     ========================================================= */
+  {
+    key: 'hog', team: '1v3', title: '코인 독식', sub: '1 대 3 · 항아리 코인을 먼저 가져가라!',
+    rule: '항아리에 코인 60개!<br>혼자는 한 번에 2개, 3명은 1개씩 가져가요. 더 많이 가져간 팀이 승리!',
+    dur: 8,
+    init(m) {
+      m.pot = 60; m.take = {}; m.acc = {}; m.rate = {}; m.fx = []; m.done = false;
+      m.players.forEach((p, i) => {
+        m.take[i] = 0; m.acc[i] = Math.random();
+        m.rate[i] = (1.7 + Math.random() * .6) * aiF().speed;
+      });
+    },
+    grab(m, i) {
+      if (m.done || m.pot <= 0) return;
+      const amt = Math.min(m.pot, teamOfIdx(m, i) === 'blue' ? 2 : 1);
+      m.pot -= amt; m.take[i] += amt;
+      m.fx.push({ t: 0, blue: teamOfIdx(m, i) === 'blue' });
+      setPad(i, m.take[i] + '개');
+      sfx('coin');
+      if (m.pot <= 0) this.finish(m);
+    },
+    tap(m, i) { this.grab(m, i); },
+    botTick(m, dt) {
+      if (m.done) return;
+      m.players.forEach((p, i) => {
+        if (!p.bot) return;
+        m.acc[i] += dt * m.rate[i];
+        while (m.acc[i] >= 1) { m.acc[i] -= 1; this.grab(m, i); }
+      });
+    },
+    update(m, dt) { m.fx.forEach(f => { f.t += dt; }); m.fx = m.fx.filter(f => f.t < .5); },
+    finish(m) {
+      if (m.done) return; m.done = true;
+      const b = teamSum(m, 'blue', i => m.take[i]);
+      const r = teamSum(m, 'red', i => m.take[i]);
+      m.teamResult = {
+        win: b === r ? 'draw' : (b > r ? 'blue' : 'red'),
+        blueLabel: '혼자 ' + b + '개', redLabel: '3명 ' + r + '개'
+      };
+    },
+    draw(m, c, w, h, t) {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#332a16'); g.addColorStop(1, '#141008');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const cx = w / 2, cy = h * .40;
+      /* 항아리 */
+      c.fillStyle = '#7d5a3a'; c.strokeStyle = '#4a3220'; c.lineWidth = 3;
+      c.beginPath(); c.ellipse(cx, cy, w * .15, h * .16, 0, 0, TAU); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.10)';
+      c.beginPath(); c.ellipse(cx - w * .04, cy - h * .04, w * .045, h * .05, -.4, 0, TAU); c.fill();
+      c.fillStyle = '#3a2818';
+      c.beginPath(); c.ellipse(cx, cy - h * .15, w * .10, h * .028, 0, 0, TAU); c.fill();
+      const fill = clamp(m.pot / 60, 0, 1);
+      c.fillStyle = '#ffd166';
+      for (let k = 0; k < Math.ceil(fill * 9); k++) {
+        const a = (k / 9) * TAU + t * .3;
+        c.beginPath(); c.arc(cx + Math.cos(a) * w * .07, cy - h * .17 + Math.sin(a) * h * .012 + (1 - fill) * h * .06, 3.4, 0, TAU); c.fill();
+      }
+      bigText(c, m.pot + '개', cx, cy + h * .10, Math.min(22, w * .062), '#ffe9a8');
+      /* 팀 게이지 */
+      const b = teamSum(m, 'blue', i => m.take[i]);
+      const r = teamSum(m, 'red', i => m.take[i]);
+      const tot = Math.max(1, b + r);
+      const bw = w * .78, bx = (w - bw) / 2, by = h * .68;
+      c.fillStyle = 'rgba(255,255,255,.14)'; roundRect(c, bx, by, bw, 16, 8); c.fill();
+      c.fillStyle = TEAM_COL.blue; roundRect(c, bx, by, bw * (b / tot), 16, 8); c.fill();
+      c.fillStyle = TEAM_COL.red; roundRect(c, bx + bw * (b / tot), by, bw * (r / tot), 16, 8); c.fill();
+      bigText(c, '혼자 ' + b, bx, by + 26, Math.min(12, w * .033), '#9dc0ff', 'left');
+      bigText(c, '3명 ' + r, bx + bw, by + 26, Math.min(12, w * .033), '#ffb3ba', 'right');
+      /* 플레이어 */
+      const rs = laneRects(w, h * .80, m.n);
+      const oy = h * .76;
+      rs.forEach((r, i) => {
+        const p = m.players[i];
+        const px = r.x + r.w / 2;
+        const blue = teamOfIdx(m, i) === 'blue';
+        c.fillStyle = blue ? 'rgba(74,134,255,.18)' : 'rgba(255,83,100,.14)';
+        roundRect(c, r.x + 4, oy, r.w - 8, h - oy - 6, 10); c.fill();
+        drawChar(c, px, oy + h * .12, Math.min(44, r.w * .34), p.ci, { time: t });
+        bigText(c, m.take[i] + '개', px, h - 14, Math.min(13, r.w * .11), blue ? '#9dc0ff' : '#ffb3ba');
+      });
+      m.fx.forEach(f => {
+        const k = f.t / .5;
+        c.fillStyle = f.blue ? 'rgba(160,200,255,' + (.9 * (1 - k)) + ')' : 'rgba(255,170,180,' + (.9 * (1 - k)) + ')';
+        c.beginPath(); c.arc(cx + (f.blue ? -1 : 1) * k * w * .22, cy - h * .10 - k * h * .16, 4, 0, TAU); c.fill();
+      });
+    }
+  },
 ];
 
 
@@ -8467,11 +9900,12 @@ const CFG = { count: 4, rounds: 10, mapId: 'meadow', diff: 'normal', bots: [fals
 G.autoReady = false;
 
 /* ---------- screen switching ---------- */
+const SCREEN_ID = { start: 'scStart', guide: 'scGuide', board: 'scBoard', mini: 'scMini', result: 'scResult', mgsel: 'scMgSel' };
 function setScreen(name) {
   G.screen = name;
-  ['scStart', 'scGuide', 'scBoard', 'scMini', 'scResult'].forEach(id => {
-    const el = $('#' + id);
-    if (el) el.classList.toggle('on', id === 'sc' + name.charAt(0).toUpperCase() + name.slice(1));
+  Object.keys(SCREEN_ID).forEach(k => {
+    const el = $('#' + SCREEN_ID[k]);
+    if (el) el.classList.toggle('on', k === name);
   });
   if (name === 'board') startBoardLoop();
   if (name !== 'board' && boardRaf) { cancelAnimationFrame(boardRaf); boardRaf = null; }
@@ -10633,6 +12067,18 @@ function bindInput() {
     setScreen('board');
     startIntro();
   });
+  const btnMM = $('#btnMiniMode');
+  if (btnMM) btnMM.addEventListener('click', () => { AU.unlock(); sfx('go'); openMiniMode(); });
+  const btnMgBack = $('#btnMgBack');
+  if (btnMgBack) btnMgBack.addEventListener('click', () => {
+    if (G.freeBusy) return;
+    sfx('click'); G.freeMode = false; setScreen('start'); buildStart();
+  });
+  const btnMgPlay = $('#btnMgPlay');
+  if (btnMgPlay) btnMgPlay.addEventListener('click', () => {
+    if (!G.msel.key || G.freeBusy) return;
+    AU.unlock(); sfx('go'); playFreeGame(G.msel.key);
+  });
   const cutBox = $('#cut');
   if (cutBox) cutBox.addEventListener('pointerdown', cutTap);
   $('#btnDice').addEventListener('click', () => {
@@ -10713,6 +12159,9 @@ window.__pickleParty = {
         x: Math.round(p.px), y: Math.round(p.py)
       })),
       minigames: MINIGAMES.map(m => m.key),
+      freeMode: !!G.freeMode, freeBusy: !!G.freeBusy,
+      msel: { cat: G.msel.cat, key: G.msel.key, count: G.msel.count, bots: G.msel.bots.slice() },
+      lastTeamPick: G.lastTeamPick || null,
       lastRoll: G.lastRoll,
       lastMinigame: G.lastMg, history: G.mgHistory.slice(),
       modal: !!pendingModal, camMode: CAM.mode, diff: CFG.diff,
@@ -10848,6 +12297,31 @@ window.__pickleParty = {
   chooseFork(k) { return chooseFork(k); },
   counts() { return BOARD.counts || {}; },
   forceMinigame(key) { G.forcedMg = key; },
+  mgList() { return MINIGAMES.map(m => ({ key: m.key, title: m.title, team: m.team || 'ffa', dur: m.dur })); },
+  mgCounts() {
+    const c = { ffa: 0, '2v2': 0, '1v3': 0 };
+    MINIGAMES.forEach(m => { c[m.team || 'ffa']++; });
+    return { total: MINIGAMES.length, ffa: c.ffa, t2v2: c['2v2'], t1v3: c['1v3'] };
+  },
+  openMiniMode() { openMiniMode(); return { cat: G.msel.cat, key: G.msel.key, count: G.msel.count }; },
+  setMsel(cfg) { Object.assign(G.msel, cfg || {}); buildMgSel(); return { cat: G.msel.cat, key: G.msel.key, count: G.msel.count }; },
+  freeStart(key) { return playFreeGame(key); },
+  teamPickInfo(mode) { const p = padGroupPlan(mode || '2v2'); return { mode: mode || '2v2', natural: p.natural, types: p.types, groups: p.groups, teams: p.teams }; },
+  setAutoResult(v) { G.autoResult = v || null; return G.autoResult; },
+  endMini() {
+    if (MG.def && MG.m && MG.running) { try { MG.def.finish(MG.m); } catch (e) { return false; } return true; }
+    return false;
+  },
+  miniInfo() {
+    return {
+      def: MG.def ? MG.def.key : null, running: !!MG.running, demo: !!MG.demo, free: !!MG.free,
+      teams: MG.m && MG.m.teams ? { blue: MG.m.teams.blue.slice(), red: MG.m.teams.red.slice() } : null,
+      teamResult: MG.m && MG.m.teamResult ? MG.m.teamResult : null,
+      ranks: MG.m && MG.m.ranks ? MG.m.ranks.map(r => ({ i: r.i, v: r.sortVal, label: r.label })) : null,
+      t: MG.m ? +MG.m.t.toFixed(2) : 0
+    };
+  },
+  genTeamPick(mode) { return pickTeamsByPad(mode); },
   setSpeed(x) { TIME_SCALE = Math.max(.25, x || 1); },
   setSeed(n) {
     setSeed(n); return true;
